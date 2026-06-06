@@ -3,7 +3,7 @@ import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { createTeam, deleteTeam, listTeams, updateTeam, uploadTeamLogo, uploadBranding } from '../lib/api'
-import { createUserAccount } from '../lib/admin'
+import { createUserAccount, resetUserPassword } from '../lib/admin'
 import { fmtPoints } from '../lib/format'
 
 const blankFor = (auction) => ({
@@ -76,6 +76,17 @@ export default function TeamsManagement() {
       })
       setCreds({ team: team.name, ...res })
       await reload()
+    } catch (e) {
+      setMsg(e.message)
+    }
+  }
+
+  const resetPassword = async (team) => {
+    setMsg(''); setCreds(null)
+    if (!team.owner_user_id) { setMsg('No linked owner for this team.'); return }
+    try {
+      const res = await resetUserPassword(team.owner_user_id)
+      setCreds({ team: team.name, email: team.owner_email, password: res.password })
     } catch (e) {
       setMsg(e.message)
     }
@@ -158,10 +169,20 @@ export default function TeamsManagement() {
                     </div>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <button onClick={() => createOwner(t)} disabled={!!t.owner_user_id}
-                      className="px-2 py-1 text-xs rounded bg-teal-600/60 disabled:opacity-40" title="Create owner login">
-                      {t.owner_user_id ? 'Linked' : 'Create login'}
-                    </button>
+                    {t.owner_user_id ? (
+                      <>
+                        <span className="px-2 py-1 text-xs rounded bg-teal-600/60 opacity-60">Linked</span>
+                        <button onClick={() => resetPassword(t)}
+                          className="px-2 py-1 text-xs rounded bg-gold/30 text-gold hover:bg-gold/50 transition" title="Generate a new password for this owner">
+                          Reset password
+                        </button>
+                      </>
+                    ) : (
+                      <button onClick={() => createOwner(t)}
+                        className="px-2 py-1 text-xs rounded bg-teal-600/60" title="Create owner login">
+                        Create login
+                      </button>
+                    )}
                     <button onClick={() => { setEditId(t.id); setForm({ ...blankFor(auction), ...t }) }} className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
                     <button onClick={async () => { await deleteTeam(t.id); reload() }} className="px-2 py-1 text-xs rounded bg-live/40">Delete</button>
                   </div>

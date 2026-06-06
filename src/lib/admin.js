@@ -29,7 +29,24 @@ export async function createUserAccount({ email, fullName, role = 'team_owner', 
     body: { email, full_name: fullName, role, team_id: teamId, password }
   })
   if (error) {
-    // Edge Functions return error detail in the response body when non-2xx.
+    let detail = error.message
+    try {
+      const ctx = await error.context?.json?.()
+      if (ctx?.error) detail = ctx.error
+    } catch { /* ignore */ }
+    throw new Error(detail)
+  }
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
+// ---- Password reset via the admin-reset-password Edge Function ----
+// Returns { ok, password } with a newly generated random password.
+export async function resetUserPassword(profileId) {
+  const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+    body: { profile_id: profileId }
+  })
+  if (error) {
     let detail = error.message
     try {
       const ctx = await error.context?.json?.()
