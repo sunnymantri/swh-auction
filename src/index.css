@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+body {
+  margin: 0;
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #0e2c28 0%, #061614 60%, #04100e 100%);
+  color: #e9f3f1;
+  min-height: 100vh;
+}
+.tabular { font-variant-numeric: tabular-nums; }
+.stat-grid dt { letter-spacing: .04em; text-transform: uppercase; font-size: .62rem; }
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
