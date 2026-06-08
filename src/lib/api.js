@@ -344,3 +344,20 @@ export function subscribeToAuction(auctionId, cb) {
   ch.subscribe()
   return () => supabase.removeChannel(ch)
 }
+
+// ---- CricHeroes stats fetch ----
+export async function fetchCricHeroesStats(profileUrl) {
+  const { data, error } = await supabase.functions.invoke('fetch-cricheroes', {
+    body: { profile_url: profileUrl }
+  })
+  if (error) {
+    let detail = error.message
+    try {
+      const ctx = await error.context?.json?.()
+      if (ctx?.error) detail = ctx.error
+    } catch { /* ignore */ }
+    throw new Error(detail)
+  }
+  if (data?.error) throw new Error(data.error)
+  return data
+}

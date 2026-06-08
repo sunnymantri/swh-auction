@@ -5,7 +5,8 @@ import { useActiveAuction } from '../hooks/useActiveAuction'
 import {
   createPlayer, deletePlayer, exportPlayersCsv, listPlayers,
   parsePlayersCsvDetailed, playersCsvTemplate, updatePlayer, uploadPlayerPhoto,
-  createCategory, deleteCategory, listCategories, updateCategory
+  createCategory, deleteCategory, listCategories, updateCategory,
+  fetchCricHeroesStats
 } from '../lib/api'
 import { supabase } from '../lib/supabase'
 
@@ -66,6 +67,7 @@ export default function PlayersManagement() {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [fetchingStats, setFetchingStats] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const [bulkBusy, setBulkBusy] = useState(false)
 
@@ -122,6 +124,32 @@ export default function PlayersManagement() {
       setErr(`Photo upload failed: ${e.message}`)
     } finally {
       setUploadingPhoto(false)
+    }
+  }
+
+  const fetchFromCricHeroes = async () => {
+    if (!form.profile_url) { setErr('Enter a CricHeroes profile URL first.'); return }
+    setErr(''); setFetchingStats(true)
+    try {
+      const stats = await fetchCricHeroesStats(form.profile_url)
+      setForm((s) => ({
+        ...s,
+        name: stats.name || s.name,
+        matches: stats.matches ?? s.matches,
+        runs: stats.runs ?? s.runs,
+        wickets: stats.wickets ?? s.wickets,
+        bat_avg: stats.bat_avg ?? s.bat_avg,
+        strike_rate: stats.strike_rate ?? s.strike_rate,
+        economy: stats.economy ?? s.economy,
+        catches: stats.catches ?? s.catches,
+        batting_style: stats.batting_style || s.batting_style,
+        bowling_style: stats.bowling_style || s.bowling_style,
+        role: stats.role || s.role,
+      }))
+    } catch (e) {
+      setErr(`CricHeroes fetch failed: ${e.message}`)
+    } finally {
+      setFetchingStats(false)
     }
   }
 
@@ -219,15 +247,31 @@ export default function PlayersManagement() {
               {FIELD_META.map(({ key, label, type }) => (
                 <label key={key} className="block text-xs text-teal-300">
                   {label}
-                  <input
-                    type={type === 'number' ? 'text' : 'text'}
-                    inputMode={type === 'number' ? 'numeric' : 'text'}
-                    value={form[key] ?? ''}
-                    onChange={(e) => set(key, type === 'number'
-                      ? Number(e.target.value.replace(/[^\d.]/g, '') || 0)
-                      : e.target.value)}
-                    className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
-                  />
+                  {key === 'profile_url' ? (
+                    <div className="flex gap-2 mt-1">
+                      <input
+                        type="text"
+                        value={form[key] ?? ''}
+                        onChange={(e) => set(key, e.target.value)}
+                        className="flex-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
+                        placeholder="https://cricheroes.com/player-profile/..."
+                      />
+                      <button type="button" onClick={fetchFromCricHeroes} disabled={fetchingStats || !form.profile_url}
+                        className="px-3 py-2 rounded-lg bg-teal-600/70 text-white text-xs font-semibold whitespace-nowrap disabled:opacity-40">
+                        {fetchingStats ? 'Fetching…' : 'Fetch stats'}
+                      </button>
+                    </div>
+                  ) : (
+                    <input
+                      type={type === 'number' ? 'text' : 'text'}
+                      inputMode={type === 'number' ? 'numeric' : 'text'}
+                      value={form[key] ?? ''}
+                      onChange={(e) => set(key, type === 'number'
+                        ? Number(e.target.value.replace(/[^\d.]/g, '') || 0)
+                        : e.target.value)}
+                      className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
+                    />
+                  )}
                 </label>
               ))}
               <label className="block text-xs text-teal-300">
