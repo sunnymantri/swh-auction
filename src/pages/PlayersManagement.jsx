@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
@@ -9,6 +9,7 @@ import {
   fetchCricHeroesStats
 } from '../lib/api'
 import { supabase } from '../lib/supabase'
+import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier } from '../lib/points'
 
 const TABS = ['Players', 'Categories']
 
@@ -17,7 +18,10 @@ const blankFor = (auction) => ({
   status: 'approved',
   batting_style: '', bowling_style: '', profile_url: '',
   matches: 0, runs: 0, bat_avg: 0, wickets: 0, catches: 0,
-  strike_rate: 0, bowl_avg: 0, economy: 0, photo_url: ''
+  strike_rate: 0, bowl_avg: 0, economy: 0, photo_url: '',
+  fifties: 0, hundreds: 0, sixes: 0,
+  dot_balls: 0, three_wicket_hauls: 0, five_wicket_hauls: 0,
+  run_outs: 0, stumpings: 0
 })
 
 const FIELD_META = [
@@ -32,10 +36,18 @@ const FIELD_META = [
   { key: 'runs',          label: 'Runs',                    type: 'number' },
   { key: 'bat_avg',       label: 'Batting average',         type: 'number' },
   { key: 'strike_rate',   label: 'Batting strike rate',     type: 'number' },
+  { key: 'fifties',       label: '50s',                     type: 'number' },
+  { key: 'hundreds',      label: '100s',                    type: 'number' },
+  { key: 'sixes',         label: 'Sixes',                   type: 'number' },
   { key: 'wickets',       label: 'Wickets',                 type: 'number' },
   { key: 'bowl_avg',      label: 'Bowling average',         type: 'number' },
   { key: 'economy',       label: 'Economy',                 type: 'number' },
+  { key: 'dot_balls',     label: 'Dot balls',              type: 'number' },
+  { key: 'three_wicket_hauls', label: '3-wicket hauls',    type: 'number' },
+  { key: 'five_wicket_hauls',  label: '5-wicket hauls',    type: 'number' },
   { key: 'catches',       label: 'Catches',                 type: 'number' },
+  { key: 'run_outs',      label: 'Run outs',               type: 'number' },
+  { key: 'stumpings',     label: 'Stumpings',              type: 'number' },
 ]
 
 const blankCat = { name: '', sequence_order: 1, minimum_required: 0, maximum_allowed: 0 }
@@ -71,6 +83,9 @@ export default function PlayersManagement() {
   const [selected, setSelected] = useState(new Set())
   const [bulkBusy, setBulkBusy] = useState(false)
 
+  // Filter state
+  const [statusFilter, setStatusFilter] = useState(null)
+
   // Category state
   const [categories, setCategories] = useState([])
   const [catForm, setCatForm] = useState(blankCat)
@@ -86,6 +101,40 @@ export default function PlayersManagement() {
   }
   useEffect(() => { reloadPlayers(); reloadCategories() }, [auction])
   useEffect(() => { if (!editId) setForm(blankFor(auction)) }, [auction, editId])
+
+  // Status counts and filtered list
+  const statusCounts = useMemo(() => {
+    const counts = {}
+    for (const p of players) {
+      counts[p.status] = (counts[p.status] || 0) + 1
+    }
+    return counts
+  }, [players])
+
+  const filteredPlayers = useMemo(() => {
+    if (!statusFilter) return players
+    return players.filter((p) => p.status === statusFilter)
+  }, [players, statusFilter])
+
+  // Duplicate detection: find players with matching name+phone or name+email
+  const findDuplicates = (name, email, phone) => {
+    const normName = name?.trim().toLowerCase()
+    if (!normName) return []
+    return players.filter((p) => {
+      if (editId && p.id === editId) return false
+      const pName = p.name?.trim().toLowerCase()
+      if (pName !== normName) return false
+      if (email && p.email && p.email.toLowerCase() === email.toLowerCase()) return true
+      if (phone && p.phone && p.phone === phone) return true
+      // Same name alone is a potential duplicate
+      return true
+    })
+  }
+
+  const duplicates = useMemo(
+    () => findDuplicates(form.name, form.email, form.phone),
+    [form.name, form.email, form.phone, players, editId]
+  )
 
   if (!auction) {
     return (
@@ -166,7 +215,7 @@ export default function PlayersManagement() {
   })
 
   const selectAll = () => setSelected(
-    selected.size === players.length ? new Set() : new Set(players.map((p) => p.id))
+    selected.size === filteredPlayers.length ? new Set() : new Set(filteredPlayers.map((p) => p.id))
   )
 
   const bulkSetStatus = async (status) => {
@@ -296,6 +345,39 @@ export default function PlayersManagement() {
                 </div>
                 {uploadingPhoto && <p className="text-teal-400 text-xs mt-1 animate-pulse">Uploading photo…</p>}
               </label>
+              {/* Auto-calculated points preview */}
+              {form.matches > 0 && (
+                <div className="rounded-lg border border-teal-700/40 bg-ink-900/50 p-3 space-y-1">
+                  <p className="text-xs font-semibold text-teal-200 uppercase tracking-wide">Calculated Points (PPM)</p>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                    <span className="text-teal-400">Batting:</span>
+                    <span className="text-white">{calcBattingPoints(form).toFixed(1)}</span>
+                    <span className="text-teal-400">Bowling:</span>
+                    <span className="text-white">{calcBowlingPoints(form).toFixed(1)}</span>
+                    <span className="text-teal-400">Fielding:</span>
+                    <span className="text-white">{calcFieldingPoints(form).toFixed(1)}</span>
+                    <span className="text-teal-400 font-semibold">Total:</span>
+                    <span className="text-white font-semibold">{calcTotalPoints(form).toFixed(1)}</span>
+                    <span className="text-teal-400 font-semibold">PPM:</span>
+                    <span className={`font-semibold ${getTier(calcPPM(form)).color}`}>
+                      {calcPPM(form).toFixed(2)} ({getTier(calcPPM(form)).label})
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Duplicate warning */}
+              {duplicates.length > 0 && (
+                <div className="rounded-lg border border-yellow-600/50 bg-yellow-900/20 p-2">
+                  <p className="text-yellow-400 text-xs font-semibold">Possible duplicate{duplicates.length > 1 ? 's' : ''} found:</p>
+                  <ul className="text-xs text-yellow-300 mt-1 space-y-0.5">
+                    {duplicates.map((d) => (
+                      <li key={d.id}>{d.name} — {d.role} ({d.status})</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {err && <p className="text-red-400 text-xs">{err}</p>}
               <div className="flex gap-2">
                 <button onClick={save} disabled={!form.name || saving || uploadingPhoto}
@@ -334,11 +416,36 @@ export default function PlayersManagement() {
                 </div>
               )}
 
-              {players.length > 0 && (
+              {/* Status filter tags */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                <button onClick={() => setStatusFilter(null)}
+                  className={`px-2.5 py-1 text-xs rounded-full font-medium transition ${!statusFilter ? 'bg-teal-600 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300 hover:text-white'}`}>
+                  All ({players.length})
+                </button>
+                {['approved', 'registered', 'in_auction', 'sold', 'unsold'].map((s) => {
+                  const count = statusCounts[s] || 0
+                  if (count === 0 && s !== 'approved' && s !== 'registered') return null
+                  const colors = {
+                    approved: 'bg-green-900/40 border-green-600/50 text-green-400',
+                    registered: 'bg-blue-900/40 border-blue-600/50 text-blue-400',
+                    in_auction: 'bg-yellow-900/40 border-yellow-600/50 text-yellow-400',
+                    sold: 'bg-gold/20 border-gold/50 text-gold',
+                    unsold: 'bg-red-900/40 border-red-600/50 text-red-400',
+                  }
+                  return (
+                    <button key={s} onClick={() => setStatusFilter(statusFilter === s ? null : s)}
+                      className={`px-2.5 py-1 text-xs rounded-full font-medium border transition ${statusFilter === s ? colors[s] : 'bg-ink-900 border-teal-700/50 text-teal-300 hover:text-white'}`}>
+                      {s.replace('_', ' ')} ({count})
+                    </button>
+                  )
+                })}
+              </div>
+
+              {filteredPlayers.length > 0 && (
                 <div className="flex items-center gap-3 mb-2 flex-wrap">
                   <label className="flex items-center gap-1.5 text-xs text-teal-300 cursor-pointer">
                     <input type="checkbox"
-                      checked={selected.size === players.length && players.length > 0}
+                      checked={selected.size === filteredPlayers.length && filteredPlayers.length > 0}
                       onChange={selectAll} />
                     {selected.size === 0 ? 'Select all' : `${selected.size} selected`}
                   </label>
@@ -358,41 +465,58 @@ export default function PlayersManagement() {
               )}
 
               <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                {players.map((p) => (
-                  <div key={p.id}
-                    className={`border rounded-lg p-3 flex justify-between items-center gap-3 ${selected.has(p.id) ? 'border-teal-500/60 bg-teal-900/20' : 'border-teal-700/40'}`}>
-                    <div className="flex items-center gap-3 min-w-0">
-                      <input type="checkbox" checked={selected.has(p.id)}
-                        onChange={() => toggleSelect(p.id)} className="shrink-0" />
-                      <div className="h-9 w-9 rounded-lg bg-ink-900 border border-teal-700/40 overflow-hidden grid place-items-center shrink-0">
-                        {p.photo_url
-                          ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" />
-                          : <span className="text-[0.55rem] text-teal-500">no img</span>}
+                {filteredPlayers.map((p) => {
+                  const ppm = calcPPM(p)
+                  const tier = getTier(ppm)
+                  return (
+                    <div key={p.id}
+                      className={`border rounded-lg p-3 flex flex-col gap-2 ${selected.has(p.id) ? 'border-teal-500/60 bg-teal-900/20' : 'border-teal-700/40'}`}>
+                      <div className="flex justify-between items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <input type="checkbox" checked={selected.has(p.id)}
+                            onChange={() => toggleSelect(p.id)} className="shrink-0" />
+                          <div className="h-9 w-9 rounded-lg bg-ink-900 border border-teal-700/40 overflow-hidden grid place-items-center shrink-0">
+                            {p.photo_url
+                              ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" />
+                              : <span className="text-[0.55rem] text-teal-500">no img</span>}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-white truncate">
+                              {p.name}
+                              <span className="text-teal-500 text-xs"> · {p.role}{p.category ? ` / ${p.category}` : ''}</span>
+                            </p>
+                            <p className="text-xs text-teal-300">
+                              Base {p.base_price} ·{' '}
+                              <span className={p.status === 'sold' ? 'text-gold' : p.status === 'approved' ? 'text-teal-400' : ''}>{p.status}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <button onClick={() => toggleApprove(p)}
+                            className={`px-2 py-1 text-xs rounded ${p.status === 'approved' ? 'bg-teal-600/50' : 'bg-ink-900 border border-teal-700/50'}`}>
+                            {p.status === 'approved' ? 'Unapprove' : 'Approve'}
+                          </button>
+                          <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr('') }}
+                            className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
+                          <button onClick={async () => { await deletePlayer(p.id); reloadPlayers() }}
+                            className="px-2 py-1 text-xs rounded bg-red-900/50">Delete</button>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-white truncate">
-                          {p.name}
-                          <span className="text-teal-500 text-xs"> · {p.role}{p.category ? ` / ${p.category}` : ''}</span>
-                        </p>
-                        <p className="text-xs text-teal-300">
-                          Base {p.base_price} ·{' '}
-                          <span className={p.status === 'sold' ? 'text-gold' : p.status === 'approved' ? 'text-teal-400' : ''}>{p.status}</span>
-                        </p>
-                      </div>
+                      {/* Points breakdown row */}
+                      {p.matches > 0 && (
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.65rem] ml-[3.25rem] text-teal-400">
+                          <span>Bat: <b className="text-white">{calcBattingPoints(p).toFixed(0)}</b></span>
+                          <span>Bowl: <b className="text-white">{calcBowlingPoints(p).toFixed(0)}</b></span>
+                          <span>Field: <b className="text-white">{calcFieldingPoints(p).toFixed(0)}</b></span>
+                          <span>Total: <b className="text-white">{calcTotalPoints(p).toFixed(0)}</b></span>
+                          <span>PPM: <b className={tier.color}>{ppm.toFixed(1)}</b></span>
+                          <span className={`font-semibold ${tier.color}`}>{tier.label}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex gap-2 shrink-0">
-                      <button onClick={() => toggleApprove(p)}
-                        className={`px-2 py-1 text-xs rounded ${p.status === 'approved' ? 'bg-teal-600/50' : 'bg-ink-900 border border-teal-700/50'}`}>
-                        {p.status === 'approved' ? 'Unapprove' : 'Approve'}
-                      </button>
-                      <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr('') }}
-                        className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
-                      <button onClick={async () => { await deletePlayer(p.id); reloadPlayers() }}
-                        className="px-2 py-1 text-xs rounded bg-red-900/50">Delete</button>
-                    </div>
-                  </div>
-                ))}
-                {players.length === 0 && <p className="text-teal-500 text-sm">No players yet — add one or bulk import.</p>}
+                  )
+                })}
+                {filteredPlayers.length === 0 && <p className="text-teal-500 text-sm">{players.length === 0 ? 'No players yet — add one or bulk import.' : 'No players match this filter.'}</p>}
               </div>
             </div>
           </div>
