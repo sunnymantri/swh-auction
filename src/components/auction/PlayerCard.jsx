@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { fmtPoints } from '../../lib/format'
+import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier } from '../../lib/points'
 
 const initials = (n = '') => n.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 
@@ -11,7 +13,55 @@ function Stat({ label, value }) {
   )
 }
 
-export default function PlayerCard({ player }) {
+function PointsBreakdown({ player, onRecalculate, recalculating }) {
+  const batting = calcBattingPoints(player)
+  const bowling = calcBowlingPoints(player)
+  const fielding = calcFieldingPoints(player)
+  const total = calcTotalPoints(player)
+  const ppm = calcPPM(player)
+  const tier = getTier(ppm)
+
+  return (
+    <div className="px-6 py-4 border-t border-teal-700/30 bg-ink-900/30">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-xs font-semibold text-teal-200 uppercase tracking-wider">Performance Points</h4>
+        {onRecalculate && (
+          <button
+            onClick={onRecalculate}
+            disabled={recalculating}
+            className="px-3 py-1 text-xs rounded-lg bg-teal-600/60 text-white font-medium hover:bg-teal-600/80 disabled:opacity-50 transition"
+          >
+            {recalculating ? 'Calculating…' : 'Recalculate'}
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="rounded-lg bg-ink-800/60 border border-teal-700/30 p-2.5 text-center">
+          <div className="font-score text-lg text-white tabular">{batting.toFixed(0)}</div>
+          <div className="text-[0.6rem] text-teal-400 uppercase tracking-wider mt-0.5">Batting</div>
+        </div>
+        <div className="rounded-lg bg-ink-800/60 border border-teal-700/30 p-2.5 text-center">
+          <div className="font-score text-lg text-white tabular">{bowling.toFixed(0)}</div>
+          <div className="text-[0.6rem] text-teal-400 uppercase tracking-wider mt-0.5">Bowling</div>
+        </div>
+        <div className="rounded-lg bg-ink-800/60 border border-teal-700/30 p-2.5 text-center">
+          <div className="font-score text-lg text-white tabular">{fielding.toFixed(0)}</div>
+          <div className="text-[0.6rem] text-teal-400 uppercase tracking-wider mt-0.5">Fielding</div>
+        </div>
+        <div className="rounded-lg bg-ink-800/60 border border-teal-700/30 p-2.5 text-center">
+          <div className="font-score text-lg text-white tabular">{total.toFixed(0)}</div>
+          <div className="text-[0.6rem] text-teal-400 uppercase tracking-wider mt-0.5">Total</div>
+        </div>
+        <div className={`rounded-lg border p-2.5 text-center ${ppm >= 55 ? 'bg-purple-900/30 border-purple-600/40' : ppm >= 40 ? 'bg-yellow-900/30 border-yellow-600/40' : ppm >= 25 ? 'bg-gray-800/50 border-gray-500/40' : 'bg-amber-900/20 border-amber-700/40'}`}>
+          <div className={`font-score text-lg tabular ${tier.color}`}>{ppm.toFixed(1)}</div>
+          <div className="text-[0.6rem] text-teal-400 uppercase tracking-wider mt-0.5">PPM · {tier.label}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function PlayerCard({ player, showPoints = false, onRecalculate, recalculating }) {
   if (!player) {
     return (
       <div className="rounded-2xl bg-ink-800/70 border border-teal-700/40 p-10 text-center text-teal-400">
@@ -50,6 +100,9 @@ export default function PlayerCard({ player }) {
         <Stat label="Bowl Avg" value={player.bowl_avg ?? '—'} />
         <Stat label="Econ" value={player.economy ?? '—'} />
       </div>
+      {showPoints && player.matches > 0 && (
+        <PointsBreakdown player={player} onRecalculate={onRecalculate} recalculating={recalculating} />
+      )}
       {player.profile_url && (
         <div className="px-6 pb-4">
           <a

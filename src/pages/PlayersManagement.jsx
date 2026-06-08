@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
+import PlayerCard from '../components/auction/PlayerCard'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import {
   createPlayer, deletePlayer, exportPlayersCsv, listPlayers,
@@ -85,6 +86,9 @@ export default function PlayersManagement() {
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState(null)
+  // Player profile view
+  const [viewPlayer, setViewPlayer] = useState(null)
+  const [recalculating, setRecalculating] = useState(false)
 
   // Category state
   const [categories, setCategories] = useState([])
@@ -135,6 +139,20 @@ export default function PlayersManagement() {
     () => findDuplicates(form.name, form.email, form.phone),
     [form.name, form.email, form.phone, players, editId]
   )
+
+  const recalculatePlayer = async (player) => {
+    setRecalculating(true)
+    try {
+      const total = calcTotalPoints(player)
+      const ppm = calcPPM(player)
+      const tier = getTier(ppm)
+      await updatePlayer(player.id, { calculated_value: Math.round(tier.base) })
+      await reloadPlayers()
+      setViewPlayer({ ...player, calculated_value: Math.round(tier.base) })
+    } finally {
+      setRecalculating(false)
+    }
+  }
 
   if (!auction) {
     return (
@@ -288,6 +306,25 @@ export default function PlayersManagement() {
             </button>
           ))}
         </div>
+
+        {/* Player profile overlay */}
+        {viewPlayer && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setViewPlayer(null)}>
+            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <PlayerCard
+                player={viewPlayer}
+                showPoints
+                onRecalculate={() => recalculatePlayer(viewPlayer)}
+                recalculating={recalculating}
+              />
+              <button onClick={() => setViewPlayer(null)}
+                className="mt-3 w-full py-2 text-sm text-teal-300 hover:text-white bg-ink-800/80 border border-teal-700/40 rounded-xl">
+                Close
+              </button>
+            </div>
+          </div>
+        )}
 
         {tab === 'Players' && (
           <div className="grid lg:grid-cols-3 gap-4">
@@ -482,7 +519,9 @@ export default function PlayersManagement() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-white truncate">
-                              {p.name}
+                              <button onClick={() => setViewPlayer(p)} className="hover:text-gold transition text-left">
+                                {p.name}
+                              </button>
                               <span className="text-teal-500 text-xs"> · {p.role}{p.category ? ` / ${p.category}` : ''}</span>
                             </p>
                             <p className="text-xs text-teal-300">
