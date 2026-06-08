@@ -191,19 +191,19 @@ export default function TeamsManagement() {
                     {t.owner_user_id ? (
                       <>
                         <span className="px-2 py-1 text-xs rounded bg-teal-600/60 opacity-60">Linked</span>
-                        <button onClick={() => resetPassword(t)}
+                        <button onClick={(e) => { e.stopPropagation(); resetPassword(t) }}
                           className="px-2 py-1 text-xs rounded bg-gold/30 text-gold hover:bg-gold/50 transition" title="Generate a new password for this owner">
                           Reset password
                         </button>
                       </>
                     ) : (
-                      <button onClick={() => createOwner(t)}
+                      <button onClick={(e) => { e.stopPropagation(); createOwner(t) }}
                         className="px-2 py-1 text-xs rounded bg-teal-600/60" title="Create owner login">
                         Create login
                       </button>
                     )}
-                    <button onClick={() => { setEditId(t.id); setForm({ ...blankFor(auction), ...t }) }} className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
-                    <button onClick={async () => { await deleteTeam(t.id); reload() }} className="px-2 py-1 text-xs rounded bg-live/40">Delete</button>
+                    <button onClick={(e) => { e.stopPropagation(); setEditId(t.id); setForm({ ...blankFor(auction), ...t }) }} className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
+                    <button onClick={async (e) => { e.stopPropagation(); await deleteTeam(t.id); reload() }} className="px-2 py-1 text-xs rounded bg-live/40">Delete</button>
                   </div>
                 </div>
               ))}
