@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
-import { createTeam, deleteTeam, listTeams, updateTeam, uploadTeamLogo, uploadBranding } from '../lib/api'
+import { createTeam, deleteTeam, listTeams, listPlayers, updateTeam, uploadTeamLogo, uploadBranding } from '../lib/api'
 import { createUserAccount, resetUserPassword } from '../lib/admin'
 import { fmtPoints } from '../lib/format'
 
@@ -16,6 +16,7 @@ const blankFor = (auction) => ({
 export default function TeamsManagement() {
   const { auction } = useActiveAuction()
   const [teams, setTeams] = useState([])
+  const [players, setPlayers] = useState([])
   const [form, setForm] = useState(blankFor(null))
   const [editId, setEditId] = useState(null)
   const [creds, setCreds] = useState(null)
@@ -25,9 +26,18 @@ export default function TeamsManagement() {
   const reload = async () => {
     if (!auction) return
     setTeams(await listTeams(auction.id))
+    setPlayers(await listPlayers(auction.id))
   }
   useEffect(() => { reload() }, [auction])
   useEffect(() => { if (!editId) setForm(blankFor(auction)) }, [auction, editId])
+
+  const calculatedBudget = useMemo(() => {
+    const approvedPlayers = players.filter((p) => p.status === 'approved')
+    const totalBase = approvedPlayers.reduce((sum, p) => sum + (p.base_price || 0), 0)
+    const multiplier = auction?.budget_multiplier ?? 1.6
+    const numTeams = teams.length || 1
+    return Math.round((totalBase * multiplier) / numTeams)
+  }, [players, teams, auction])
 
   if (!auction) {
     return (
@@ -153,9 +163,18 @@ export default function TeamsManagement() {
 
           <div className="lg:col-span-2 rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
             <h3 className="font-score text-lg text-teal-200 mb-2">Teams ({teams.length})</h3>
+            {/* Calculated budget info */}
+            <div className="mb-3 rounded-lg border border-teal-700/30 bg-ink-900/40 p-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-teal-300">
+              <span>Approved players: <b className="text-white">{players.filter((p) => p.status === 'approved').length}</b></span>
+              <span>Total base: <b className="text-white">{fmtPoints(players.filter((p) => p.status === 'approved').reduce((s, p) => s + (p.base_price || 0), 0))}</b></span>
+              <span>Multiplier: <b className="text-white">{auction?.budget_multiplier ?? 1.6}x</b></span>
+              <span>Suggested team budget: <b className="text-gold">{fmtPoints(calculatedBudget)}</b></span>
+            </div>
             <div className="space-y-2">
               {teams.map((t) => (
-                <div key={t.id} className="border border-teal-700/40 rounded-lg p-3 flex justify-between items-center gap-3">
+                <div key={t.id}
+                  onClick={() => { setEditId(t.id); setForm({ ...blankFor(auction), ...t }) }}
+                  className={`border rounded-lg p-3 flex justify-between items-center gap-3 cursor-pointer transition ${editId === t.id ? 'border-gold/50 bg-gold/5' : 'border-teal-700/40 hover:border-teal-600/60'}`}>
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="h-10 w-10 rounded-lg bg-ink-900 border border-teal-700/40 grid place-items-center overflow-hidden shrink-0">
                       {t.logo_url ? <img src={t.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-[0.6rem] text-teal-500">{t.short_name}</span>}

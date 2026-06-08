@@ -72,6 +72,7 @@ export default function Auctions() {
         default_base_price: Number(cfgForm.default_base_price || 0),
         default_bid_increment: Number(cfgForm.default_bid_increment || 0),
         min_player_price: Number(cfgForm.min_player_price || 0),
+        budget_multiplier: Number(cfgForm.budget_multiplier || 1.6),
         reauction_refund_enabled: !!cfgForm.reauction_refund_enabled,
         banner_logo_url: cfgForm.banner_logo_url || null,
         sponsor_logos: cfgForm.sponsor_logos || []
@@ -236,6 +237,15 @@ export default function Auctions() {
                       <CfgField key={k} label={k.replaceAll('_', ' ')} value={cfgForm[k] ?? ''}
                         onChange={(v) => cfgSet(k, Number(v.replace(/[^\d]/g, '') || 0))} />
                     ))}
+                    <label className="block text-xs text-teal-300 capitalize">
+                      Budget multiplier
+                      <input type="text" inputMode="decimal" value={cfgForm.budget_multiplier ?? 1.6}
+                        onChange={(e) => cfgSet('budget_multiplier', e.target.value.replace(/[^\d.]/g, ''))}
+                        className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
+                      <span className="text-[0.6rem] text-teal-500 mt-0.5 block">
+                        Team budget = (sum of approved player base prices) × multiplier ÷ number of teams
+                      </span>
+                    </label>
                   </div>
                   <label className="flex items-center gap-2 text-sm text-teal-200">
                     <input type="checkbox" checked={!!cfgForm.reauction_refund_enabled}
