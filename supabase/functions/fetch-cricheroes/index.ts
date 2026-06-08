@@ -18,13 +18,44 @@ function extractPlayerId(url: string): string | null {
 
 function parsePlayerStatement(statement: string) {
   const stats: Record<string, number> = {}
-  const avgMatch = statement.match(/avg[:\s]*([\d.]+)/i)
+  const clean = statement.replace(/<[^>]+>/g, '')
+  const avgMatch = clean.match(/average of\s*([\d.]+)/i)
   if (avgMatch) stats.bat_avg = parseFloat(avgMatch[1])
-  const srMatch = statement.match(/SR[:\s]*([\d.]+)/i)
+  const srMatch = clean.match(/strike rate of\s*([\d.]+)/i)
   if (srMatch) stats.strike_rate = parseFloat(srMatch[1])
-  const econMatch = statement.match(/economy[:\s]*([\d.]+)/i)
+  const econMatch = clean.match(/economy rate of\s*([\d.]+)/i)
   if (econMatch) stats.economy = parseFloat(econMatch[1])
+  const wicketsMatch = clean.match(/taking\s*(\d+)\s*wickets/i)
+  if (wicketsMatch) stats.wickets = parseInt(wicketsMatch[1])
+  const topScoreMatch = clean.match(/top score of\s*(\d+)/i)
+  if (topScoreMatch) stats.top_score = parseInt(topScoreMatch[1])
+  const sixesMatch = clean.match(/(\d+)\s*sixes/i)
+  if (sixesMatch) stats.sixes = parseInt(sixesMatch[1])
+  const foursMatch = clean.match(/(\d+)\s*fours/i)
+  if (foursMatch) stats.fours = parseInt(foursMatch[1])
   return stats
+}
+
+function inferRole(player: Record<string, unknown>, statementStats: Record<string, number>): string {
+  if (player.playing_role) return String(player.playing_role)
+
+  const matches = Number(player.total_matches) || 1
+  const runs = Number(player.total_runs) || 0
+  const wickets = Number(player.total_wickets) || 0
+
+  const runsPerMatch = runs / matches
+  const wicketsPerMatch = wickets / matches
+
+  const hasBowlingStyle = !!player.bowling_style
+  const isBatsman = runsPerMatch > 15 && wicketsPerMatch < 0.5
+  const isBowler = wicketsPerMatch >= 1 && runsPerMatch < 10
+  const isAllRounder = runsPerMatch >= 10 && wicketsPerMatch >= 0.5 && hasBowlingStyle
+
+  if (isAllRounder) return 'All-Rounder'
+  if (isBowler) return 'Bowler'
+  if (isBatsman) return 'Batsman'
+  if (hasBowlingStyle && wickets > 0) return 'All-Rounder'
+  return 'Batsman'
 }
 
 Deno.serve(async (req: Request) => {
@@ -47,7 +78,10 @@ Deno.serve(async (req: Request) => {
         headers: {
           'api-key': 'cr!CkH3r0s',
           'device-type': 'Chrome: 120.0.0.0',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Origin': 'https://cricheroes.com',
+          'Referer': 'https://cricheroes.com/'
         }
       }
     )
@@ -57,21 +91,26 @@ Deno.serve(async (req: Request) => {
     }
 
     const data = await res.json()
-    const player = data?.data
 
+    if (data?.status === false) {
+      return json({ error: data?.error?.message || 'CricHeroes API error' }, 502)
+    }
+
+    const player = data?.data
     if (!player) return json({ error: 'No player data returned' }, 404)
 
     const statementStats = parsePlayerStatement(player.player_statement || '')
+    const role = inferRole(player, statementStats)
 
     const result = {
       name: player.name || null,
       matches: player.total_matches ?? 0,
       runs: player.total_runs ?? 0,
-      wickets: player.total_wickets ?? 0,
+      wickets: statementStats.wickets ?? player.total_wickets ?? 0,
       batting_style: player.batting_hand === 'RHB' ? 'Right-hand bat' :
                      player.batting_hand === 'LHB' ? 'Left-hand bat' : player.batting_hand || null,
       bowling_style: player.bowling_style || null,
-      role: player.playing_role || null,
+      role,
       bat_avg: statementStats.bat_avg ?? 0,
       strike_rate: statementStats.strike_rate ?? 0,
       economy: statementStats.economy ?? 0,
