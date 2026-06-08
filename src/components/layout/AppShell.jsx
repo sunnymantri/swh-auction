@@ -9,10 +9,8 @@ const NAV_GROUPS = [
     label: 'Overview',
     roles: ['admin', 'team_owner', 'public'],
     links: [
-      { to: '/dashboard',   label: 'Dashboard',     roles: ['admin', 'team_owner'] },
-      { to: '/public-live', label: 'Live',           roles: ['public', 'team_owner', 'admin'] },
-      { to: '/results',     label: 'Results',        roles: ['public', 'team_owner', 'admin'] },
-      { to: '/squads',      label: 'Squads',         roles: ['public', 'team_owner', 'admin'] },
+      { to: '/public-live', label: 'Live',    roles: ['public', 'team_owner', 'admin'] },
+      { to: '/results',     label: 'Results',  roles: ['public', 'team_owner', 'admin'] },
     ]
   },
   {
@@ -20,12 +18,10 @@ const NAV_GROUPS = [
     label: 'Setup',
     roles: ['admin'],
     links: [
-      { to: '/auctions',    label: 'Auctions',       roles: ['admin'] },
-      { to: '/setup',       label: 'Configuration',  roles: ['admin'] },
-      { to: '/teams',       label: 'Teams',          roles: ['admin'] },
-      { to: '/players',     label: 'Players',        roles: ['admin'] },
-      { to: '/categories',  label: 'Categories',     roles: ['admin'] },
-      { to: '/users',       label: 'Users',          roles: ['admin'] },
+      { to: '/auctions', label: 'Auctions', roles: ['admin'] },
+      { to: '/teams',    label: 'Teams',    roles: ['admin'] },
+      { to: '/players',  label: 'Players',  roles: ['admin'] },
+      { to: '/users',    label: 'Users',    roles: ['admin'] },
     ]
   },
   {
@@ -33,9 +29,8 @@ const NAV_GROUPS = [
     label: 'Run Auction',
     roles: ['admin'],
     links: [
-      { to: '/queue',       label: 'Queue',          roles: ['admin'] },
-      { to: '/auction',     label: 'Auction Centre', roles: ['admin'] },
-      { to: '/unsold',      label: 'Unsold',         roles: ['admin'] },
+      { to: '/queue',   label: 'Queue',          roles: ['admin'] },
+      { to: '/auction', label: 'Auction Centre', roles: ['admin'] },
     ]
   },
   {
@@ -49,7 +44,7 @@ const NAV_GROUPS = [
 ]
 
 function getOverviewPath(role) {
-  if (role === 'admin' || role === 'team_owner') return '/dashboard'
+  if (role === 'admin' || role === 'team_owner') return '/public-live'
   return '/public-live'
 }
 
@@ -68,7 +63,6 @@ export default function AppShell({ title, children }) {
     } finally {
       localStorage.removeItem('ca.selectedAuctionId')
       nav('/login', { replace: true })
-      // Hard navigation prevents any stale in-memory auth/router state.
       window.location.assign('/login')
       setSigningOut(false)
     }
@@ -155,21 +149,9 @@ export default function AppShell({ title, children }) {
                   {gi > 0 && (
                     <div className="mx-2 h-4 w-px bg-teal-700/40 shrink-0" />
                   )}
-                  {group.id === 'overview' ? (
-                    <Link
-                      to={overviewPath}
-                      className={`
-                        text-[0.6rem] uppercase tracking-widest px-1 shrink-0 hidden lg:block transition-colors
-                        ${loc.pathname === overviewPath ? 'text-gold' : 'text-teal-600 hover:text-teal-300'}
-                      `}
-                    >
-                      {group.label}
-                    </Link>
-                  ) : (
-                    <span className="text-[0.6rem] uppercase tracking-widest text-teal-600 px-1 shrink-0 hidden lg:block">
-                      {group.label}
-                    </span>
-                  )}
+                  <span className="text-[0.6rem] uppercase tracking-widest text-teal-600 px-1 shrink-0 hidden lg:block">
+                    {group.label}
+                  </span>
                   {visibleLinks.map(l => {
                     const active = loc.pathname === l.to
                     return (

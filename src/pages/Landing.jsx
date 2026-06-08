@@ -8,7 +8,7 @@ export default function Landing() {
     return <div className="min-h-screen grid place-items-center text-teal-400">Loading…</div>
   }
   if (!session) return <Navigate to="/public-live" replace />
-  if (role === 'admin') return <Navigate to="/auctions" replace />
+  if (role === 'admin') return <Navigate to="/auction" replace />
   if (role === 'team_owner') return <Navigate to="/team-bidding" replace />
   return <Navigate to="/public-live" replace />
 }

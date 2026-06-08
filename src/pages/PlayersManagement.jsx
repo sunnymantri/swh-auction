@@ -4,9 +4,12 @@ import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import {
   createPlayer, deletePlayer, exportPlayersCsv, listPlayers,
-  parsePlayersCsvDetailed, playersCsvTemplate, updatePlayer, uploadPlayerPhoto
+  parsePlayersCsvDetailed, playersCsvTemplate, updatePlayer, uploadPlayerPhoto,
+  createCategory, deleteCategory, listCategories, updateCategory
 } from '../lib/api'
 import { supabase } from '../lib/supabase'
+
+const TABS = ['Players', 'Categories']
 
 const blankFor = (auction) => ({
   name: '', role: '', category: '', base_price: auction?.default_base_price ?? 500,
@@ -34,6 +37,13 @@ const FIELD_META = [
   { key: 'catches',       label: 'Catches',                 type: 'number' },
 ]
 
+const blankCat = { name: '', sequence_order: 1, minimum_required: 0, maximum_allowed: 0 }
+const CAT_FIELD_LABELS = {
+  sequence_order: 'Sequence order',
+  minimum_required: 'Minimum required',
+  maximum_allowed: 'Maximum allowed'
+}
+
 function download(filename, text) {
   const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' })
   const link = document.createElement('a')
@@ -46,6 +56,9 @@ function download(filename, text) {
 
 export default function PlayersManagement() {
   const { auction } = useActiveAuction()
+  const [tab, setTab] = useState('Players')
+
+  // Player state
   const [players, setPlayers] = useState([])
   const [form, setForm] = useState(blankFor(null))
   const [editId, setEditId] = useState(null)
@@ -56,16 +69,25 @@ export default function PlayersManagement() {
   const [selected, setSelected] = useState(new Set())
   const [bulkBusy, setBulkBusy] = useState(false)
 
-  const reload = async () => {
+  // Category state
+  const [categories, setCategories] = useState([])
+  const [catForm, setCatForm] = useState(blankCat)
+  const [catEditId, setCatEditId] = useState(null)
+
+  const reloadPlayers = async () => {
     if (!auction) return
     setPlayers(await listPlayers(auction.id))
   }
-  useEffect(() => { reload() }, [auction])
+  const reloadCategories = async () => {
+    if (!auction) return
+    setCategories(await listCategories(auction.id))
+  }
+  useEffect(() => { reloadPlayers(); reloadCategories() }, [auction])
   useEffect(() => { if (!editId) setForm(blankFor(auction)) }, [auction, editId])
 
   if (!auction) {
     return (
-      <AppShell title="Players Management">
+      <AppShell title="Players">
         <RoleGate allow={['admin']}>
           <p className="text-teal-400">No auction selected. Create or select one on the Auctions screen.</p>
         </RoleGate>
@@ -83,7 +105,7 @@ export default function PlayersManagement() {
       else await createPlayer(payload)
       setEditId(null)
       setForm(blankFor(auction))
-      await reload()
+      await reloadPlayers()
     } catch (e) {
       setErr(e.message || 'Save failed — check browser console.')
     } finally {
@@ -105,10 +127,9 @@ export default function PlayersManagement() {
 
   const toggleApprove = async (p) => {
     await updatePlayer(p.id, { status: p.status === 'approved' ? 'registered' : 'approved' })
-    await reload()
+    await reloadPlayers()
   }
 
-  // Bulk operations
   const toggleSelect = (id) => setSelected((s) => {
     const n = new Set(s)
     n.has(id) ? n.delete(id) : n.add(id)
@@ -124,7 +145,7 @@ export default function PlayersManagement() {
     try {
       await Promise.all([...selected].map((id) => updatePlayer(id, { status })))
       setSelected(new Set())
-      await reload()
+      await reloadPlayers()
     } catch (e) {
       setErr(e.message)
     } finally {
@@ -149,7 +170,6 @@ export default function PlayersManagement() {
         .insert(payload)
         .select('id')
       if (error) {
-        // Batch failed — fall back to row-by-row to identify individual failures
         for (const row of rows) {
           try {
             await createPlayer({ ...row, auction_id: auction.id })
@@ -165,164 +185,210 @@ export default function PlayersManagement() {
       failures.push(`Batch import failed: ${e.message}`)
     }
     setReport({ total, inserted, skipped, failures })
-    await reload()
+    await reloadPlayers()
+  }
+
+  // Category handlers
+  const saveCat = async () => {
+    const payload = { ...catForm, auction_id: auction.id, maximum_allowed: catForm.maximum_allowed || null }
+    if (catEditId) await updateCategory(catEditId, payload)
+    else await createCategory(payload)
+    setCatForm(blankCat)
+    setCatEditId(null)
+    await reloadCategories()
   }
 
   return (
-    <AppShell title="Players Management">
+    <AppShell title="Players">
       <RoleGate allow={['admin']}>
-        <div className="grid lg:grid-cols-3 gap-4">
+        {/* Tab bar */}
+        <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5">
+          {TABS.map(t => (
+            <button key={t} onClick={() => setTab(t)}
+              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${tab === t ? 'bg-ink-800/60 text-gold border border-teal-700/40 border-b-transparent -mb-px' : 'text-teal-300 hover:text-white'}`}>
+              {t}
+            </button>
+          ))}
+        </div>
 
-          {/* ---- Create / Edit form ---- */}
-          <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-3">
-            <h3 className="font-score text-lg text-teal-200">{editId ? 'Edit player' : 'Create player'}</h3>
-
-            {FIELD_META.map(({ key, label, type }) => (
-              <label key={key} className="block text-xs text-teal-300">
-                {label}
-                <input
-                  type={type === 'number' ? 'text' : 'text'}
-                  inputMode={type === 'number' ? 'numeric' : 'text'}
-                  value={form[key] ?? ''}
-                  onChange={(e) => set(key, type === 'number'
-                    ? Number(e.target.value.replace(/[^\d.]/g, '') || 0)
-                    : e.target.value)}
-                  className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
-                />
-              </label>
-            ))}
-
-            <label className="block text-xs text-teal-300">
-              Status
-              <select
-                className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
-                value={form.status}
-                onChange={(e) => set('status', e.target.value)}
-              >
-                {['registered', 'approved', 'in_auction', 'sold', 'unsold', 'reauction'].map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block text-xs text-teal-300">
-              Player photo
-              <div className="mt-1 flex items-center gap-2">
-                {form.photo_url && (
-                  <img src={form.photo_url} alt="" className="h-10 w-10 rounded object-cover border border-teal-700/40" />
-                )}
-                <input type="file" accept="image/*" className="text-xs"
-                  disabled={uploadingPhoto}
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f) }} />
-              </div>
-              {uploadingPhoto && <p className="text-teal-400 text-xs mt-1 animate-pulse">Uploading photo…</p>}
-            </label>
-
-            {err && <p className="text-red-400 text-xs">{err}</p>}
-
-            <div className="flex gap-2">
-              <button onClick={save} disabled={!form.name || saving || uploadingPhoto}
-                className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
-                {saving ? 'Saving…' : 'Save player'}
-              </button>
-              {editId && (
-                <button onClick={() => { setEditId(null); setForm(blankFor(auction)); setErr('') }}
-                  className="text-xs text-teal-300">Cancel</button>
-              )}
-            </div>
-          </div>
-
-          {/* ---- Player list ---- */}
-          <div className="lg:col-span-2 rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
-
-            {/* CSV toolbar */}
-            <div className="flex flex-wrap gap-2 mb-3">
-              <button onClick={() => download('players-template.csv', playersCsvTemplate())}
-                className="px-3 py-1 rounded bg-teal-700/50 text-sm">Download template</button>
-              <button onClick={() => download('players-export.csv', exportPlayersCsv(players))}
-                className="px-3 py-1 rounded bg-teal-700/50 text-sm">Export CSV</button>
-              <label className="px-3 py-1 rounded bg-gold/80 text-ink-900 font-semibold text-sm cursor-pointer">
-                Bulk import CSV
-                <input type="file" accept=".csv,text/csv" className="hidden"
-                  onChange={(e) => e.target.files?.[0] && importCsv(e.target.files[0])} />
-              </label>
-            </div>
-
-            {report && (
-              <div className="mb-3 rounded-lg border border-teal-600/40 bg-teal-900/20 p-3 text-sm">
-                <p className="text-teal-200">Imported <b>{report.inserted}</b> of {report.total} rows. Skipped {report.skipped}.</p>
-                {report.failures.length > 0 && (
-                  <ul className="mt-1 text-red-400 text-xs list-disc pl-4 max-h-28 overflow-y-auto">
-                    {report.failures.map((f, i) => <li key={i}>{f}</li>)}
-                  </ul>
-                )}
-              </div>
-            )}
-
-            {/* Bulk actions */}
-            {players.length > 0 && (
-              <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <label className="flex items-center gap-1.5 text-xs text-teal-300 cursor-pointer">
-                  <input type="checkbox"
-                    checked={selected.size === players.length && players.length > 0}
-                    onChange={selectAll} />
-                  {selected.size === 0 ? 'Select all' : `${selected.size} selected`}
+        {tab === 'Players' && (
+          <div className="grid lg:grid-cols-3 gap-4">
+            {/* Create / Edit form */}
+            <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-3">
+              <h3 className="font-score text-lg text-teal-200">{editId ? 'Edit player' : 'Create player'}</h3>
+              {FIELD_META.map(({ key, label, type }) => (
+                <label key={key} className="block text-xs text-teal-300">
+                  {label}
+                  <input
+                    type={type === 'number' ? 'text' : 'text'}
+                    inputMode={type === 'number' ? 'numeric' : 'text'}
+                    value={form[key] ?? ''}
+                    onChange={(e) => set(key, type === 'number'
+                      ? Number(e.target.value.replace(/[^\d.]/g, '') || 0)
+                      : e.target.value)}
+                    className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
+                  />
                 </label>
-                {selected.size > 0 && (
-                  <>
-                    <button onClick={() => bulkSetStatus('approved')} disabled={bulkBusy}
-                      className="px-2 py-1 text-xs rounded bg-teal-600/70 disabled:opacity-50">
-                      {bulkBusy ? '…' : 'Approve selected'}
-                    </button>
-                    <button onClick={() => bulkSetStatus('registered')} disabled={bulkBusy}
-                      className="px-2 py-1 text-xs rounded bg-ink-900 border border-teal-700/50 disabled:opacity-50">
-                      {bulkBusy ? '…' : 'Unapprove selected'}
-                    </button>
-                  </>
+              ))}
+              <label className="block text-xs text-teal-300">
+                Status
+                <select className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
+                  value={form.status} onChange={(e) => set('status', e.target.value)}>
+                  {['registered', 'approved', 'in_auction', 'sold', 'unsold', 'reauction'].map((s) => (
+                    <option key={s}>{s}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-xs text-teal-300">
+                Player photo
+                <div className="mt-1 flex items-center gap-2">
+                  {form.photo_url && (
+                    <img src={form.photo_url} alt="" className="h-10 w-10 rounded object-cover border border-teal-700/40" />
+                  )}
+                  <input type="file" accept="image/*" className="text-xs"
+                    disabled={uploadingPhoto}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f) }} />
+                </div>
+                {uploadingPhoto && <p className="text-teal-400 text-xs mt-1 animate-pulse">Uploading photo…</p>}
+              </label>
+              {err && <p className="text-red-400 text-xs">{err}</p>}
+              <div className="flex gap-2">
+                <button onClick={save} disabled={!form.name || saving || uploadingPhoto}
+                  className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
+                  {saving ? 'Saving…' : 'Save player'}
+                </button>
+                {editId && (
+                  <button onClick={() => { setEditId(null); setForm(blankFor(auction)); setErr('') }}
+                    className="text-xs text-teal-300">Cancel</button>
                 )}
               </div>
-            )}
+            </div>
 
-            {/* List */}
-            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-              {players.map((p) => (
-                <div key={p.id}
-                  className={`border rounded-lg p-3 flex justify-between items-center gap-3 ${selected.has(p.id) ? 'border-teal-500/60 bg-teal-900/20' : 'border-teal-700/40'}`}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <input type="checkbox" checked={selected.has(p.id)}
-                      onChange={() => toggleSelect(p.id)} className="shrink-0" />
-                    <div className="h-9 w-9 rounded-lg bg-ink-900 border border-teal-700/40 overflow-hidden grid place-items-center shrink-0">
-                      {p.photo_url
-                        ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" />
-                        : <span className="text-[0.55rem] text-teal-500">no img</span>}
+            {/* Player list */}
+            <div className="lg:col-span-2 rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
+              <div className="flex flex-wrap gap-2 mb-3">
+                <button onClick={() => download('players-template.csv', playersCsvTemplate())}
+                  className="px-3 py-1 rounded bg-teal-700/50 text-sm">Download template</button>
+                <button onClick={() => download('players-export.csv', exportPlayersCsv(players))}
+                  className="px-3 py-1 rounded bg-teal-700/50 text-sm">Export CSV</button>
+                <label className="px-3 py-1 rounded bg-gold/80 text-ink-900 font-semibold text-sm cursor-pointer">
+                  Bulk import CSV
+                  <input type="file" accept=".csv,text/csv" className="hidden"
+                    onChange={(e) => e.target.files?.[0] && importCsv(e.target.files[0])} />
+                </label>
+              </div>
+
+              {report && (
+                <div className="mb-3 rounded-lg border border-teal-600/40 bg-teal-900/20 p-3 text-sm">
+                  <p className="text-teal-200">Imported <b>{report.inserted}</b> of {report.total} rows. Skipped {report.skipped}.</p>
+                  {report.failures.length > 0 && (
+                    <ul className="mt-1 text-red-400 text-xs list-disc pl-4 max-h-28 overflow-y-auto">
+                      {report.failures.map((f, i) => <li key={i}>{f}</li>)}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {players.length > 0 && (
+                <div className="flex items-center gap-3 mb-2 flex-wrap">
+                  <label className="flex items-center gap-1.5 text-xs text-teal-300 cursor-pointer">
+                    <input type="checkbox"
+                      checked={selected.size === players.length && players.length > 0}
+                      onChange={selectAll} />
+                    {selected.size === 0 ? 'Select all' : `${selected.size} selected`}
+                  </label>
+                  {selected.size > 0 && (
+                    <>
+                      <button onClick={() => bulkSetStatus('approved')} disabled={bulkBusy}
+                        className="px-2 py-1 text-xs rounded bg-teal-600/70 disabled:opacity-50">
+                        {bulkBusy ? '…' : 'Approve selected'}
+                      </button>
+                      <button onClick={() => bulkSetStatus('registered')} disabled={bulkBusy}
+                        className="px-2 py-1 text-xs rounded bg-ink-900 border border-teal-700/50 disabled:opacity-50">
+                        {bulkBusy ? '…' : 'Unapprove selected'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                {players.map((p) => (
+                  <div key={p.id}
+                    className={`border rounded-lg p-3 flex justify-between items-center gap-3 ${selected.has(p.id) ? 'border-teal-500/60 bg-teal-900/20' : 'border-teal-700/40'}`}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <input type="checkbox" checked={selected.has(p.id)}
+                        onChange={() => toggleSelect(p.id)} className="shrink-0" />
+                      <div className="h-9 w-9 rounded-lg bg-ink-900 border border-teal-700/40 overflow-hidden grid place-items-center shrink-0">
+                        {p.photo_url
+                          ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" />
+                          : <span className="text-[0.55rem] text-teal-500">no img</span>}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white truncate">
+                          {p.name}
+                          <span className="text-teal-500 text-xs"> · {p.role}{p.category ? ` / ${p.category}` : ''}</span>
+                        </p>
+                        <p className="text-xs text-teal-300">
+                          Base {p.base_price} ·{' '}
+                          <span className={p.status === 'sold' ? 'text-gold' : p.status === 'approved' ? 'text-teal-400' : ''}>{p.status}</span>
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-white truncate">
-                        {p.name}
-                        <span className="text-teal-500 text-xs"> · {p.role}{p.category ? ` / ${p.category}` : ''}</span>
-                      </p>
-                      <p className="text-xs text-teal-300">
-                        Base {p.base_price} ·{' '}
-                        <span className={p.status === 'sold' ? 'text-gold' : p.status === 'approved' ? 'text-teal-400' : ''}>{p.status}</span>
-                      </p>
+                    <div className="flex gap-2 shrink-0">
+                      <button onClick={() => toggleApprove(p)}
+                        className={`px-2 py-1 text-xs rounded ${p.status === 'approved' ? 'bg-teal-600/50' : 'bg-ink-900 border border-teal-700/50'}`}>
+                        {p.status === 'approved' ? 'Unapprove' : 'Approve'}
+                      </button>
+                      <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr('') }}
+                        className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
+                      <button onClick={async () => { await deletePlayer(p.id); reloadPlayers() }}
+                        className="px-2 py-1 text-xs rounded bg-red-900/50">Delete</button>
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <button onClick={() => toggleApprove(p)}
-                      className={`px-2 py-1 text-xs rounded ${p.status === 'approved' ? 'bg-teal-600/50' : 'bg-ink-900 border border-teal-700/50'}`}>
-                      {p.status === 'approved' ? 'Unapprove' : 'Approve'}
-                    </button>
-                    <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr('') }}
-                      className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
-                    <button onClick={async () => { await deletePlayer(p.id); reload() }}
-                      className="px-2 py-1 text-xs rounded bg-red-900/50">Delete</button>
+                ))}
+                {players.length === 0 && <p className="text-teal-500 text-sm">No players yet — add one or bulk import.</p>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'Categories' && (
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-2">
+              <label className="block text-xs text-teal-300 uppercase tracking-wide">
+                Category name
+                <input placeholder="e.g. Wicketkeeper" value={catForm.name}
+                  onChange={(e) => setCatForm((s) => ({ ...s, name: e.target.value }))}
+                  className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
+              </label>
+              {['sequence_order', 'minimum_required', 'maximum_allowed'].map((f) => (
+                <label key={f} className="block text-xs text-teal-300 uppercase tracking-wide">
+                  {CAT_FIELD_LABELS[f]}
+                  <input placeholder={CAT_FIELD_LABELS[f]} value={catForm[f]}
+                    onChange={(e) => setCatForm((s) => ({ ...s, [f]: Number(e.target.value || 0) }))}
+                    className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
+                </label>
+              ))}
+              <button onClick={saveCat} className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold">Save</button>
+            </div>
+            <div className="md:col-span-2 rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-2">
+              {categories.map((c) => (
+                <div key={c.id} className="border border-teal-700/40 rounded-lg p-3 flex justify-between">
+                  <div>
+                    <p>{c.sequence_order}. {c.name}</p>
+                    <p className="text-xs text-teal-300">Min {c.minimum_required} · Max {c.maximum_allowed ?? '-'}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => { setCatEditId(c.id); setCatForm(c) }} className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
+                    <button onClick={async () => { await deleteCategory(c.id); reloadCategories() }} className="px-2 py-1 text-xs rounded bg-live/40">Delete</button>
                   </div>
                 </div>
               ))}
-              {players.length === 0 && <p className="text-teal-500 text-sm">No players yet — add one or bulk import.</p>}
+              {categories.length === 0 && <p className="text-teal-500 text-sm">No categories yet.</p>}
             </div>
           </div>
-        </div>
+        )}
       </RoleGate>
     </AppShell>
   )

@@ -95,7 +95,7 @@ export default function AuctionCentre() {
       <RoleGate allow={['admin']}>
         {!isLive && (
           <div className="mb-4 rounded-xl border border-gold/40 bg-gold/10 text-gold p-3 text-sm">
-            This auction is <b>{auction.status}</b>. Set it to <b>live</b> on the Auctions screen to accept bids.
+            This auction is <b>{auction.status}</b>. Set it to <b>live</b> on the <a href="/auctions" className="underline">Auctions</a> page to accept bids.
           </div>
         )}
         <div className="grid lg:grid-cols-[1fr_22rem] gap-5">
