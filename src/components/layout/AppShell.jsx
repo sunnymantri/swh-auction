@@ -189,7 +189,7 @@ export default function AppShell({ title, children }) {
       <footer className="border-t border-teal-700/30 mt-12 py-6">
         <div className="max-w-7xl mx-auto px-4 text-center space-y-1">
           <p className="text-[0.65rem] text-teal-500">
-            v1.8 · Developed by Sunny Mantri for South West Hitters Cricket Club
+            v1.9 · Developed by Sunny Mantri for South West Hitters Cricket Club
           </p>
           <p className="text-[0.6rem] text-teal-600">
             ABN 56 495 977 829

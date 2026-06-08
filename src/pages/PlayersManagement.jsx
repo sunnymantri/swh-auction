@@ -145,6 +145,7 @@ export default function PlayersManagement() {
         batting_style: stats.batting_style || s.batting_style,
         bowling_style: stats.bowling_style || s.bowling_style,
         role: stats.role || s.role,
+        photo_url: stats.photo_url || s.photo_url,
       }))
     } catch (e) {
       setErr(`CricHeroes fetch failed: ${e.message}`)
