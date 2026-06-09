@@ -1,0 +1,6 @@
+#!/bin/sh
+# Auto-bump the app version by 0.1 on every commit, then re-stage
+# package.json so the bump is part of the commit being made.
+# Enable once per clone with:  npm run setup:hooks
+node scripts/bump-version.mjs || exit 1
+git add package.json

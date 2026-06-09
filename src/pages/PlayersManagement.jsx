@@ -10,7 +10,7 @@ import {
   fetchCricHeroesStats
 } from '../lib/api'
 import { supabase } from '../lib/supabase'
-import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier, buildTierIndexByPlayerId, calcBasePriceFromStats } from '../lib/points'
+import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier, buildTierIndexByPlayerId, computeCohortBasePrices } from '../lib/points'
 
 const TABS = ['Players', 'Add Player', 'Categories']
 
@@ -101,8 +101,8 @@ const buildStatsUpdatePayload = (player) => ({
   batting_style: player.batting_style,
   bowling_style: player.bowling_style,
   role: player.role,
-  photo_url: player.photo_url,
-  base_price: calcBasePriceFromStats(player)
+  photo_url: player.photo_url
+  // base_price is set cohort-relative via recalculation, not here.
 })
 
 export default function PlayersManagement() {
@@ -192,18 +192,53 @@ export default function PlayersManagement() {
     return Math.round(calcTotalPoints(player))
   }
 
+  // Base price is cohort-relative: a player's price depends on the whole
+  // pool. So every recalc re-prices the entire cohort and persists the
+  // rows whose base price or performance points actually changed.
+  const persistBasePrices = async (list) => {
+    const priceById = computeCohortBasePrices(list)
+    const updates = []
+    for (const p of list) {
+      const newBase = priceById[p.id]
+      if (newBase == null) continue
+      const newCalc = getCalculatedPoints(p)
+      if (newBase !== p.base_price || newCalc !== p.calculated_value) {
+        updates.push(updatePlayer(p.id, { base_price: newBase, calculated_value: newCalc }))
+      }
+    }
+    await Promise.all(updates)
+    return priceById
+  }
+
+  // Toolbar action — re-price everyone (Option A: only on explicit click).
+  const recalcAllBasePrices = async () => {
+    if (recalculating || players.length === 0) return
+    setErr('')
+    setRecalculating(true)
+    try {
+      await persistBasePrices(players)
+      await reloadPlayers()
+    } catch (e) {
+      setErr(e?.message || 'Recalculate failed. Please try again.')
+    } finally {
+      setRecalculating(false)
+    }
+  }
+
+  // Per-player Recalculate button: still re-prices the whole cohort
+  // (prices are relative), then refreshes the player being viewed.
   const recalculatePlayer = async (player) => {
     if (!player?.id || recalculating) return
     setErr('')
     setRecalculating(true)
     try {
-      const calculatedPoints = getCalculatedPoints(player)
-      await updatePlayer(player.id, {
-        calculated_value: calculatedPoints,
-        base_price: calcBasePriceFromStats(player)
-      })
+      const priceById = await persistBasePrices(players)
       await reloadPlayers()
-      setViewPlayer({ ...player, calculated_value: calculatedPoints })
+      setViewPlayer({
+        ...player,
+        calculated_value: getCalculatedPoints(player),
+        base_price: priceById[player.id] ?? player.base_price
+      })
     } catch (e) {
       setErr(e?.message || 'Recalculate failed. Please try again.')
     } finally {
@@ -230,8 +265,18 @@ export default function PlayersManagement() {
         calculated_value: calculatedPoints
       })
 
+      // Re-price the whole cohort with this player's fresh stats applied.
+      const updatedList = players.map((p) => (
+        p.id === player.id ? { ...mergedPlayer, calculated_value: calculatedPoints } : p
+      ))
+      const priceById = await persistBasePrices(updatedList)
+
       await reloadPlayers()
-      setViewPlayer({ ...mergedPlayer, calculated_value: calculatedPoints })
+      setViewPlayer({
+        ...mergedPlayer,
+        calculated_value: calculatedPoints,
+        base_price: priceById[player.id] ?? mergedPlayer.base_price
+      })
     } catch (e) {
       setErr(`Fetch/Recalculate failed: ${e.message}`)
     } finally {
@@ -254,7 +299,9 @@ export default function PlayersManagement() {
   const save = async () => {
     setErr(''); setSaving(true)
     try {
-      const payload = { ...form, base_price: calcBasePriceFromStats(form), auction_id: auction.id }
+      // Base price is set via "Recalculate base prices" (cohort-relative),
+      // not on save — keep whatever the admin entered here.
+      const payload = { ...form, auction_id: auction.id }
       if (editId) await updatePlayer(editId, payload)
       else await createPlayer(payload)
       setEditId(null)
@@ -363,6 +410,9 @@ export default function PlayersManagement() {
         }
       }
 
+      // Re-price the cohort once, after all fetched stats are applied.
+      await persistBasePrices(workingPlayers)
+
       await reloadPlayers()
       setSelected(new Set())
       setBulkSyncReport(summary)
@@ -383,8 +433,11 @@ export default function PlayersManagement() {
     }
     const failures = [...errors]
     let inserted = 0
+    // Imported rows keep their own base price (or the auction default).
+    // Cohort-relative prices are applied later via "Recalculate base prices".
+    const defaultBase = auction?.default_base_price ?? 500
     try {
-      const payload = rows.map(r => ({ ...r, base_price: calcBasePriceFromStats(r), auction_id: auction.id }))
+      const payload = rows.map(r => ({ ...r, base_price: r.base_price ?? defaultBase, auction_id: auction.id }))
       const { data, error } = await supabase
         .from('players')
         .insert(payload)
@@ -392,7 +445,7 @@ export default function PlayersManagement() {
       if (error) {
         for (const row of rows) {
           try {
-            await createPlayer({ ...row, base_price: calcBasePriceFromStats(row), auction_id: auction.id })
+            await createPlayer({ ...row, base_price: row.base_price ?? defaultBase, auction_id: auction.id })
             inserted++
           } catch (e) {
             failures.push(`${row.name}: ${e.message}`)
@@ -567,6 +620,14 @@ export default function PlayersManagement() {
                   <input type="file" accept=".csv,text/csv" className="hidden"
                     onChange={(e) => e.target.files?.[0] && importCsv(e.target.files[0])} />
                 </label>
+                <button
+                  onClick={recalcAllBasePrices}
+                  disabled={recalculating || players.length === 0}
+                  title="Re-price every player relative to the full cohort (percentile → ₹500–₹10,000)"
+                  className="px-3 py-1 rounded bg-teal-600/70 text-white font-semibold text-sm disabled:opacity-50"
+                >
+                  {recalculating ? 'Recalculating…' : 'Recalculate base prices'}
+                </button>
                 {selected.size > 0 && (
                   <button
                     onClick={bulkFetchAndRecalculateSelected}
