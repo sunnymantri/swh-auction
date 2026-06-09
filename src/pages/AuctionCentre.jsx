@@ -14,6 +14,7 @@ import PlayerCard from '../components/auction/PlayerCard'
 import AuctioneerControls from '../components/auction/AuctioneerControls'
 import TeamBudgetGrid from '../components/auction/TeamBudgetGrid'
 import ActivityFeed from '../components/auction/ActivityFeed'
+import SoldCelebration from '../components/auction/SoldCelebration'
 
 export default function AuctionCentre() {
   const { isAdmin, role } = useAuth()
@@ -26,6 +27,7 @@ export default function AuctionCentre() {
   const [activeSale, setActiveSale] = useState(null)
   const [busy, setBusy] = useState(false)
   const [warning, setWarning] = useState(null)
+  const [celebration, setCelebration] = useState(null) // { player, soldPrice, teamName, teamLogo }
 
   const player = current?.players ?? null
   const isLive = auction?.status === 'live'
@@ -66,7 +68,16 @@ export default function AuctionCentre() {
       act(() => placeBid(player.id, teamId, amount, type, override)),
     onSold: (teamId, price) => {
       if (!teamId) { setWarning('No bids yet — cannot mark sold.'); return }
-      return act(() => markSold(player.id, teamId, price))
+      const winningTeam = teams.find(t => t.id === teamId)
+      return act(async () => {
+        await markSold(player.id, teamId, price)
+        setCelebration({
+          player,
+          soldPrice: price,
+          teamName: winningTeam?.name ?? 'Unknown',
+          teamLogo: winningTeam?.logo_url ?? null,
+        })
+      })
     },
     onUnsold: () => act(() => markUnsold(player.id)),
     onReauction: (saleId) => saleId && act(() => reauctionPlayer(saleId)),
@@ -92,21 +103,30 @@ export default function AuctionCentre() {
 
   return (
     <AppShell title="Auction Centre">
+      {celebration && (
+        <SoldCelebration
+          player={celebration.player}
+          soldPrice={celebration.soldPrice}
+          teamName={celebration.teamName}
+          teamLogo={celebration.teamLogo}
+          onDone={() => setCelebration(null)}
+        />
+      )}
       <RoleGate allow={['admin']}>
         {!isLive && (
           <div className="mb-4 rounded-xl border border-gold/40 bg-gold/10 text-gold p-3 text-sm">
             This auction is <b>{auction.status}</b>. Set it to <b>live</b> on the <a href="/auctions" className="underline">Auctions</a> page to accept bids.
           </div>
         )}
-        <div className="grid lg:grid-cols-[1fr_22rem] gap-5">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-5">
           <div className="space-y-5">
             <PlayerCard player={player} />
 
             {/* Up next + start/next control (always visible to admin) */}
-            <div className="rounded-2xl bg-ink-800/70 border border-teal-700/40 p-4 flex items-center justify-between gap-3">
-              <div className="text-sm">
+            <div className="rounded-2xl bg-ink-800/70 border border-teal-700/40 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-sm min-w-0">
                 <span className="text-teal-400">Up next: </span>
-                <span className="text-white font-semibold">{nextUp?.players?.name || 'Queue empty'}</span>
+                <span className="text-white font-semibold break-words">{nextUp?.players?.name || 'Queue empty'}</span>
               </div>
               <div className="flex gap-2">
                 <button
@@ -120,14 +140,14 @@ export default function AuctionCentre() {
             </div>
 
             {/* Scoreboard */}
-            <div key={highestBid} className="rounded-2xl bg-gradient-to-br from-teal-900 to-ink-900 border border-gold/30 p-6 flex items-end justify-between animate-bidflash">
-              <div>
+            <div key={highestBid} className="rounded-2xl bg-gradient-to-br from-teal-900 to-ink-900 border border-gold/30 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 animate-bidflash">
+              <div className="min-w-0">
                 <div className="text-teal-400 text-xs uppercase tracking-widest">Current bid</div>
-                <div className="font-score text-6xl text-gold tabular leading-none">{fmtPoints(highestBid)}</div>
+                <div className="font-score text-4xl sm:text-5xl lg:text-6xl text-gold tabular leading-none">{fmtPoints(highestBid)}</div>
               </div>
-              <div className="text-right">
+              <div className="sm:text-right min-w-0">
                 <div className="text-teal-400 text-xs uppercase tracking-widest">Highest bidder</div>
-                <div className="font-score text-3xl text-white">{leaderName || '—'}</div>
+                <div className="font-score text-2xl sm:text-3xl text-white truncate">{leaderName || '—'}</div>
               </div>
             </div>
 
@@ -135,7 +155,7 @@ export default function AuctionCentre() {
               <AuctioneerControls
                 player={player} teams={teams} highestBid={highestBid}
                 leaderTeamId={leaderTeamId} basePrice={player?.base_price ?? 0}
-                increment={auction.default_bid_increment} hasBids={bids.length > 0}
+                hasBids={bids.length > 0}
                 activeSale={activeSale} busy={busy || !isLive} warning={warning} {...handlers} />
             )}
 

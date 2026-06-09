@@ -3,14 +3,33 @@ import { fmtPoints } from '../../lib/format'
 
 const btn = 'px-3 py-2 rounded-lg font-semibold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed'
 
+// Dynamic bid increment tiers:
+//   < 10,000      → +100
+//   10,000–15,000 → +500
+//   > 15,000      → +1,000
+export function calcIncrement(currentBid) {
+  if (currentBid < 10000) return 100
+  if (currentBid < 15000) return 500
+  return 1000
+}
+
 export default function AuctioneerControls({
-  player, teams, highestBid, leaderTeamId, basePrice, increment,
+  player, teams, highestBid, leaderTeamId, basePrice,
   hasBids, activeSale, busy, warning, onBid, onSold, onUnsold, onReauction, onNext, onStart
 }) {
   const [teamId, setTeamId] = useState('')
   const [manual, setManual] = useState('')
 
-  const nextBid = Math.max((highestBid || 0) + increment, basePrice)
+  // Re-auction players can be sold below their base price
+  const isReauction = player?.status === 'reauction'
+
+  const dynamicIncrement = calcIncrement(highestBid)
+
+  // For re-auction: don't enforce base price floor
+  const nextBid = isReauction
+    ? (highestBid || 0) + dynamicIncrement
+    : Math.max((highestBid || 0) + dynamicIncrement, basePrice)
+
   const leader = teams.find(t => t.id === leaderTeamId)
 
   if (!player) {
@@ -23,16 +42,21 @@ export default function AuctioneerControls({
   }
 
   return (
-    <div className="rounded-2xl bg-ink-800/80 border border-teal-700/50 p-5 space-y-4 shadow-card">
-      <div className="flex items-center gap-2">
+    <div className="rounded-2xl bg-ink-800/80 border border-teal-700/50 p-4 sm:p-5 space-y-4 shadow-card">
+      <div className="flex items-center gap-2 flex-wrap">
         <span className="font-score text-lg text-teal-200">Auctioneer</span>
+        {isReauction && (
+          <span className="px-2 py-0.5 rounded-full bg-yellow-700/50 text-yellow-300 text-xs font-semibold">
+            ↻ Re-auction · below base allowed
+          </span>
+        )}
         {busy && <span className="text-xs text-teal-400 animate-pulsegold">working…</span>}
       </div>
 
       {/* Calling bids on behalf of a team */}
       <div className="space-y-2">
         <div className="text-xs text-teal-300 uppercase tracking-wide">Bidding team</div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           {teams.map((t) => {
             const isSelected = teamId === t.id
             const isLeader = t.id === leaderTeamId
@@ -64,7 +88,7 @@ export default function AuctioneerControls({
                     <p className="text-xs text-white truncate">
                       {isLeader ? '★ ' : ''}{t.short_name || t.name}
                     </p>
-                    <p className="text-[10px] text-teal-300 truncate">
+                    <p className="text-xs text-teal-300 truncate">
                       {fmtPoints(t.points_remaining)} left{isFull ? ' · Full' : ''}
                     </p>
                   </div>
@@ -73,11 +97,15 @@ export default function AuctioneerControls({
             )
           })}
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <button className={`${btn} bg-teal-600 hover:bg-teal-500 text-white`}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button
+            className={`${btn} bg-teal-600 hover:bg-teal-500 text-white`}
             disabled={busy || !teamId}
-            onClick={() => onBid(teamId, nextBid, 'team_bid', false)}>
-            + {fmtPoints(increment)} → {fmtPoints(nextBid)}
+            onClick={() => onBid(teamId, nextBid, 'team_bid', isReauction)}
+            title={isReauction ? 'Re-auction: base price not enforced' : `Increment: +${fmtPoints(dynamicIncrement)}`}
+          >
+            + {fmtPoints(dynamicIncrement)} → {fmtPoints(nextBid)}
           </button>
           <div className="flex gap-1">
             <input value={manual} onChange={e => setManual(e.target.value.replace(/[^\d]/g, ''))}
@@ -96,7 +124,7 @@ export default function AuctioneerControls({
       {warning && <p className="text-live text-xs bg-live/10 rounded-lg px-3 py-2">{warning}</p>}
 
       {/* Outcome */}
-      <div className="grid grid-cols-2 gap-2 pt-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
         <button className={`${btn} bg-gold text-ink-900 hover:bg-gold-soft`}
           disabled={busy || !hasBids}
           onClick={() => onSold(leaderTeamId, highestBid)}>
