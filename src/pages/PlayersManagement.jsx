@@ -10,13 +10,13 @@ import {
   fetchCricHeroesStats
 } from '../lib/api'
 import { supabase } from '../lib/supabase'
-import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier } from '../lib/points'
+import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier, buildTierIndexByPlayerId, calcBasePriceFromStats } from '../lib/points'
 
-const TABS = ['Players', 'Categories']
+const TABS = ['Players', 'Add Player', 'Categories']
 
 const blankFor = (auction) => ({
   name: '', role: '', category: '', base_price: auction?.default_base_price ?? 500,
-  status: 'approved',
+  status: 'auction',
   batting_style: '', bowling_style: '', profile_url: '',
   matches: 0, runs: 0, bat_avg: 0, wickets: 0, catches: 0,
   strike_rate: 0, bowl_avg: 0, economy: 0, photo_url: '',
@@ -68,6 +68,43 @@ function download(filename, text) {
   document.body.removeChild(link)
 }
 
+const extractCricHeroesProfileId = (url = '') => {
+  const match = String(url).match(/player-profile\/(\d+)/i)
+  return match?.[1] || null
+}
+
+const mergeFetchedStats = (player, stats) => ({
+  ...player,
+  name: stats.name || player.name,
+  matches: stats.matches ?? player.matches,
+  runs: stats.runs ?? player.runs,
+  wickets: stats.wickets ?? player.wickets,
+  bat_avg: stats.bat_avg ?? player.bat_avg,
+  strike_rate: stats.strike_rate ?? player.strike_rate,
+  economy: stats.economy ?? player.economy,
+  catches: stats.catches ?? player.catches,
+  batting_style: stats.batting_style || player.batting_style,
+  bowling_style: stats.bowling_style || player.bowling_style,
+  role: stats.role || player.role,
+  photo_url: stats.photo_url || player.photo_url,
+})
+
+const buildStatsUpdatePayload = (player) => ({
+  name: player.name,
+  matches: player.matches,
+  runs: player.runs,
+  wickets: player.wickets,
+  bat_avg: player.bat_avg,
+  strike_rate: player.strike_rate,
+  economy: player.economy,
+  catches: player.catches,
+  batting_style: player.batting_style,
+  bowling_style: player.bowling_style,
+  role: player.role,
+  photo_url: player.photo_url,
+  base_price: calcBasePriceFromStats(player)
+})
+
 export default function PlayersManagement() {
   const { auction } = useActiveAuction()
   const [tab, setTab] = useState('Players')
@@ -89,6 +126,8 @@ export default function PlayersManagement() {
   // Player profile view
   const [viewPlayer, setViewPlayer] = useState(null)
   const [recalculating, setRecalculating] = useState(false)
+  const [syncingProfileStats, setSyncingProfileStats] = useState(false)
+  const [bulkSyncReport, setBulkSyncReport] = useState(null)
 
   // Category state
   const [categories, setCategories] = useState([])
@@ -120,6 +159,15 @@ export default function PlayersManagement() {
     return players.filter((p) => p.status === statusFilter)
   }, [players, statusFilter])
 
+  const tierByPlayerId = useMemo(() => buildTierIndexByPlayerId(players), [players])
+
+  const formTier = useMemo(() => {
+    const tempId = editId || '__form_preview__'
+    const pool = [...players.filter((p) => p.id !== editId), { ...form, id: tempId }]
+    const byId = buildTierIndexByPlayerId(pool)
+    return byId[tempId] || getTier(calcPPM(form))
+  }, [players, form, editId])
+
   // Duplicate detection: find players with matching name+phone or name+email
   const findDuplicates = (name, email, phone) => {
     const normName = name?.trim().toLowerCase()
@@ -140,17 +188,54 @@ export default function PlayersManagement() {
     [form.name, form.email, form.phone, players, editId]
   )
 
+  const getCalculatedPoints = (player) => {
+    return Math.round(calcTotalPoints(player))
+  }
+
   const recalculatePlayer = async (player) => {
+    if (!player?.id || recalculating) return
+    setErr('')
     setRecalculating(true)
     try {
-      const total = calcTotalPoints(player)
-      const ppm = calcPPM(player)
-      const tier = getTier(ppm)
-      await updatePlayer(player.id, { calculated_value: Math.round(tier.base) })
+      const calculatedPoints = getCalculatedPoints(player)
+      await updatePlayer(player.id, {
+        calculated_value: calculatedPoints,
+        base_price: calcBasePriceFromStats(player)
+      })
       await reloadPlayers()
-      setViewPlayer({ ...player, calculated_value: Math.round(tier.base) })
+      setViewPlayer({ ...player, calculated_value: calculatedPoints })
+    } catch (e) {
+      setErr(e?.message || 'Recalculate failed. Please try again.')
     } finally {
       setRecalculating(false)
+    }
+  }
+
+  const fetchAndRecalculateProfilePlayer = async (player) => {
+    if (!player?.id || syncingProfileStats) return
+    if (!extractCricHeroesProfileId(player.profile_url)) {
+      setErr('Valid CricHeroes profile URL required to fetch stats.')
+      return
+    }
+
+    setErr('')
+    setSyncingProfileStats(true)
+    try {
+      const stats = await fetchCricHeroesStats(player.profile_url)
+      const mergedPlayer = mergeFetchedStats(player, stats)
+      const calculatedPoints = getCalculatedPoints(mergedPlayer)
+
+      await updatePlayer(player.id, {
+        ...buildStatsUpdatePayload(mergedPlayer),
+        calculated_value: calculatedPoints
+      })
+
+      await reloadPlayers()
+      setViewPlayer({ ...mergedPlayer, calculated_value: calculatedPoints })
+    } catch (e) {
+      setErr(`Fetch/Recalculate failed: ${e.message}`)
+    } finally {
+      setSyncingProfileStats(false)
     }
   }
 
@@ -169,7 +254,7 @@ export default function PlayersManagement() {
   const save = async () => {
     setErr(''); setSaving(true)
     try {
-      const payload = { ...form, base_price: Number(form.base_price || 0), auction_id: auction.id }
+      const payload = { ...form, base_price: calcBasePriceFromStats(form), auction_id: auction.id }
       if (editId) await updatePlayer(editId, payload)
       else await createPlayer(payload)
       setEditId(null)
@@ -199,21 +284,7 @@ export default function PlayersManagement() {
     setErr(''); setFetchingStats(true)
     try {
       const stats = await fetchCricHeroesStats(form.profile_url)
-      setForm((s) => ({
-        ...s,
-        name: stats.name || s.name,
-        matches: stats.matches ?? s.matches,
-        runs: stats.runs ?? s.runs,
-        wickets: stats.wickets ?? s.wickets,
-        bat_avg: stats.bat_avg ?? s.bat_avg,
-        strike_rate: stats.strike_rate ?? s.strike_rate,
-        economy: stats.economy ?? s.economy,
-        catches: stats.catches ?? s.catches,
-        batting_style: stats.batting_style || s.batting_style,
-        bowling_style: stats.bowling_style || s.bowling_style,
-        role: stats.role || s.role,
-        photo_url: stats.photo_url || s.photo_url,
-      }))
+      setForm((s) => mergeFetchedStats(s, stats))
     } catch (e) {
       setErr(`CricHeroes fetch failed: ${e.message}`)
     } finally {
@@ -222,7 +293,7 @@ export default function PlayersManagement() {
   }
 
   const toggleApprove = async (p) => {
-    await updatePlayer(p.id, { status: p.status === 'approved' ? 'registered' : 'approved' })
+    await updatePlayer(p.id, { status: p.status === 'auction' ? 'registered' : 'auction' })
     await reloadPlayers()
   }
 
@@ -249,6 +320,59 @@ export default function PlayersManagement() {
     }
   }
 
+  const bulkFetchAndRecalculateSelected = async () => {
+    if (selected.size === 0) return
+
+    setErr('')
+    setBulkBusy(true)
+    setBulkSyncReport(null)
+
+    let workingPlayers = [...players]
+    const summary = { success: 0, skipped: [], failed: [] }
+
+    try {
+      for (const id of selected) {
+        const player = workingPlayers.find((p) => p.id === id)
+        if (!player) {
+          summary.skipped.push(`Unknown player (${id})`)
+          continue
+        }
+        if (!extractCricHeroesProfileId(player.profile_url)) {
+          summary.skipped.push(`${player.name}: missing/invalid CricHeroes URL`)
+          continue
+        }
+
+        try {
+          const stats = await fetchCricHeroesStats(player.profile_url)
+          const mergedPlayer = mergeFetchedStats(player, stats)
+          const calculatedPoints = getCalculatedPoints(mergedPlayer)
+
+          await updatePlayer(player.id, {
+            ...buildStatsUpdatePayload(mergedPlayer),
+            calculated_value: calculatedPoints
+          })
+
+          workingPlayers = workingPlayers.map((p) => (
+            p.id === player.id
+              ? { ...mergedPlayer, calculated_value: calculatedPoints }
+              : p
+          ))
+          summary.success += 1
+        } catch (e) {
+          summary.failed.push(`${player.name}: ${e.message}`)
+        }
+      }
+
+      await reloadPlayers()
+      setSelected(new Set())
+      setBulkSyncReport(summary)
+    } catch (e) {
+      setErr(e.message || 'Bulk fetch/recalculate failed.')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
   const importCsv = async (file) => {
     setReport(null)
     const text = await file.text()
@@ -260,7 +384,7 @@ export default function PlayersManagement() {
     const failures = [...errors]
     let inserted = 0
     try {
-      const payload = rows.map(r => ({ ...r, auction_id: auction.id }))
+      const payload = rows.map(r => ({ ...r, base_price: calcBasePriceFromStats(r), auction_id: auction.id }))
       const { data, error } = await supabase
         .from('players')
         .insert(payload)
@@ -268,7 +392,7 @@ export default function PlayersManagement() {
       if (error) {
         for (const row of rows) {
           try {
-            await createPlayer({ ...row, auction_id: auction.id })
+            await createPlayer({ ...row, base_price: calcBasePriceFromStats(row), auction_id: auction.id })
             inserted++
           } catch (e) {
             failures.push(`${row.name}: ${e.message}`)
@@ -298,7 +422,7 @@ export default function PlayersManagement() {
     <AppShell title="Players">
       <RoleGate allow={['admin']}>
         {/* Tab bar */}
-        <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5">
+        <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5 overflow-x-auto scrollbar-none">
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${tab === t ? 'bg-ink-800/60 text-gold border border-teal-700/40 border-b-transparent -mb-px' : 'text-teal-300 hover:text-white'}`}>
@@ -317,6 +441,9 @@ export default function PlayersManagement() {
                 showPoints
                 onRecalculate={() => recalculatePlayer(viewPlayer)}
                 recalculating={recalculating}
+                onFetchAndRecalculate={() => fetchAndRecalculateProfilePlayer(viewPlayer)}
+                fetchingAndRecalculating={syncingProfileStats}
+                tierOverride={viewPlayer ? (tierByPlayerId[viewPlayer.id] || getTier(calcPPM(viewPlayer))) : null}
               />
               <button onClick={() => setViewPlayer(null)}
                 className="mt-3 w-full py-2 text-sm text-teal-300 hover:text-white bg-ink-800/80 border border-teal-700/40 rounded-xl">
@@ -326,10 +453,10 @@ export default function PlayersManagement() {
           </div>
         )}
 
-        {tab === 'Players' && (
-          <div className="grid lg:grid-cols-3 gap-4">
+        {(tab === 'Players' || tab === 'Add Player') && (
+          <div className="grid gap-4 xl:grid-cols-3">
             {/* Create / Edit form */}
-            <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-3">
+            <div className={`${tab === 'Add Player' ? '' : 'hidden'} rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-3`}>
               <h3 className="font-score text-lg text-teal-200">{editId ? 'Edit player' : 'Create player'}</h3>
               {FIELD_META.map(({ key, label, type }) => (
                 <label key={key} className="block text-xs text-teal-300">
@@ -340,7 +467,7 @@ export default function PlayersManagement() {
                         type="text"
                         value={form[key] ?? ''}
                         onChange={(e) => set(key, e.target.value)}
-                        className="flex-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
+                        className="flex-1 min-w-0 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
                         placeholder="https://cricheroes.com/player-profile/..."
                       />
                       <button type="button" onClick={fetchFromCricHeroes} disabled={fetchingStats || !form.profile_url}
@@ -365,7 +492,7 @@ export default function PlayersManagement() {
                 Status
                 <select className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
                   value={form.status} onChange={(e) => set('status', e.target.value)}>
-                  {['registered', 'approved', 'in_auction', 'sold', 'unsold', 'reauction'].map((s) => (
+                  {['registered', 'auction', 'in_auction', 'sold', 'unsold', 'reauction'].map((s) => (
                     <option key={s}>{s}</option>
                   ))}
                 </select>
@@ -396,8 +523,8 @@ export default function PlayersManagement() {
                     <span className="text-teal-400 font-semibold">Total:</span>
                     <span className="text-white font-semibold">{calcTotalPoints(form).toFixed(1)}</span>
                     <span className="text-teal-400 font-semibold">PPM:</span>
-                    <span className={`font-semibold ${getTier(calcPPM(form)).color}`}>
-                      {calcPPM(form).toFixed(2)} ({getTier(calcPPM(form)).label})
+                    <span className={`font-semibold ${formTier.color}`}>
+                      {calcPPM(form).toFixed(2)} ({formTier.label})
                     </span>
                   </div>
                 </div>
@@ -416,7 +543,7 @@ export default function PlayersManagement() {
               )}
 
               {err && <p className="text-red-400 text-xs">{err}</p>}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button onClick={save} disabled={!form.name || saving || uploadingPhoto}
                   className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
                   {saving ? 'Saving…' : 'Save player'}
@@ -429,7 +556,7 @@ export default function PlayersManagement() {
             </div>
 
             {/* Player list */}
-            <div className="lg:col-span-2 rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
+            <div className={`${tab === 'Players' ? 'xl:col-span-3' : 'hidden'} rounded-xl border border-teal-700/40 bg-ink-800/60 p-4`}>
               <div className="flex flex-wrap gap-2 mb-3">
                 <button onClick={() => download('players-template.csv', playersCsvTemplate())}
                   className="px-3 py-1 rounded bg-teal-700/50 text-sm">Download template</button>
@@ -440,6 +567,15 @@ export default function PlayersManagement() {
                   <input type="file" accept=".csv,text/csv" className="hidden"
                     onChange={(e) => e.target.files?.[0] && importCsv(e.target.files[0])} />
                 </label>
+                {selected.size > 0 && (
+                  <button
+                    onClick={bulkFetchAndRecalculateSelected}
+                    disabled={bulkBusy}
+                    className="px-3 py-1 rounded bg-gold text-ink-900 font-semibold text-sm disabled:opacity-50"
+                  >
+                    {bulkBusy ? 'Processing…' : 'Fetch + Recalculate selected'}
+                  </button>
+                )}
               </div>
 
               {report && (
@@ -452,6 +588,20 @@ export default function PlayersManagement() {
                   )}
                 </div>
               )}
+              {bulkSyncReport && (
+                <div className="mb-3 rounded-lg border border-teal-600/40 bg-teal-900/20 p-3 text-sm">
+                  <p className="text-teal-200">
+                    Bulk fetch/recalculate completed. Success: <b>{bulkSyncReport.success}</b> ·
+                    Skipped: <b>{bulkSyncReport.skipped.length}</b> ·
+                    Failed: <b>{bulkSyncReport.failed.length}</b>
+                  </p>
+                  {[...bulkSyncReport.skipped, ...bulkSyncReport.failed].length > 0 && (
+                    <ul className="mt-1 text-red-400 text-xs list-disc pl-4 max-h-28 overflow-y-auto">
+                      {[...bulkSyncReport.skipped, ...bulkSyncReport.failed].map((msg, i) => <li key={i}>{msg}</li>)}
+                    </ul>
+                  )}
+                </div>
+              )}
 
               {/* Status filter tags */}
               <div className="flex flex-wrap gap-2 mb-3">
@@ -459,11 +609,11 @@ export default function PlayersManagement() {
                   className={`px-2.5 py-1 text-xs rounded-full font-medium transition ${!statusFilter ? 'bg-teal-600 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300 hover:text-white'}`}>
                   All ({players.length})
                 </button>
-                {['approved', 'registered', 'in_auction', 'sold', 'unsold'].map((s) => {
+                {['auction', 'registered', 'in_auction', 'sold', 'unsold'].map((s) => {
                   const count = statusCounts[s] || 0
-                  if (count === 0 && s !== 'approved' && s !== 'registered') return null
+                  if (count === 0 && s !== 'auction' && s !== 'registered') return null
                   const colors = {
-                    approved: 'bg-green-900/40 border-green-600/50 text-green-400',
+                    auction: 'bg-green-900/40 border-green-600/50 text-green-400',
                     registered: 'bg-blue-900/40 border-blue-600/50 text-blue-400',
                     in_auction: 'bg-yellow-900/40 border-yellow-600/50 text-yellow-400',
                     sold: 'bg-gold/20 border-gold/50 text-gold',
@@ -488,13 +638,13 @@ export default function PlayersManagement() {
                   </label>
                   {selected.size > 0 && (
                     <>
-                      <button onClick={() => bulkSetStatus('approved')} disabled={bulkBusy}
+                      <button onClick={() => bulkSetStatus('auction')} disabled={bulkBusy}
                         className="px-2 py-1 text-xs rounded bg-teal-600/70 disabled:opacity-50">
-                        {bulkBusy ? '…' : 'Approve selected'}
+                        {bulkBusy ? '…' : 'Set auction selected'}
                       </button>
                       <button onClick={() => bulkSetStatus('registered')} disabled={bulkBusy}
                         className="px-2 py-1 text-xs rounded bg-ink-900 border border-teal-700/50 disabled:opacity-50">
-                        {bulkBusy ? '…' : 'Unapprove selected'}
+                        {bulkBusy ? '…' : 'Move to registered'}
                       </button>
                     </>
                   )}
@@ -504,11 +654,11 @@ export default function PlayersManagement() {
               <div className="space-y-2 max-h-[60vh] overflow-y-auto">
                 {filteredPlayers.map((p) => {
                   const ppm = calcPPM(p)
-                  const tier = getTier(ppm)
+                  const tier = tierByPlayerId[p.id] || getTier(ppm)
                   return (
                     <div key={p.id}
                       className={`border rounded-lg p-3 flex flex-col gap-2 ${selected.has(p.id) ? 'border-teal-500/60 bg-teal-900/20' : 'border-teal-700/40'}`}>
-                      <div className="flex justify-between items-center gap-3">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                         <div className="flex items-center gap-3 min-w-0">
                           <input type="checkbox" checked={selected.has(p.id)}
                             onChange={() => toggleSelect(p.id)} className="shrink-0" />
@@ -526,16 +676,16 @@ export default function PlayersManagement() {
                             </p>
                             <p className="text-xs text-teal-300">
                               Base {p.base_price} ·{' '}
-                              <span className={p.status === 'sold' ? 'text-gold' : p.status === 'approved' ? 'text-teal-400' : ''}>{p.status}</span>
+                              <span className={p.status === 'sold' ? 'text-gold' : p.status === 'auction' ? 'text-teal-400' : ''}>{p.status}</span>
                             </p>
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex flex-wrap gap-2 shrink-0">
                           <button onClick={() => toggleApprove(p)}
-                            className={`px-2 py-1 text-xs rounded ${p.status === 'approved' ? 'bg-teal-600/50' : 'bg-ink-900 border border-teal-700/50'}`}>
-                            {p.status === 'approved' ? 'Unapprove' : 'Approve'}
+                            className={`px-2 py-1 text-xs rounded ${p.status === 'auction' ? 'bg-teal-600/50' : 'bg-ink-900 border border-teal-700/50'}`}>
+                            {p.status === 'auction' ? 'Remove Auction' : 'Set Auction'}
                           </button>
-                          <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr('') }}
+                          <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr(''); setTab('Add Player') }}
                             className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
                           <button onClick={async () => { await deletePlayer(p.id); reloadPlayers() }}
                             className="px-2 py-1 text-xs rounded bg-red-900/50">Delete</button>
@@ -543,7 +693,7 @@ export default function PlayersManagement() {
                       </div>
                       {/* Points breakdown row */}
                       {p.matches > 0 && (
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[0.65rem] ml-[3.25rem] text-teal-400">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs sm:text-[0.7rem] text-teal-400 sm:ml-[3.25rem]">
                           <span>Bat: <b className="text-white">{calcBattingPoints(p).toFixed(0)}</b></span>
                           <span>Bowl: <b className="text-white">{calcBowlingPoints(p).toFixed(0)}</b></span>
                           <span>Field: <b className="text-white">{calcFieldingPoints(p).toFixed(0)}</b></span>
@@ -562,7 +712,7 @@ export default function PlayersManagement() {
         )}
 
         {tab === 'Categories' && (
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-2">
               <label className="block text-xs text-teal-300 uppercase tracking-wide">
                 Category name
@@ -582,7 +732,7 @@ export default function PlayersManagement() {
             </div>
             <div className="md:col-span-2 rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-2">
               {categories.map((c) => (
-                <div key={c.id} className="border border-teal-700/40 rounded-lg p-3 flex justify-between">
+                <div key={c.id} className="border border-teal-700/40 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between gap-2">
                   <div>
                     <p>{c.sequence_order}. {c.name}</p>
                     <p className="text-xs text-teal-300">Min {c.minimum_required} · Max {c.maximum_allowed ?? '-'}</p>

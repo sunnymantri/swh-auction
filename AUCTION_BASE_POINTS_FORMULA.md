@@ -12,6 +12,10 @@ To evaluate any player fairly, calculate their points across the three core area
 Final Performance Score (PPM) = (Batting Points + Bowling Points + Fielding Points) / Total Matches
 ```
 
+```
+Base Price = roundToNearest100((Batting Points + Bowling Points + Fielding Points) x 10)
+```
+
 ---
 
 ## Step-by-Step Sub-Formulas
@@ -69,25 +73,42 @@ Fielding Points = (Catches x 10) + (Run Outs x 15) + (Stumpings x 15)
 
 ---
 
-## Auction Tiering Matrix
+## Auction Tiering Matrix (PPM Only)
 
-Once you calculate the Final PPM for every player, map their score to this tier system to determine their auction base price:
+Once you calculate the Final PPM for every player, map their score to this tier system for classification only (label + styling):
 
-| Final PPM Range | Player Tier | Player Profile Description | Suggested Base Price |
-|----------------|-------------|---------------------------|---------------------|
-| Over 55.0 | Tier 1: Platinum | Elite Marquee All-Rounders / Match-winning Pros | 15,000 Credits |
-| 40.0 - 54.9 | Tier 2: Gold | High-impact frontline batsmen or primary opening bowlers | 10,000 Credits |
-| 25.0 - 39.9 | Tier 3: Silver | Dependable utility squad players and stable anchors | 5,000 Credits |
-| Under 25.0 | Tier 4: Bronze | Emerging young talent, bench depth, or pure specialists | 2,000 Credits |
+| Final PPM Range | Player Tier | Player Profile Description |
+|----------------|-------------|---------------------------|
+| 55.0 and above | Tier 1: Platinum | Elite Marquee All-Rounders / Match-winning Pros |
+| 40.0 - 54.9 | Tier 2: Gold | High-impact frontline batsmen or primary opening bowlers |
+| 25.0 - 39.9 | Tier 3: Silver | Dependable utility squad players and stable anchors |
+| Under 25.0 | Tier 4: Bronze | Emerging young talent, bench depth, or pure specialists |
+
+---
+
+## Base Price Derivation (Auction Start Price)
+
+Base price is not tier-fixed. It is derived directly from total points:
+
+```
+Total Points = Batting Points + Bowling Points + Fielding Points
+Scaled Points = Total Points x 10
+Base Price = roundToNearest100(Scaled Points)
+```
+
+Rounding rule examples:
+- 5,540 -> 5,500
+- 5,560 -> 5,600
+- 5,500 -> 5,500
 
 ---
 
 ## Example Verification
 
-**Sunny Mantri's Stats:**
-- Aggregate metrics yielded **13,687.21 total points** across **222 matches**
-- PPM = 13,687.21 / 222 = **61.65 PPM**
-- Tier placement: **Tier 1 (Platinum)** — Elite marquee asset
+**Sample Player Stats:**
+- Aggregate metrics yielded **556 total points** across **27 matches**
+- PPM = 556 / 27 = **20.6 PPM** -> **Tier 4 (Bronze)**
+- Base Price = roundToNearest100(556 x 10) = roundToNearest100(5,560) = **5,600**
 
 ---
 
@@ -97,3 +118,4 @@ Once you calculate the Final PPM for every player, map their score to this tier 
 - Economy rate of 0 should be handled as a special case (set bowling economy contribution to 0)
 - Players with fewer than a minimum match threshold (e.g., 5 matches) may need manual tier assignment
 - The formula is role-agnostic — pure batsmen naturally score 0 in bowling, and vice versa
+- Tier comes from PPM only; base price comes from scaled+rounded total points
