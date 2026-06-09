@@ -23,7 +23,7 @@ export default function Dashboard() {
 
   const sold    = players.filter(p => p.status === 'sold').length
   const unsold  = players.filter(p => p.status === 'unsold').length
-  const pending = players.filter(p => p.status === 'approved').length
+  const pending = players.filter(p => p.status === 'ready_for_auction').length
   const total   = players.length
 
   return (
@@ -40,7 +40,7 @@ export default function Dashboard() {
       {auction && (
         <div className="space-y-5">
           {/* Auction status banner */}
-          <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 flex items-center justify-between gap-4">
+          <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <p className="font-score text-2xl text-white">{auction.name}</p>
               <p className="text-sm text-teal-400">{auction.season} · {auction.sport}</p>
@@ -67,16 +67,16 @@ export default function Dashboard() {
             <StatCard label="Awaiting auction" value={String(pending)} />
           </div>
 
-          <div className="grid lg:grid-cols-[1fr_22rem] gap-4">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
             {/* Team budget table */}
             <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
               <h3 className="font-score text-lg text-teal-200 mb-3">Team budgets</h3>
-              <div className="space-y-2">
+              <div className="space-y-2 overflow-x-auto">
                 {teams.map(t => {
                   const pct = Math.max(0, Math.min(100, (t.points_remaining / t.total_budget) * 100))
                   return (
-                    <div key={t.id} className="flex items-center gap-3">
-                      <span className="text-sm text-white min-w-[10rem] truncate">{t.name}</span>
+                    <div key={t.id} className="flex items-center gap-3 min-w-[30rem]">
+                      <span className="text-sm text-white w-40 truncate">{t.name}</span>
                       <div className="flex-1 h-2 rounded-full bg-ink-900 overflow-hidden">
                         <div className="h-full rounded-full bg-teal-500" style={{ width: `${pct}%` }} />
                       </div>
@@ -98,7 +98,7 @@ export default function Dashboard() {
           </div>
 
           {/* Quick links */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
             {[
               ['/players', '+ Add players'],
               ['/queue', '📋 Manage queue'],

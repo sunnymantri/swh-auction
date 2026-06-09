@@ -32,11 +32,13 @@ export default function TeamsManagement() {
   useEffect(() => { if (!editId) setForm(blankFor(auction)) }, [auction, editId])
 
   const calculatedBudget = useMemo(() => {
-    const approvedPlayers = players.filter((p) => p.status === 'approved')
-    const totalBase = approvedPlayers.reduce((sum, p) => sum + (p.base_price || 0), 0)
+    const readyPlayers = players.filter((p) => p.status === 'ready_for_auction')
+    // Sum of performance points (calculated_value) — not base price.
+    // Formula: totalPoints × multiplier ÷ numTeams
+    const totalPoints = readyPlayers.reduce((sum, p) => sum + (p.calculated_value || 0), 0)
     const multiplier = auction?.budget_multiplier ?? 1.6
     const numTeams = teams.length || 1
-    return Math.round((totalBase * multiplier) / numTeams)
+    return Math.round((totalPoints * multiplier) / numTeams)
   }, [players, teams, auction])
 
   if (!auction) {
@@ -105,7 +107,7 @@ export default function TeamsManagement() {
   return (
     <AppShell title="Teams Management">
       <RoleGate allow={['admin']}>
-        <div className="grid lg:grid-cols-3 gap-4">
+        <div className="grid gap-4 xl:grid-cols-3">
           <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-2">
             <h3 className="font-score text-lg text-teal-200">{editId ? 'Edit team' : 'Create team'}</h3>
             {[
@@ -116,7 +118,7 @@ export default function TeamsManagement() {
                 onChange={(e) => setForm((s) => ({ ...s, [f]: e.target.value }))}
                 className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
             ))}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <label className="text-xs text-teal-300">Budget
                 <input value={form.total_budget} inputMode="numeric"
                   onChange={(e) => setForm((s) => ({ ...s, total_budget: Number(e.target.value.replace(/[^\d]/g, '') || 0) }))}
@@ -150,7 +152,7 @@ export default function TeamsManagement() {
               className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
               {saving ? 'Saving…' : 'Save team'}
             </button>
-            {editId && <button onClick={() => { setEditId(null); setForm(blankFor(auction)) }} className="ml-2 text-xs text-teal-300">Cancel edit</button>}
+            {editId && <button onClick={() => { setEditId(null); setForm(blankFor(auction)) }} className="text-xs text-teal-300">Cancel edit</button>}
             {msg && <p className="text-live text-sm">{msg}</p>}
             {creds && (
               <div className="rounded-lg border border-teal-600/50 bg-teal-900/30 p-3 text-sm">
@@ -161,12 +163,12 @@ export default function TeamsManagement() {
             )}
           </div>
 
-          <div className="lg:col-span-2 rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
+          <div className="xl:col-span-2 rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
             <h3 className="font-score text-lg text-teal-200 mb-2">Teams ({teams.length})</h3>
             {/* Calculated budget info */}
             <div className="mb-3 rounded-lg border border-teal-700/30 bg-ink-900/40 p-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-teal-300">
-              <span>Approved players: <b className="text-white">{players.filter((p) => p.status === 'approved').length}</b></span>
-              <span>Total base: <b className="text-white">{fmtPoints(players.filter((p) => p.status === 'approved').reduce((s, p) => s + (p.base_price || 0), 0))}</b></span>
+              <span>Ready for auction: <b className="text-white">{players.filter((p) => p.status === 'ready_for_auction').length}</b></span>
+              <span>Total points pool: <b className="text-white">{fmtPoints(players.filter((p) => p.status === 'ready_for_auction').reduce((s, p) => s + (p.calculated_value || 0), 0))}</b></span>
               <span>Multiplier: <b className="text-white">{auction?.budget_multiplier ?? 1.6}x</b></span>
               <span>Suggested team budget: <b className="text-gold">{fmtPoints(calculatedBudget)}</b></span>
             </div>
@@ -174,7 +176,7 @@ export default function TeamsManagement() {
               {teams.map((t) => (
                 <div key={t.id}
                   onClick={() => { setEditId(t.id); setForm({ ...blankFor(auction), ...t }) }}
-                  className={`border rounded-lg p-3 flex justify-between items-center gap-3 cursor-pointer transition ${editId === t.id ? 'border-gold/50 bg-gold/5' : 'border-teal-700/40 hover:border-teal-600/60'}`}>
+                  className={`border rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 cursor-pointer transition ${editId === t.id ? 'border-gold/50 bg-gold/5' : 'border-teal-700/40 hover:border-teal-600/60'}`}>
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="h-10 w-10 rounded-lg bg-ink-900 border border-teal-700/40 grid place-items-center overflow-hidden shrink-0">
                       {t.logo_url ? <img src={t.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-[0.6rem] text-teal-500">{t.short_name}</span>}
@@ -187,7 +189,7 @@ export default function TeamsManagement() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex flex-wrap gap-2 shrink-0">
                     {t.owner_user_id ? (
                       <>
                         <span className="px-2 py-1 text-xs rounded bg-teal-600/60 opacity-60">Linked</span>

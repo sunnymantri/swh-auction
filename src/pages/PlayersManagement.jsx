@@ -14,9 +14,20 @@ import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoin
 
 const TABS = ['Players', 'Add Player', 'Categories']
 
+// Human-readable labels for every player status value
+const STATUS_LABELS = {
+  not_registered:    'Not registered',
+  registered:        'Registered',
+  ready_for_auction: 'Ready for auction',
+  in_auction:        'In auction',
+  sold:              'Sold',
+  unsold:            'Unsold',
+  reauction:         'Re-auction',
+}
+
 const blankFor = (auction) => ({
   name: '', role: '', category: '', base_price: auction?.default_base_price ?? 500,
-  status: 'auction',
+  status: 'registered',
   batting_style: '', bowling_style: '', profile_url: '',
   matches: 0, runs: 0, bat_avg: 0, wickets: 0, catches: 0,
   strike_rate: 0, bowl_avg: 0, economy: 0, photo_url: '',
@@ -340,7 +351,8 @@ export default function PlayersManagement() {
   }
 
   const toggleApprove = async (p) => {
-    await updatePlayer(p.id, { status: p.status === 'auction' ? 'registered' : 'auction' })
+    const next = p.status === 'ready_for_auction' ? 'registered' : 'ready_for_auction'
+    await updatePlayer(p.id, { status: next })
     await reloadPlayers()
   }
 
@@ -509,74 +521,161 @@ export default function PlayersManagement() {
         {(tab === 'Players' || tab === 'Add Player') && (
           <div className="grid gap-4 xl:grid-cols-3">
             {/* Create / Edit form */}
-            <div className={`${tab === 'Add Player' ? '' : 'hidden'} rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-3`}>
-              <h3 className="font-score text-lg text-teal-200">{editId ? 'Edit player' : 'Create player'}</h3>
-              {FIELD_META.map(({ key, label, type }) => (
-                <label key={key} className="block text-xs text-teal-300">
-                  {label}
-                  {key === 'profile_url' ? (
-                    <div className="flex gap-2 mt-1">
-                      <input
-                        type="text"
-                        value={form[key] ?? ''}
-                        onChange={(e) => set(key, e.target.value)}
-                        className="flex-1 min-w-0 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
-                        placeholder="https://cricheroes.com/player-profile/..."
-                      />
-                      <button type="button" onClick={fetchFromCricHeroes} disabled={fetchingStats || !form.profile_url}
-                        className="px-3 py-2 rounded-lg bg-teal-600/70 text-white text-xs font-semibold whitespace-nowrap disabled:opacity-40">
-                        {fetchingStats ? 'Fetching…' : 'Fetch stats'}
-                      </button>
-                    </div>
-                  ) : (
+            <div className={`${tab === 'Add Player' ? '' : 'hidden'} rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 flex flex-col gap-3`}>
+              <h3 className="font-score text-lg text-teal-200 shrink-0">{editId ? 'Edit player' : 'Create player'}</h3>
+
+              {/* Scrollable field area */}
+              <div className="overflow-y-auto max-h-[70vh] pr-1 space-y-4">
+
+                {/* CricHeroes fetch — full width */}
+                <div>
+                  <p className="text-xs text-teal-300 mb-1">Profile URL (CricHeroes)</p>
+                  <div className="flex gap-2">
                     <input
-                      type={type === 'number' ? 'text' : 'text'}
-                      inputMode={type === 'number' ? 'numeric' : 'text'}
-                      value={form[key] ?? ''}
-                      onChange={(e) => set(key, type === 'number'
-                        ? Number(e.target.value.replace(/[^\d.]/g, '') || 0)
-                        : e.target.value)}
-                      className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
+                      type="text"
+                      value={form.profile_url ?? ''}
+                      onChange={(e) => set('profile_url', e.target.value)}
+                      placeholder="https://cricheroes.com/player-profile/..."
+                      className="flex-1 min-w-0 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-1.5 text-white text-sm"
                     />
-                  )}
-                </label>
-              ))}
-              <label className="block text-xs text-teal-300">
-                Status
-                <select className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white"
-                  value={form.status} onChange={(e) => set('status', e.target.value)}>
-                  {['registered', 'auction', 'in_auction', 'sold', 'unsold', 'reauction'].map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="block text-xs text-teal-300">
-                Player photo
-                <div className="mt-1 flex items-center gap-2">
-                  {form.photo_url && (
-                    <img src={form.photo_url} alt="" className="h-10 w-10 rounded object-cover border border-teal-700/40" />
-                  )}
-                  <input type="file" accept="image/*" className="text-xs"
-                    disabled={uploadingPhoto}
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f) }} />
+                    <button type="button" onClick={fetchFromCricHeroes} disabled={fetchingStats || !form.profile_url}
+                      className="px-3 py-1.5 rounded-lg bg-teal-600/70 text-white text-xs font-semibold whitespace-nowrap disabled:opacity-40">
+                      {fetchingStats ? 'Fetching…' : 'Fetch stats'}
+                    </button>
+                  </div>
                 </div>
-                {uploadingPhoto && <p className="text-teal-400 text-xs mt-1 animate-pulse">Uploading photo…</p>}
-              </label>
+
+                {/* Identity — 2 columns */}
+                <fieldset className="border border-teal-700/30 rounded-lg p-3 space-y-2">
+                  <legend className="text-[0.65rem] text-teal-400 uppercase tracking-wider px-1">Identity</legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'name', label: 'Full name', type: 'text', span: true },
+                      { key: 'role', label: 'Role', type: 'text' },
+                      { key: 'category', label: 'Category', type: 'text' },
+                      { key: 'batting_style', label: 'Batting style', type: 'text' },
+                      { key: 'bowling_style', label: 'Bowling style', type: 'text' },
+                      { key: 'base_price', label: 'Base price', type: 'number' },
+                    ].map(({ key, label, type, span }) => (
+                      <label key={key} className={`block text-xs text-teal-300 ${span ? 'col-span-2' : ''}`}>
+                        {label}
+                        <input
+                          type="text"
+                          inputMode={type === 'number' ? 'numeric' : 'text'}
+                          value={form[key] ?? ''}
+                          onChange={(e) => set(key, type === 'number'
+                            ? Number(e.target.value.replace(/[^\d.]/g, '') || 0)
+                            : e.target.value)}
+                          className="mt-0.5 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2.5 py-1.5 text-white text-sm"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="block text-xs text-teal-300">
+                      Status
+                      <select className="mt-0.5 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2.5 py-1.5 text-white text-sm"
+                        value={form.status} onChange={(e) => set('status', e.target.value)}>
+                        {['not_registered', 'registered', 'ready_for_auction', 'in_auction', 'sold', 'unsold', 'reauction'].map((s) => (
+                          <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block text-xs text-teal-300">
+                      Player photo
+                      <div className="mt-0.5 flex items-center gap-2">
+                        {form.photo_url && (
+                          <img src={form.photo_url} alt="" className="h-8 w-8 rounded object-cover border border-teal-700/40 shrink-0" />
+                        )}
+                        <input type="file" accept="image/*" className="text-xs min-w-0"
+                          disabled={uploadingPhoto}
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f) }} />
+                      </div>
+                      {uploadingPhoto && <p className="text-teal-400 text-xs mt-0.5 animate-pulse">Uploading…</p>}
+                    </label>
+                  </div>
+                </fieldset>
+
+                {/* Batting stats — 2 columns */}
+                <fieldset className="border border-teal-700/30 rounded-lg p-3 space-y-2">
+                  <legend className="text-[0.65rem] text-teal-400 uppercase tracking-wider px-1">Batting</legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'matches', label: 'Matches' },
+                      { key: 'runs', label: 'Runs' },
+                      { key: 'bat_avg', label: 'Average' },
+                      { key: 'strike_rate', label: 'Strike rate' },
+                      { key: 'fifties', label: '50s' },
+                      { key: 'hundreds', label: '100s' },
+                      { key: 'sixes', label: 'Sixes' },
+                    ].map(({ key, label }) => (
+                      <label key={key} className="block text-xs text-teal-300">
+                        {label}
+                        <input type="text" inputMode="numeric"
+                          value={form[key] ?? ''}
+                          onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
+                          className="mt-0.5 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2.5 py-1.5 text-white text-sm" />
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                {/* Bowling stats — 2 columns */}
+                <fieldset className="border border-teal-700/30 rounded-lg p-3 space-y-2">
+                  <legend className="text-[0.65rem] text-teal-400 uppercase tracking-wider px-1">Bowling</legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'wickets', label: 'Wickets' },
+                      { key: 'bowl_avg', label: 'Average' },
+                      { key: 'economy', label: 'Economy' },
+                      { key: 'dot_balls', label: 'Dot balls' },
+                      { key: 'three_wicket_hauls', label: '3-wkt hauls' },
+                      { key: 'five_wicket_hauls', label: '5-wkt hauls' },
+                    ].map(({ key, label }) => (
+                      <label key={key} className="block text-xs text-teal-300">
+                        {label}
+                        <input type="text" inputMode="numeric"
+                          value={form[key] ?? ''}
+                          onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
+                          className="mt-0.5 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2.5 py-1.5 text-white text-sm" />
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                {/* Fielding stats — 2 columns */}
+                <fieldset className="border border-teal-700/30 rounded-lg p-3 space-y-2">
+                  <legend className="text-[0.65rem] text-teal-400 uppercase tracking-wider px-1">Fielding</legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'catches', label: 'Catches' },
+                      { key: 'run_outs', label: 'Run outs' },
+                      { key: 'stumpings', label: 'Stumpings' },
+                    ].map(({ key, label }) => (
+                      <label key={key} className="block text-xs text-teal-300">
+                        {label}
+                        <input type="text" inputMode="numeric"
+                          value={form[key] ?? ''}
+                          onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
+                          className="mt-0.5 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2.5 py-1.5 text-white text-sm" />
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+              </div>{/* end scrollable area */}
+
               {/* Auto-calculated points preview */}
               {form.matches > 0 && (
-                <div className="rounded-lg border border-teal-700/40 bg-ink-900/50 p-3 space-y-1">
-                  <p className="text-xs font-semibold text-teal-200 uppercase tracking-wide">Calculated Points (PPM)</p>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                    <span className="text-teal-400">Batting:</span>
-                    <span className="text-white">{calcBattingPoints(form).toFixed(1)}</span>
-                    <span className="text-teal-400">Bowling:</span>
-                    <span className="text-white">{calcBowlingPoints(form).toFixed(1)}</span>
-                    <span className="text-teal-400">Fielding:</span>
-                    <span className="text-white">{calcFieldingPoints(form).toFixed(1)}</span>
-                    <span className="text-teal-400 font-semibold">Total:</span>
-                    <span className="text-white font-semibold">{calcTotalPoints(form).toFixed(1)}</span>
+                <div className="rounded-lg border border-teal-700/40 bg-ink-900/50 p-3 shrink-0">
+                  <p className="text-xs font-semibold text-teal-200 uppercase tracking-wide mb-1">Calculated Points (PPM)</p>
+                  <div className="grid grid-cols-3 gap-x-3 gap-y-1 text-xs">
+                    <span className="text-teal-400">Batting:</span><span className="text-white col-span-2">{calcBattingPoints(form).toFixed(1)}</span>
+                    <span className="text-teal-400">Bowling:</span><span className="text-white col-span-2">{calcBowlingPoints(form).toFixed(1)}</span>
+                    <span className="text-teal-400">Fielding:</span><span className="text-white col-span-2">{calcFieldingPoints(form).toFixed(1)}</span>
+                    <span className="text-teal-400 font-semibold">Total:</span><span className="text-white font-semibold col-span-2">{calcTotalPoints(form).toFixed(1)}</span>
                     <span className="text-teal-400 font-semibold">PPM:</span>
-                    <span className={`font-semibold ${formTier.color}`}>
+                    <span className={`font-semibold col-span-2 ${formTier.color}`}>
                       {calcPPM(form).toFixed(2)} ({formTier.label})
                     </span>
                   </div>
@@ -670,12 +769,13 @@ export default function PlayersManagement() {
                   className={`px-2.5 py-1 text-xs rounded-full font-medium transition ${!statusFilter ? 'bg-teal-600 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300 hover:text-white'}`}>
                   All ({players.length})
                 </button>
-                {['auction', 'registered', 'in_auction', 'sold', 'unsold'].map((s) => {
+                {['not_registered', 'registered', 'ready_for_auction', 'in_auction', 'sold', 'unsold'].map((s) => {
                   const count = statusCounts[s] || 0
-                  if (count === 0 && s !== 'auction' && s !== 'registered') return null
+                  if (count === 0 && s !== 'ready_for_auction' && s !== 'registered') return null
                   const colors = {
-                    auction: 'bg-green-900/40 border-green-600/50 text-green-400',
+                    not_registered: 'bg-gray-800/60 border-gray-600/50 text-gray-400',
                     registered: 'bg-blue-900/40 border-blue-600/50 text-blue-400',
+                    ready_for_auction: 'bg-green-900/40 border-green-600/50 text-green-400',
                     in_auction: 'bg-yellow-900/40 border-yellow-600/50 text-yellow-400',
                     sold: 'bg-gold/20 border-gold/50 text-gold',
                     unsold: 'bg-red-900/40 border-red-600/50 text-red-400',
@@ -683,7 +783,7 @@ export default function PlayersManagement() {
                   return (
                     <button key={s} onClick={() => setStatusFilter(statusFilter === s ? null : s)}
                       className={`px-2.5 py-1 text-xs rounded-full font-medium border transition ${statusFilter === s ? colors[s] : 'bg-ink-900 border-teal-700/50 text-teal-300 hover:text-white'}`}>
-                      {s.replace('_', ' ')} ({count})
+                      {STATUS_LABELS[s]} ({count})
                     </button>
                   )
                 })}
@@ -699,9 +799,9 @@ export default function PlayersManagement() {
                   </label>
                   {selected.size > 0 && (
                     <>
-                      <button onClick={() => bulkSetStatus('auction')} disabled={bulkBusy}
-                        className="px-2 py-1 text-xs rounded bg-teal-600/70 disabled:opacity-50">
-                        {bulkBusy ? '…' : 'Set auction selected'}
+                      <button onClick={() => bulkSetStatus('ready_for_auction')} disabled={bulkBusy}
+                        className="px-2 py-1 text-xs rounded bg-green-700/60 text-white disabled:opacity-50">
+                        {bulkBusy ? '…' : '✓ Ready for auction'}
                       </button>
                       <button onClick={() => bulkSetStatus('registered')} disabled={bulkBusy}
                         className="px-2 py-1 text-xs rounded bg-ink-900 border border-teal-700/50 disabled:opacity-50">
@@ -737,14 +837,19 @@ export default function PlayersManagement() {
                             </p>
                             <p className="text-xs text-teal-300">
                               Base {p.base_price} ·{' '}
-                              <span className={p.status === 'sold' ? 'text-gold' : p.status === 'auction' ? 'text-teal-400' : ''}>{p.status}</span>
+                              <span className={
+                                p.status === 'sold' ? 'text-gold' :
+                                p.status === 'ready_for_auction' ? 'text-green-400' :
+                                p.status === 'in_auction' ? 'text-yellow-400' :
+                                p.status === 'not_registered' ? 'text-gray-400' : ''
+                              }>{STATUS_LABELS[p.status] ?? p.status}</span>
                             </p>
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-2 shrink-0">
                           <button onClick={() => toggleApprove(p)}
-                            className={`px-2 py-1 text-xs rounded ${p.status === 'auction' ? 'bg-teal-600/50' : 'bg-ink-900 border border-teal-700/50'}`}>
-                            {p.status === 'auction' ? 'Remove Auction' : 'Set Auction'}
+                            className={`px-2 py-1 text-xs rounded ${p.status === 'ready_for_auction' ? 'bg-green-700/50 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300'}`}>
+                            {p.status === 'ready_for_auction' ? '✓ Ready — Remove' : 'Set Ready for Auction'}
                           </button>
                           <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr(''); setTab('Add Player') }}
                             className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
@@ -774,6 +879,16 @@ export default function PlayersManagement() {
 
         {tab === 'Categories' && (
           <div className="grid gap-4 md:grid-cols-3">
+            {/* Description card */}
+            <div className="md:col-span-3 rounded-xl border border-teal-600/30 bg-teal-900/20 p-4">
+              <p className="text-sm font-semibold text-teal-200 mb-1">📂 What are Categories?</p>
+              <p className="text-xs text-teal-300 leading-relaxed">
+                Categories group players by role (e.g. <span className="text-white">Wicketkeeper</span>, <span className="text-white">Batter</span>, <span className="text-white">Bowler</span>) so each team must pick the right mix.
+                Set a <span className="text-white">Minimum required</span> to enforce squad balance — every team must buy at least that many from this group.
+                Set a <span className="text-white">Maximum allowed</span> to cap how many a team can buy (leave 0 for no cap).
+                The <span className="text-white">Sequence order</span> controls the order in which categories go to auction — lower number goes first.
+              </p>
+            </div>
             <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-2">
               <label className="block text-xs text-teal-300 uppercase tracking-wide">
                 Category name
