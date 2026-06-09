@@ -843,6 +843,9 @@ export default function PlayersManagement() {
                                 p.status === 'in_auction' ? 'text-yellow-400' :
                                 p.status === 'not_registered' ? 'text-gray-400' : ''
                               }>{STATUS_LABELS[p.status] ?? p.status}</span>
+                              {p.weeks_away > 0 && (
+                                <span className="text-yellow-400 ml-1">· Away {p.weeks_away}w</span>
+                              )}
                             </p>
                           </div>
                         </div>

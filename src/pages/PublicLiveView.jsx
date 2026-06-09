@@ -66,20 +66,20 @@ export default function PublicLiveView() {
 
   return (
     <AppShell title="Public Live View">
-      <div className="grid lg:grid-cols-[1fr_22rem] gap-4">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-4">
           <PlayerCard player={current?.players} />
-          <div key={top?.bid_amount ?? 0} className="rounded-xl border border-gold/30 bg-gradient-to-r from-teal-900 to-ink-900 p-5 animate-bidflash">
+          <div key={top?.bid_amount ?? 0} className="rounded-xl border border-gold/30 bg-gradient-to-r from-teal-900 to-ink-900 p-4 sm:p-5 animate-bidflash">
             <p className="text-xs text-teal-300 uppercase">Current Bid</p>
-            <p className="font-score text-6xl text-gold tabular">{fmtPoints(top?.bid_amount ?? 0)}</p>
+            <p className="font-score text-4xl sm:text-5xl lg:text-6xl text-gold tabular">{fmtPoints(top?.bid_amount ?? 0)}</p>
             <p className="text-sm text-teal-100">Highest bidder: {top?.teams?.name || '—'}</p>
           </div>
           <div className="grid md:grid-cols-2 gap-2">
             {teams.map((t) => (
-              <div key={t.id} className="rounded-lg border border-teal-700/40 bg-ink-800/60 p-3 flex items-center gap-2">
+              <div key={t.id} className="rounded-lg border border-teal-700/40 bg-ink-800/60 p-3 flex items-center gap-2 min-w-0">
                 {t.logo_url && <img src={t.logo_url} alt="" className="h-8 w-8 rounded object-cover" />}
-                <div>
-                  <p className="text-white">{t.name}</p>
+                <div className="min-w-0">
+                  <p className="text-white truncate">{t.name}</p>
                   <p className="text-xs text-teal-300">Remaining {fmtPoints(t.points_remaining)} · Players {t.players_count}/{t.squad_size}</p>
                 </div>
               </div>

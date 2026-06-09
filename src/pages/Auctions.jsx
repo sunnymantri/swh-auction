@@ -4,7 +4,7 @@ import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useAuctionContext } from '../context/AuctionContext'
 import { useActiveAuction } from '../hooks/useActiveAuction'
-import { createAuction, setAuctionStatus, updateAuction, uploadBranding } from '../lib/api'
+import { createAuction, setAuctionStatus, updateAuction, uploadBranding, resetAuction } from '../lib/api'
 import { fmtPoints } from '../lib/format'
 
 const STATUSES = ['draft', 'live', 'paused', 'completed']
@@ -30,6 +30,7 @@ export default function Auctions() {
   const [cfgForm, setCfgForm] = useState(null)
   const [cfgMsg, setCfgMsg] = useState('')
   const [cfgBusy, setCfgBusy] = useState(false)
+  const [resetBusy, setResetBusy] = useState(false)
   const [uploadErr, setUploadErr] = useState('')
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingSponsor, setUploadingSponsor] = useState(false)
@@ -113,11 +114,28 @@ export default function Auctions() {
 
   const removeSponsor = (i) => cfgSet('sponsor_logos', cfgForm.sponsor_logos.filter((_, idx) => idx !== i))
 
+  const handleResetAuction = async () => {
+    if (!auction) return
+    const ok = window.confirm(`Reset auction "${auction.name}"? This clears queue, bids, sales and moves players back to auction/registered states.`)
+    if (!ok) return
+    setResetBusy(true)
+    setCfgMsg('')
+    try {
+      await resetAuction(auction.id)
+      await reload()
+      setCfgMsg('Auction reset complete.')
+    } catch (e) {
+      setCfgMsg(e.message || 'Auction reset failed.')
+    } finally {
+      setResetBusy(false)
+    }
+  }
+
   return (
     <AppShell title="Auctions">
       <RoleGate allow={['admin']}>
         {/* Tab bar */}
-        <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5">
+        <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5 overflow-x-auto scrollbar-none">
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${tab === t ? 'bg-ink-800/60 text-gold border border-teal-700/40 border-b-transparent -mb-px' : 'text-teal-300 hover:text-white'}`}>
@@ -127,7 +145,7 @@ export default function Auctions() {
         </div>
 
         {tab === 'Auctions' && (
-          <div className="grid lg:grid-cols-[1fr_22rem] gap-4">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
             <div className="space-y-2">
               {auctions.map((a) => (
                 <div key={a.id}
@@ -140,7 +158,7 @@ export default function Auctions() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-score text-xl text-white">{a.name}</p>
-                        <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold uppercase ${
+                        <span className={`text-[0.7rem] sm:text-xs px-2 py-0.5 rounded-full font-semibold uppercase ${
                           a.status === 'live'
                             ? 'bg-gold/20 text-gold'
                             : a.status === 'completed'
@@ -148,7 +166,7 @@ export default function Auctions() {
                             : 'bg-ink-900 text-teal-300 border border-teal-700/40'
                         }`}>{a.status}</span>
                         {a.id === auctionId && (
-                          <span className="text-[0.6rem] px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30 font-semibold">SELECTED</span>
+                          <span className="text-[0.7rem] sm:text-xs px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30 font-semibold">SELECTED</span>
                         )}
                       </div>
                       <p className="text-xs text-teal-400 mt-1">
@@ -224,10 +242,10 @@ export default function Auctions() {
             {!auction || !cfgForm ? (
               <p className="text-teal-400">No auction selected. Switch to the Auctions tab and select or create one.</p>
             ) : (
-              <div className="grid lg:grid-cols-2 gap-4">
+              <div className="grid gap-4 xl:grid-cols-2">
                 <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-3">
                   <h3 className="font-score text-lg text-teal-200">Rules & details</h3>
-                  <div className="grid md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <CfgField label="Name" value={cfgForm.name} onChange={(v) => cfgSet('name', v)} />
                     <CfgField label="Season" value={cfgForm.season} onChange={(v) => cfgSet('season', v)} />
                     <CfgField label="Sport" value={cfgForm.sport} onChange={(v) => cfgSet('sport', v)} />
@@ -242,8 +260,8 @@ export default function Auctions() {
                       <input type="text" inputMode="decimal" value={cfgForm.budget_multiplier ?? 1.6}
                         onChange={(e) => cfgSet('budget_multiplier', e.target.value.replace(/[^\d.]/g, ''))}
                         className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
-                      <span className="text-[0.6rem] text-teal-500 mt-0.5 block">
-                        Team budget = (sum of approved player base prices) × multiplier ÷ number of teams
+                      <span className="text-[0.7rem] sm:text-xs text-teal-500 mt-0.5 block">
+                        Team budget = (sum of auction player base prices) × multiplier ÷ number of teams
                       </span>
                     </label>
                   </div>
@@ -255,6 +273,13 @@ export default function Auctions() {
                   <button onClick={saveCfg} disabled={cfgBusy}
                     className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
                     {cfgBusy ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    onClick={handleResetAuction}
+                    disabled={resetBusy}
+                    className="ml-2 px-4 py-2 rounded-lg bg-red-900/60 border border-red-600/50 text-red-200 font-semibold disabled:opacity-50"
+                  >
+                    {resetBusy ? 'Resetting…' : 'Reset auction'}
                   </button>
                   {cfgMsg && <p className="text-teal-300 text-sm">{cfgMsg}</p>}
                 </div>
@@ -290,7 +315,7 @@ export default function Auctions() {
                       <input type="file" accept="image/*" className="hidden" disabled={uploadingSponsor}
                         onChange={(e) => { const f = e.target.files?.[0]; if (f) addSponsor(f) }} />
                     </label>
-                    <p className="text-[0.65rem] text-teal-500 mt-1">Logo appears above — then click Save to persist.</p>
+                    <p className="text-[0.7rem] sm:text-xs text-teal-500 mt-1">Logo appears above — then click Save to persist.</p>
                   </div>
                 </div>
               </div>

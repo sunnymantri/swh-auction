@@ -49,7 +49,7 @@ export default function UserManagement() {
   return (
     <AppShell title="User Management">
       <RoleGate allow={['admin']}>
-        <div className="grid lg:grid-cols-2 gap-4">
+        <div className="grid gap-4 xl:grid-cols-2">
           <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-3">
             <h3 className="font-score text-lg text-teal-200">Create login</h3>
             <p className="text-xs text-teal-400">
@@ -95,7 +95,7 @@ export default function UserManagement() {
             <h3 className="font-score text-lg text-teal-200 mb-2">Existing users</h3>
             <div className="space-y-2 max-h-[60vh] overflow-y-auto">
               {profiles.map((p) => (
-                <div key={p.id} className="border border-teal-700/40 rounded-lg p-3 flex justify-between items-center">
+                <div key={p.id} className="border border-teal-700/40 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                   <div className="min-w-0">
                     <p className="text-white truncate">{p.full_name || '—'}</p>
                     <p className="text-xs text-teal-400">{p.role}</p>

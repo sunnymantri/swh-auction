@@ -3,7 +3,32 @@
     "allow": [
       "Bash(npx netlify *)",
       "Bash(rm -rf swh-auction)",
-      "Bash(git init *)"
+      "Bash(git init *)",
+      "Bash(awk '{print $2}')",
+      "Bash(git check-ignore *)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(gh auth *)",
+      "Bash(ssh -T -o StrictHostKeyChecking=no -o ConnectTimeout=8 git@github.com)",
+      "Bash(env)",
+      "Bash(security find-internet-password *)",
+      "Bash(brew install *)",
+      "Bash(echo \"=== check if brew is elsewhere ===\" && which brew 2>/dev/null || find /opt/homebrew /usr/local/bin -name brew -type f 2>/dev/null | head -3 && echo \"\" && echo \"=== check for curl ===\" && which curl)",
+      "Read(//opt/**)",
+      "Bash(curl -sL \"https://github.com/cli/cli/releases/download/v2.63.2/gh_2.63.2_macOS_arm64.zip\" -o /tmp/gh.zip)",
+      "Bash(unzip -q -o /tmp/gh.zip -d /tmp/gh)",
+      "Read(//tmp/**)",
+      "Bash(/tmp/gh/gh_2.63.2_macOS_arm64/bin/gh --version)",
+      "Bash(curl -s -H \"api-key: cr!CkH3r0s\" -H \"device-type: Chrome: 120.0.0.0\" -H \"Accept: application/json\" -H \"Content-Type: application/json\" \"https://cricheroes.in/api/v1/player/get-player-profile-web/13942169\")",
+      "Bash(curl -s -H \"api-key: cr!CkH3r0s\" -H \"device-type: Chrome: 120.0.0.0\" -H \"Accept: application/json\" \"https://cricheroes.in/api/v1/player/get-player-profile-web/3702402\")",
+      "Bash(curl -s -H \"api_key: cr!CkH3r0s\" -H \"device-type: Chrome: 120.0.0.0\" \"https://cricheroes.in/api/v1/player/get-player-profile-web/3702402\")",
+      "Bash(curl -s -H \"api-key: cr!CkH3r0s\" -H \"device-type: Chrome/120.0.0.0\" \"https://cricheroes.in/api/v2/player/get-player-profile-web/3702402\")",
+      "Bash(curl -s -H \"api-key: cr!CkH3r0s\" -H \"device-type: Chrome: 120.0.0.0\" \"https://cricheroes.com/api/v1/player/get-player-profile-web/3702402\")",
+      "Bash(curl -s -X GET https://cricheroes.in/api/v1/player/get-player-profile-web/13942169 -H 'api-key: cr!CkH3r0s' -H 'device-type: Chrome: 120.0.0.0' -H 'Accept: application/json' -H 'User-Agent: Mozilla/5.0 \\(Macintosh; Intel Mac OS X 10_15_7\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36' -H 'Origin: https://cricheroes.com' -H 'Referer: https://cricheroes.com/')",
+      "Bash(git commit -m ' *)",
+      "Bash(npx vite *)",
+      "Bash(lsof -ti:5173)"
     ]
   }
 }

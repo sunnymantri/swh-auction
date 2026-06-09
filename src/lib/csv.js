@@ -32,7 +32,7 @@ export function playersCsvTemplate() {
     '500', 'https://cricheroes.com/player-profile/123/jane-example/stats',
     '20', '850', '42.50', '128.40',
     '2', '25.50', '6.20',
-    '6', 'approved'
+    '6', 'auction'
   ]
   return [CSV_HEADERS.join(','), example.join(',')].join('\n')
 }

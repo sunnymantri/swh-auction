@@ -78,7 +78,7 @@ begin
       round((105 + (i*7) % 60)::numeric, 2),   -- strike rate
       round((4 + (i*3) % 5)::numeric, 2),       -- economy
       case when i % 5 = 0 then 1500 when i % 3 = 0 then 1000 else 500 end,
-      'approved');
+      'auction');
   end loop;
 end $$;
 
@@ -90,7 +90,7 @@ declare v_first uuid;
 begin
   select id into v_auction from public.auctions order by created_at desc limit 1;
 
-  -- Build ordered queue from approved players (mirrors generate_queue logic).
+  -- Build ordered queue from auction-eligible players (mirrors generate_queue logic).
   insert into public.auction_queue(auction_id, player_id, category, queue_order, status)
   select
     p.auction_id,
@@ -105,7 +105,7 @@ begin
     on  c.auction_id = p.auction_id
     and c.name       = p.category
   where p.auction_id = v_auction
-    and p.status in ('approved', 'reauction', 'unsold');
+    and p.status in ('auction', 'reauction', 'unsold');
 
   select player_id into v_first
   from public.auction_queue

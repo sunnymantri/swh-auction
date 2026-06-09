@@ -17,13 +17,13 @@ const since = (ts) => {
 
 export default function ActivityFeed({ events }) {
   return (
-    <div className="rounded-2xl bg-ink-800/70 border border-teal-700/40 p-4 max-h-[28rem] overflow-y-auto">
+    <div className="rounded-2xl bg-ink-800/70 border border-teal-700/40 p-4 max-h-[24rem] sm:max-h-[28rem] overflow-y-auto">
       <h3 className="font-score text-lg text-teal-200 mb-3">Live Activity</h3>
       <ul className="space-y-2.5">
         {events.map(e => {
           const m = META[e.event_type] || META.skipped
           return (
-            <li key={e.id} className="flex items-start gap-2.5 text-sm animate-rise">
+            <li key={e.id} className="flex items-start gap-2 text-sm animate-rise">
               <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${m.dot}`} />
               <div className="min-w-0 flex-1">
                 <span className="text-teal-300 font-semibold">{m.label}</span>

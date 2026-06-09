@@ -10,8 +10,9 @@ const NAV_GROUPS = [
     label: 'Overview',
     roles: ['admin', 'team_owner', 'public'],
     links: [
-      { to: '/public-live', label: 'Live',    roles: ['public', 'team_owner', 'admin'] },
+      { to: '/public-live', label: 'Live',     roles: ['public', 'team_owner', 'admin'] },
       { to: '/results',     label: 'Results',  roles: ['public', 'team_owner', 'admin'] },
+      { to: '/vacation',    label: 'Vacation', roles: ['public', 'team_owner', 'admin'] },
     ]
   },
   {
@@ -76,7 +77,7 @@ export default function AppShell({ title, children }) {
   return (
     <div className="min-h-screen">
       <header className="bg-ink-900/80 backdrop-blur border-b border-teal-700/40 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <a href="/" className="shrink-0">
               <img
@@ -93,11 +94,11 @@ export default function AppShell({ title, children }) {
               />
             )}
             <div className="min-w-0">
-              <h1 className="font-score text-2xl text-white leading-none truncate">{title}</h1>
+              <h1 className="font-score text-xl sm:text-2xl text-white leading-none truncate">{title}</h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-xs text-teal-400 capitalize">{role}</span>
                 {auction && (
-                  <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-semibold ${
+                  <span className={`text-[0.7rem] sm:text-xs px-2 py-0.5 rounded-full font-semibold ${
                     auction.status === 'live'
                       ? 'bg-gold/20 text-gold animate-pulsegold'
                       : 'bg-teal-700/40 text-teal-200'
@@ -109,12 +110,12 @@ export default function AppShell({ title, children }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-3">
             {role !== 'public' && auctions.length > 0 && (
               <select
                 value={auctionId ?? ''}
                 onChange={(e) => selectAuction(e.target.value)}
-                className="rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1.5 text-xs text-white max-w-[14rem]"
+                className="rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1.5 text-xs text-white w-full sm:w-auto max-w-[16rem]"
               >
                 {auctions.map((a) => (
                   <option key={a.id} value={a.id}>{a.name} ({a.status})</option>
@@ -179,21 +180,21 @@ export default function AppShell({ title, children }) {
         </nav>
 
         {sponsors.length > 0 && (
-          <div className="max-w-7xl mx-auto px-4 pb-3 flex flex-wrap items-center gap-4">
-            <span className="text-[0.6rem] uppercase tracking-widest text-teal-500">Sponsors</span>
+          <div className="max-w-7xl mx-auto px-4 pb-3 flex flex-wrap items-center gap-3 sm:gap-4">
+            <span className="text-[0.7rem] sm:text-xs uppercase tracking-widest text-teal-500">Sponsors</span>
             {sponsors.map((s, i) => (
               s?.url ? <img key={i} src={s.url} alt={s.name || ''} title={s.name || ''} className="h-7 object-contain" /> : null
             ))}
           </div>
         )}
       </header>
-      <main className="max-w-7xl mx-auto p-4">{children}</main>
+      <main className="max-w-7xl mx-auto p-3 sm:p-4">{children}</main>
       <footer className="border-t border-teal-700/30 mt-12 py-6">
         <div className="max-w-7xl mx-auto px-4 text-center space-y-1">
-          <p className="text-[0.65rem] text-teal-500">
+          <p className="text-xs text-teal-500">
             {footerVersion} · Developed by Sunny Mantri for South West Hitters Cricket Club
           </p>
-          <p className="text-[0.6rem] text-teal-600">
+          <p className="text-[0.7rem] sm:text-xs text-teal-600">
             ABN 56 495 977 829
           </p>
         </div>

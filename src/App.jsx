@@ -13,6 +13,7 @@ import UserManagement from './pages/UserManagement'
 import TeamOwnerBidding from './pages/TeamOwnerBidding'
 import PublicLiveView from './pages/PublicLiveView'
 import AuctionResults from './pages/AuctionResults'
+import VacationForm from './pages/VacationForm'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
             {/* Public (no login required) */}
             <Route path="/public-live" element={<PublicLiveView />} />
             <Route path="/results" element={<AuctionResults />} />
+            <Route path="/vacation" element={<VacationForm />} />
 
             {/* Authenticated */}
             <Route path="/auctions" element={<RequireAuth><Auctions /></RequireAuth>} />

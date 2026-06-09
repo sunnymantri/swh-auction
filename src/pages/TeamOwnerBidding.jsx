@@ -70,17 +70,17 @@ export default function TeamOwnerBidding() {
           <p className="text-teal-400">No player is currently on the block.</p>
         )}
         {auction && current?.players && (
-          <div className="grid lg:grid-cols-[1fr_22rem] gap-4">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
             <div className="space-y-4">
               <PlayerCard player={current.players} />
-              <div className="rounded-2xl bg-gradient-to-br from-teal-900 to-ink-900 border border-gold/30 p-5 flex items-end justify-between">
-                <div>
+              <div className="rounded-2xl bg-gradient-to-br from-teal-900 to-ink-900 border border-gold/30 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                <div className="min-w-0">
                   <div className="text-teal-400 text-xs uppercase tracking-widest">Current bid</div>
-                  <div className="font-score text-5xl text-gold tabular leading-none">{fmtPoints(highestBid)}</div>
+                  <div className="font-score text-4xl sm:text-5xl text-gold tabular leading-none">{fmtPoints(highestBid)}</div>
                 </div>
-                <div className="text-right">
+                <div className="sm:text-right min-w-0">
                   <div className="text-teal-400 text-xs uppercase tracking-widest">Leader</div>
-                  <div className="font-score text-2xl text-white">{leaderName || '—'}</div>
+                  <div className="font-score text-2xl text-white truncate">{leaderName || '—'}</div>
                 </div>
               </div>
             </div>
@@ -100,7 +100,7 @@ export default function TeamOwnerBidding() {
                 className="w-full px-3 py-2 rounded bg-gold text-ink-900 font-semibold disabled:opacity-40">
                 Bid {fmtPoints(minNext)}
               </button>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d]/g, ''))}
                   placeholder="Manual amount" inputMode="numeric"
                   className="flex-1 rounded bg-ink-900 border border-teal-700/50 px-3 py-2" />

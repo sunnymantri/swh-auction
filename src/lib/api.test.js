@@ -17,14 +17,14 @@ describe('players csv helpers', () => {
         catches: 4,
         strike_rate: 130.5,
         economy: 0,
-        status: 'approved'
+        status: 'auction'
       }
     ])
     const rows = parsePlayersCsv(csv)
     expect(rows).toHaveLength(1)
     expect(rows[0].name).toBe('A Test Batter')
     expect(rows[0].base_price).toBe(200)
-    expect(rows[0].status).toBe('approved')
+    expect(rows[0].status).toBe('auction')
   })
 
   it('ignores empty CSV bodies', () => {

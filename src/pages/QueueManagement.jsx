@@ -45,7 +45,7 @@ export default function QueueManagement() {
     <AppShell title="Queue">
       <RoleGate allow={['admin']}>
         {/* Tab bar */}
-        <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5">
+        <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5 overflow-x-auto scrollbar-none">
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${tab === t ? 'bg-ink-800/60 text-gold border border-teal-700/40 border-b-transparent -mb-px' : 'text-teal-300 hover:text-white'}`}>
@@ -56,18 +56,18 @@ export default function QueueManagement() {
 
         {tab === 'Queue' && (
           <>
-            <div className="mb-3 flex gap-2">
+            <div className="mb-3 flex flex-wrap gap-2">
               <button onClick={async () => { await generateQueue(auction.id); reloadQueue() }}
                 className="px-3 py-1 rounded bg-gold text-ink-900 text-sm">Generate Random Queue</button>
             </div>
             <div className="space-y-2">
               {queue.map((q) => (
-                <div key={q.id} className="border border-teal-700/40 rounded-lg p-3 flex justify-between items-center bg-ink-800/60">
+                <div key={q.id} className="border border-teal-700/40 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 bg-ink-800/60">
                   <div>
                     <p>{q.queue_order}. {q.players?.name}</p>
                     <p className="text-xs text-teal-300">{q.status} · {q.category}</p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button onClick={() => reorder(q.id, -1)} className="px-2 py-1 rounded text-xs bg-teal-700/50">Up</button>
                     <button onClick={() => reorder(q.id, 1)} className="px-2 py-1 rounded text-xs bg-teal-700/50">Down</button>
                     <button
@@ -90,7 +90,7 @@ export default function QueueManagement() {
         {tab === 'Unsold / Re-auction' && (
           <div className="space-y-2">
             {unsold.map((p) => (
-              <div key={p.id} className="rounded-lg border border-teal-700/40 bg-ink-800/60 p-3 flex justify-between items-center">
+              <div key={p.id} className="rounded-lg border border-teal-700/40 bg-ink-800/60 p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                 <div>
                   <p>{p.name}</p>
                   <p className="text-xs text-teal-300">{p.status} · {p.category}</p>

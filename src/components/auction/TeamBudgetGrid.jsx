@@ -14,7 +14,7 @@ export default function TeamBudgetGrid({ teams, leaderTeamId }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="font-score text-lg text-white truncate">{t.name}</span>
-                {leading && <span className="text-[0.6rem] font-bold text-gold uppercase tracking-wide animate-pulsegold">Leading</span>}
+                {leading && <span className="text-[0.7rem] sm:text-xs font-bold text-gold uppercase tracking-wide animate-pulsegold">Leading</span>}
               </div>
               <span className="text-teal-300 text-xs tabular">{t.players_count}/{t.squad_size}</span>
             </div>

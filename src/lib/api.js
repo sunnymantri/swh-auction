@@ -294,6 +294,9 @@ export const reauctionPlayer = (saleId) =>
 export const generateQueue = (auctionId) =>
   rpc('generate_queue', { p_auction_id: auctionId })
 
+export const resetAuction = (auctionId) =>
+  rpc('reset_auction', { p_auction_id: auctionId })
+
 export async function uploadTeamLogo(file) {
   const path = `team-${Date.now()}-${file.name}`
   const { error } = await supabase.storage.from('team-logos').upload(path, file, { upsert: true })
@@ -329,6 +332,30 @@ async function rpc(fn, args) {
   return data
 }
 
+
+// ---- Vacation ----
+export async function searchPlayersByName(auctionId, name) {
+  const { data, error } = await supabase
+    .from('players')
+    .select('id, name, role, category, photo_url, weeks_away')
+    .eq('auction_id', auctionId)
+    .ilike('name', `%${name}%`)
+    .order('name')
+    .limit(10)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function updatePlayerVacation(playerId, weeksAway) {
+  const { data, error } = await supabase
+    .from('players')
+    .update({ weeks_away: weeksAway })
+    .eq('id', playerId)
+    .select('id, name, weeks_away')
+    .single()
+  if (error) throw error
+  return data
+}
 
 // ---- Realtime ----
 // Subscribe to all auction-relevant changes; cb() is debounced by caller.
