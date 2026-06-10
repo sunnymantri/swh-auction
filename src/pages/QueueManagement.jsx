@@ -60,30 +60,55 @@ export default function QueueManagement() {
               <button onClick={async () => { await generateQueue(auction.id); reloadQueue() }}
                 className="px-3 py-1 rounded bg-gold text-ink-900 text-sm">Generate Random Queue</button>
             </div>
-            <div className="space-y-2">
-              {queue.map((q) => (
-                <div key={q.id} className="border border-teal-700/40 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 bg-ink-800/60">
-                  <div>
-                    <p>{q.queue_order}. {q.players?.name}</p>
-                    <p className="text-xs text-teal-300">{q.status} · {q.category}</p>
+            {(() => {
+              const pending = queue.filter(q => q.status !== 'completed')
+              const completed = queue.filter(q => q.status === 'completed')
+              return (
+                <>
+                  <div className="space-y-2">
+                    {pending.map((q) => (
+                      <div key={q.id} className={`border rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 ${q.status === 'current' ? 'border-gold bg-gold/10' : 'border-teal-700/40 bg-ink-800/60'}`}>
+                        <div>
+                          <p>{q.queue_order}. {q.players?.name}</p>
+                          <p className="text-xs text-teal-300">{q.status} · {q.category}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button onClick={() => reorder(q.id, -1)} className="px-2 py-1 rounded text-xs bg-teal-700/50">Up</button>
+                          <button onClick={() => reorder(q.id, 1)} className="px-2 py-1 rounded text-xs bg-teal-700/50">Down</button>
+                          <button
+                            onClick={async () => {
+                              if (!window.confirm(`Set "${q.players?.name}" as the current player? This will advance the auction.`)) return
+                              await startPlayer(q.player_id)
+                              reloadQueue()
+                            }}
+                            className="px-2 py-1 rounded text-xs bg-gold text-ink-900 font-semibold">
+                            Set Current
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {pending.length === 0 && <p className="text-teal-500 text-sm">Queue is empty — generate it above.</p>}
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button onClick={() => reorder(q.id, -1)} className="px-2 py-1 rounded text-xs bg-teal-700/50">Up</button>
-                    <button onClick={() => reorder(q.id, 1)} className="px-2 py-1 rounded text-xs bg-teal-700/50">Down</button>
-                    <button
-                      onClick={async () => {
-                        if (!window.confirm(`Set "${q.players?.name}" as the current player? This will advance the auction.`)) return
-                        await startPlayer(q.player_id)
-                        reloadQueue()
-                      }}
-                      className="px-2 py-1 rounded text-xs bg-gold text-ink-900 font-semibold">
-                      Set Current
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {queue.length === 0 && <p className="text-teal-500 text-sm">Queue is empty — generate it above.</p>}
-            </div>
+                  {completed.length > 0 && (
+                    <details className="mt-4">
+                      <summary className="text-xs text-teal-400 cursor-pointer hover:text-teal-200">
+                        {completed.length} completed player{completed.length !== 1 ? 's' : ''}
+                      </summary>
+                      <div className="space-y-1 mt-2 opacity-60">
+                        {completed.map((q) => (
+                          <div key={q.id} className="border border-teal-700/20 rounded-lg p-2 bg-ink-900/40 flex justify-between items-center">
+                            <div>
+                              <p className="text-sm">{q.queue_order}. {q.players?.name}</p>
+                              <p className="text-xs text-teal-400">{q.category}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                </>
+              )
+            })()}
           </>
         )}
 
