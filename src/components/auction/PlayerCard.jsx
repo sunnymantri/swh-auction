@@ -146,6 +146,18 @@ export default function PlayerCard({
           tierOverride={tierOverride}
         />
       )}
+      {Array.isArray(player.vacation_dates) && player.vacation_dates.length > 0 && (
+        <div className="px-4 sm:px-6 py-4 border-t border-teal-700/30">
+          <h4 className="text-xs font-semibold text-yellow-400 uppercase tracking-wider mb-2">Unavailable Sundays</h4>
+          <div className="flex flex-wrap gap-1.5">
+            {player.vacation_dates.map((date) => (
+              <span key={date} className="px-2.5 py-1 rounded-full bg-yellow-900/30 border border-yellow-600/30 text-yellow-300 text-xs">
+                {new Date(date + 'T00:00:00').toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="px-6 pb-4 flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs text-teal-300">CricHeroes ID: <b className="text-white">{profileId || '—'}</b></span>
         {player.profile_url && (

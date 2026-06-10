@@ -68,6 +68,8 @@ export default function Auctions() {
       const payload = {
         name: cfgForm.name, season: cfgForm.season, sport: cfgForm.sport,
         auction_date: cfgForm.auction_date || null, auction_time: cfgForm.auction_time || null,
+        season_start_date: cfgForm.season_start_date || null,
+        season_end_date: cfgForm.season_end_date || null,
         squad_size: Number(cfgForm.squad_size || 0),
         default_team_budget: Number(cfgForm.default_team_budget || 0),
         default_base_price: Number(cfgForm.default_base_price || 0),
@@ -249,8 +251,10 @@ export default function Auctions() {
                     <CfgField label="Name" value={cfgForm.name} onChange={(v) => cfgSet('name', v)} />
                     <CfgField label="Season" value={cfgForm.season} onChange={(v) => cfgSet('season', v)} />
                     <CfgField label="Sport" value={cfgForm.sport} onChange={(v) => cfgSet('sport', v)} />
-                    <CfgField label="Date" type="date" value={cfgForm.auction_date ?? ''} onChange={(v) => cfgSet('auction_date', v)} />
-                    <CfgField label="Time" type="time" value={cfgForm.auction_time ?? ''} onChange={(v) => cfgSet('auction_time', v)} />
+                    <CfgField label="Auction date" type="date" value={cfgForm.auction_date ?? ''} onChange={(v) => cfgSet('auction_date', v)} />
+                    <CfgField label="Auction time" type="time" value={cfgForm.auction_time ?? ''} onChange={(v) => cfgSet('auction_time', v)} />
+                    <CfgField label="Season start (Sun)" type="date" value={cfgForm.season_start_date ?? ''} onChange={(v) => cfgSet('season_start_date', v)} />
+                    <CfgField label="Season end (Sun)" type="date" value={cfgForm.season_end_date ?? ''} onChange={(v) => cfgSet('season_end_date', v)} />
                     {NUMERIC.map((k) => (
                       <CfgField key={k} label={k.replaceAll('_', ' ')} value={cfgForm[k] ?? ''}
                         onChange={(v) => cfgSet(k, Number(v.replace(/[^\d]/g, '') || 0))} />

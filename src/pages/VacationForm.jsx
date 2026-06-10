@@ -1,17 +1,42 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { searchPlayersByName, updatePlayerVacation } from '../lib/api'
+
+function getSundays(startDate, endDate) {
+  const sundays = []
+  const start = new Date(startDate + 'T00:00:00')
+  const end = new Date(endDate + 'T00:00:00')
+  const current = new Date(start)
+  // Advance to the first Sunday
+  const dayOfWeek = current.getDay()
+  if (dayOfWeek !== 0) current.setDate(current.getDate() + (7 - dayOfWeek))
+  while (current <= end) {
+    sundays.push(current.toISOString().split('T')[0])
+    current.setDate(current.getDate() + 7)
+  }
+  return sundays
+}
+
+function formatSunday(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+}
 
 export default function VacationForm() {
   const { auction, loading: auctionLoading } = useActiveAuction()
   const [search, setSearch] = useState('')
   const [results, setResults] = useState([])
   const [selected, setSelected] = useState(null)
-  const [weeksAway, setWeeksAway] = useState(0)
+  const [selectedDates, setSelectedDates] = useState([])
   const [busy, setBusy] = useState(false)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
+
+  const sundays = useMemo(() => {
+    if (!auction?.season_start_date || !auction?.season_end_date) return []
+    return getSundays(auction.season_start_date, auction.season_end_date)
+  }, [auction])
 
   useEffect(() => {
     if (!auction || search.trim().length < 2) {
@@ -31,12 +56,22 @@ export default function VacationForm() {
 
   const selectPlayer = (player) => {
     setSelected(player)
-    setWeeksAway(player.weeks_away || 0)
+    const existing = Array.isArray(player.vacation_dates) ? player.vacation_dates : []
+    setSelectedDates(existing)
     setSearch('')
     setResults([])
     setSuccess('')
     setError('')
   }
+
+  const toggleDate = (date) => {
+    setSelectedDates((prev) =>
+      prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date]
+    )
+  }
+
+  const selectAll = () => setSelectedDates([...sundays])
+  const clearAll = () => setSelectedDates([])
 
   const submit = async () => {
     if (!selected) return
@@ -44,10 +79,16 @@ export default function VacationForm() {
     setError('')
     setSuccess('')
     try {
-      await updatePlayerVacation(selected.id, weeksAway)
-      setSuccess(`Updated! ${selected.name} marked as away for ${weeksAway} week${weeksAway === 1 ? '' : 's'}.`)
+      const sorted = [...selectedDates].sort()
+      await updatePlayerVacation(selected.id, sorted)
+      const count = sorted.length
+      setSuccess(
+        count === 0
+          ? `Updated! ${selected.name} is available for the full season.`
+          : `Updated! ${selected.name} marked as away for ${count} Sunday${count === 1 ? '' : 's'}.`
+      )
       setSelected(null)
-      setWeeksAway(0)
+      setSelectedDates([])
     } catch (e) {
       setError(e.message || 'Failed to update. Please try again.')
     } finally {
@@ -63,13 +104,24 @@ export default function VacationForm() {
     return <AppShell title="Vacation Form"><p className="text-teal-400">No active auction found.</p></AppShell>
   }
 
+  if (!auction.season_start_date || !auction.season_end_date) {
+    return (
+      <AppShell title="Vacation Form">
+        <div className="max-w-lg mx-auto rounded-xl border border-yellow-600/40 bg-yellow-900/20 p-5 text-center">
+          <p className="text-yellow-400 font-medium">Season dates not configured yet.</p>
+          <p className="text-sm text-teal-300 mt-2">The auction admin needs to set the season start and end dates in the auction configuration.</p>
+        </div>
+      </AppShell>
+    )
+  }
+
   return (
     <AppShell title="Vacation Form">
       <div className="max-w-lg mx-auto space-y-6">
         <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-5 space-y-2">
           <h2 className="font-score text-xl text-white">Report your availability</h2>
           <p className="text-sm text-teal-300">
-            If you'll be away for part of the season, let the captains know how many weeks you'll be unavailable.
+            Select the Sundays you'll be unavailable this season ({formatSunday(auction.season_start_date)} – {formatSunday(auction.season_end_date)}).
           </p>
         </div>
 
@@ -138,23 +190,39 @@ export default function VacationForm() {
               </button>
             </div>
 
-            <label className="block text-sm text-teal-200 font-medium">
-              How many weeks will you be away this season?
-              <div className="mt-2 flex items-center gap-4">
-                <input
-                  type="range"
-                  min="0"
-                  max="12"
-                  value={weeksAway}
-                  onChange={(e) => setWeeksAway(Number(e.target.value))}
-                  className="flex-1 accent-gold"
-                />
-                <span className="font-score text-2xl text-gold tabular w-12 text-center">{weeksAway}</span>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-teal-200 font-medium">
+                  Select Sundays you'll be away
+                  {selectedDates.length > 0 && (
+                    <span className="text-yellow-400 ml-2">({selectedDates.length} selected)</span>
+                  )}
+                </p>
+                <div className="flex gap-2">
+                  <button onClick={selectAll} className="text-xs text-teal-400 hover:text-white">All</button>
+                  <button onClick={clearAll} className="text-xs text-teal-400 hover:text-white">None</button>
+                </div>
               </div>
-              <p className="text-xs text-teal-500 mt-1">
-                {weeksAway === 0 ? 'Available for the full season' : `Away for ${weeksAway} week${weeksAway === 1 ? '' : 's'}`}
-              </p>
-            </label>
+
+              <div className="space-y-1.5 max-h-64 overflow-y-auto rounded-lg border border-teal-700/30 bg-ink-900/50 p-3">
+                {sundays.map((date) => {
+                  const checked = selectedDates.includes(date)
+                  return (
+                    <label key={date} className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition ${checked ? 'bg-yellow-900/30 border border-yellow-600/30' : 'hover:bg-teal-900/30 border border-transparent'}`}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleDate(date)}
+                        className="accent-gold shrink-0"
+                      />
+                      <span className={`text-sm ${checked ? 'text-yellow-400' : 'text-teal-200'}`}>
+                        {formatSunday(date)}
+                      </span>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
 
             <button
               onClick={submit}

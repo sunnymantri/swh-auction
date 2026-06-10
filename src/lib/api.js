@@ -337,7 +337,7 @@ async function rpc(fn, args) {
 export async function searchPlayersByName(auctionId, name) {
   const { data, error } = await supabase
     .from('players')
-    .select('id, name, role, category, photo_url, weeks_away')
+    .select('id, name, role, category, photo_url, weeks_away, vacation_dates')
     .eq('auction_id', auctionId)
     .ilike('name', `%${name}%`)
     .order('name')
@@ -346,12 +346,12 @@ export async function searchPlayersByName(auctionId, name) {
   return data ?? []
 }
 
-export async function updatePlayerVacation(playerId, weeksAway) {
+export async function updatePlayerVacation(playerId, vacationDates) {
   const { data, error } = await supabase
     .from('players')
-    .update({ weeks_away: weeksAway })
+    .update({ vacation_dates: vacationDates, weeks_away: vacationDates.length })
     .eq('id', playerId)
-    .select('id, name, weeks_away')
+    .select('id, name, weeks_away, vacation_dates')
     .single()
   if (error) throw error
   return data
