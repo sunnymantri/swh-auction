@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { fmtPoints } from '../../lib/format'
 
 // ─── Fireworks canvas simulation ─────────────────────────────────────────────
@@ -183,12 +183,19 @@ export default function SoldCelebration({ player, soldPrice, teamName, teamLogo,
   const canvasRef = useRef(null)
   const onDoneRef = useRef(onDone)
   onDoneRef.current = onDone
+  const [phase, setPhase] = useState('splash') // 'splash' → 'fireworks'
 
-  // stable callback so the canvas effect doesn't re-run when parent re-renders
   const stableOnDone = useCallback(() => onDoneRef.current(), [])
 
-  // Audio + auto-dismiss
+  // Phase 1: show SOLD splash for 2s, then transition to fireworks
   useEffect(() => {
+    const t = setTimeout(() => setPhase('fireworks'), 2000)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Phase 2: audio + auto-dismiss after fireworks
+  useEffect(() => {
+    if (phase !== 'fireworks') return
     try {
       audioRef.current = new Audio('/fireworks.mp3')
       audioRef.current.volume = 0.85
@@ -199,32 +206,66 @@ export default function SoldCelebration({ player, soldPrice, teamName, teamLogo,
       clearTimeout(t)
       try { audioRef.current?.pause() } catch (_) {}
     }
-  }, [stableOnDone])
+  }, [phase, stableOnDone])
 
-  useFireworksCanvas(canvasRef, true)
+  useFireworksCanvas(canvasRef, phase === 'fireworks')
 
   const initials = (n = '') => n.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 
+  // ─── Phase 1: Big SOLD splash ──────────────────────────────────────────────
+  if (phase === 'splash') {
+    return (
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center"
+        style={{ background: 'rgba(0,0,0,0.9)' }}
+        onClick={() => setPhase('fireworks')}
+      >
+        <div className="flex flex-col items-center gap-6" style={{ animation: 'soldSplashIn 0.5s cubic-bezier(.175,.885,.32,1.275) both' }}>
+          <div
+            className="font-score text-7xl sm:text-8xl lg:text-9xl text-gold tracking-wider"
+            style={{ textShadow: '0 0 40px rgba(255,215,0,0.8), 0 0 80px rgba(255,215,0,0.4)' }}
+          >
+            SOLD!
+          </div>
+          <div className="font-score text-3xl sm:text-4xl text-white">{player?.name}</div>
+          <div className="font-score text-5xl sm:text-6xl text-gold tabular" style={{ textShadow: '0 0 30px rgba(255,215,0,0.6)' }}>
+            {fmtPoints(soldPrice)}
+          </div>
+          <div className="flex items-center gap-3 mt-2">
+            {teamLogo
+              ? <img src={teamLogo} alt="" className="h-10 w-10 rounded-lg object-cover" />
+              : <div className="h-10 w-10 rounded-lg bg-teal-700 grid place-items-center text-sm font-bold text-white">{initials(teamName)}</div>}
+            <span className="font-score text-2xl text-teal-100">{teamName}</span>
+          </div>
+        </div>
+        <style>{`
+          @keyframes soldSplashIn {
+            from { transform: scale(0.3); opacity: 0 }
+            to   { transform: scale(1);   opacity: 1 }
+          }
+        `}</style>
+      </div>
+    )
+  }
+
+  // ─── Phase 2: Fireworks celebration ────────────────────────────────────────
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center cursor-pointer"
       style={{ background: 'rgba(0,0,0,0.82)' }}
       onClick={stableOnDone}
     >
-      {/* ── Canvas fireworks (full screen, behind card) ──────────── */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 pointer-events-none"
         style={{ width: '100%', height: '100%' }}
       />
 
-      {/* ── Centre card ──────────────────────────────────────────── */}
       <div
         className="relative z-10 flex flex-col items-center gap-4 p-8 rounded-3xl border border-gold/60 bg-black/80 shadow-2xl max-w-sm w-full mx-4"
         onClick={e => e.stopPropagation()}
         style={{ animation: 'celebPop 0.55s cubic-bezier(.175,.885,.32,1.275) both' }}
       >
-        {/* SOLD stamp */}
         <div
           className="absolute -top-5 left-1/2 px-7 py-1.5 rounded-full bg-gold text-ink-900 font-score text-2xl tracking-widest shadow-xl"
           style={{
@@ -236,7 +277,6 @@ export default function SoldCelebration({ player, soldPrice, teamName, teamLogo,
           ✓ SOLD
         </div>
 
-        {/* Player photo */}
         <div
           className="mt-5 h-32 w-32 rounded-full overflow-hidden border-4 border-gold bg-teal-800/60 grid place-items-center shrink-0"
           style={{ boxShadow: '0 0 40px 12px rgba(255,215,0,0.5)', animation: 'photoPop 0.5s 0.1s cubic-bezier(.175,.885,.32,1.275) both' }}
@@ -246,12 +286,10 @@ export default function SoldCelebration({ player, soldPrice, teamName, teamLogo,
             : <span className="font-score text-4xl text-teal-200">{initials(player?.name)}</span>}
         </div>
 
-        {/* Player name */}
         <p className="font-score text-3xl text-white text-center leading-tight drop-shadow-lg">
           {player?.name}
         </p>
 
-        {/* Sold price */}
         <div className="text-center">
           <p className="text-teal-400 text-xs uppercase tracking-widest mb-1">Sold for</p>
           <p
@@ -265,7 +303,6 @@ export default function SoldCelebration({ player, soldPrice, teamName, teamLogo,
           </p>
         </div>
 
-        {/* Winning team */}
         <div
           className="flex items-center gap-3 px-5 py-2.5 rounded-xl bg-teal-900/70 border border-teal-500/50"
           style={{ animation: 'priceIn 0.4s 0.5s ease both' }}

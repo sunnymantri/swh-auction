@@ -99,8 +99,17 @@ export default function QueueManagement() {
                           <div key={q.id} className="border border-teal-700/20 rounded-lg p-2 bg-ink-900/40 flex justify-between items-center">
                             <div>
                               <p className="text-sm">{q.queue_order}. {q.players?.name}</p>
-                              <p className="text-xs text-teal-400">{q.category}</p>
+                              <p className="text-xs text-teal-400">{q.status} · {q.category}</p>
                             </div>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm(`Re-start "${q.players?.name}"? This will bring them back to auction.`)) return
+                                await startPlayer(q.player_id)
+                                reloadQueue()
+                              }}
+                              className="px-2 py-1 rounded text-xs bg-gold text-ink-900 font-semibold">
+                              Set Current
+                            </button>
                           </div>
                         ))}
                       </div>

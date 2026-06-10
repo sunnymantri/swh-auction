@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
@@ -7,6 +7,7 @@ import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
 import { getBidsForPlayer, getCurrentQueueItem, listTeamSummaries, placeBid } from '../lib/api'
 import { fmtPoints } from '../lib/format'
 import PlayerCard from '../components/auction/PlayerCard'
+import AuctionTimer from '../components/auction/AuctionTimer'
 
 export default function TeamOwnerBidding() {
   const { auction } = useActiveAuction()
@@ -17,6 +18,8 @@ export default function TeamOwnerBidding() {
   const [amount, setAmount] = useState('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
+  const [lastBidAt, setLastBidAt] = useState(null)
+  const prevBidCountRef = useRef(0)
 
   const reload = useCallback(async () => {
     if (!auction) return
@@ -33,6 +36,20 @@ export default function TeamOwnerBidding() {
     () => (profile ? teams.find((t) => t.owner_user_id === profile.id) || null : null),
     [teams, profile]
   )
+
+  const player = current?.players ?? null
+
+  useEffect(() => {
+    if (player && bids.length !== prevBidCountRef.current) {
+      setLastBidAt(Date.now())
+    }
+    prevBidCountRef.current = bids.length
+  }, [bids.length, player])
+
+  useEffect(() => {
+    if (player) setLastBidAt(Date.now())
+    else setLastBidAt(null)
+  }, [player?.id])
 
   const isLive = auction?.status === 'live'
   const top = bids.reduce((m, b) => (b.bid_amount > (m?.bid_amount ?? -1) ? b : m), null)
@@ -78,6 +95,13 @@ export default function TeamOwnerBidding() {
                   <div className="text-teal-400 text-xs uppercase tracking-widest">Current bid</div>
                   <div className="font-score text-4xl sm:text-5xl text-gold tabular leading-none">{fmtPoints(highestBid)}</div>
                 </div>
+                {player && lastBidAt && isLive && (
+                  <AuctionTimer
+                    duration={auction.bid_timer_seconds ?? 15}
+                    lastBidAt={lastBidAt}
+                    paused={false}
+                  />
+                )}
                 <div className="sm:text-right min-w-0">
                   <div className="text-teal-400 text-xs uppercase tracking-widest">Leader</div>
                   <div className="font-score text-2xl text-white truncate">{leaderName || '—'}</div>

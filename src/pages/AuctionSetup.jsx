@@ -6,7 +6,7 @@ import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuctionContext } from '../context/AuctionContext'
 import { updateAuction, uploadBranding } from '../lib/api'
 
-const NUMERIC = ['squad_size', 'default_team_budget', 'default_base_price', 'default_bid_increment', 'min_player_price']
+const NUMERIC = ['squad_size', 'default_team_budget', 'default_base_price', 'default_bid_increment', 'min_player_price', 'bid_timer_seconds']
 
 export default function AuctionSetup() {
   const { auction } = useActiveAuction()
@@ -45,6 +45,7 @@ export default function AuctionSetup() {
         default_base_price: Number(form.default_base_price || 0),
         default_bid_increment: Number(form.default_bid_increment || 0),
         min_player_price: Number(form.min_player_price || 0),
+        bid_timer_seconds: Number(form.bid_timer_seconds || 15),
         reauction_refund_enabled: !!form.reauction_refund_enabled,
         banner_logo_url: form.banner_logo_url || null,
         sponsor_logos: form.sponsor_logos || []
