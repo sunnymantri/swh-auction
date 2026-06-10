@@ -3,24 +3,26 @@ import AppShell from '../components/layout/AppShell'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { searchPlayersByName, updatePlayerVacation } from '../lib/api'
 
-function getSundays(startDate, endDate) {
-  const sundays = []
-  const start = new Date(startDate + 'T00:00:00')
-  const end = new Date(endDate + 'T00:00:00')
+const DAY_MAP = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 }
+
+function getMatchDays(startDate, endDate, matchDay = 'Sunday') {
+  const days = []
+  const targetDay = DAY_MAP[matchDay] ?? 0
+  const start = new Date(startDate + 'T12:00:00')
+  const end = new Date(endDate + 'T12:00:00')
   const current = new Date(start)
-  // Advance to the first Sunday
-  const dayOfWeek = current.getDay()
-  if (dayOfWeek !== 0) current.setDate(current.getDate() + (7 - dayOfWeek))
+  const diff = (targetDay - current.getDay() + 7) % 7
+  if (diff > 0) current.setDate(current.getDate() + diff)
   while (current <= end) {
-    sundays.push(current.toISOString().split('T')[0])
+    days.push(current.toISOString().split('T')[0])
     current.setDate(current.getDate() + 7)
   }
-  return sundays
+  return days
 }
 
-function formatSunday(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+function formatMatchDay(dateStr, timezone = 'Australia/Sydney') {
+  const d = new Date(dateStr + 'T12:00:00')
+  return d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: timezone })
 }
 
 export default function VacationForm() {
@@ -33,10 +35,13 @@ export default function VacationForm() {
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
 
+  const matchDay = auction?.match_day || 'Sunday'
+  const timezone = auction?.timezone || 'Australia/Sydney'
+
   const sundays = useMemo(() => {
     if (!auction?.season_start_date || !auction?.season_end_date) return []
-    return getSundays(auction.season_start_date, auction.season_end_date)
-  }, [auction])
+    return getMatchDays(auction.season_start_date, auction.season_end_date, matchDay)
+  }, [auction, matchDay])
 
   useEffect(() => {
     if (!auction || search.trim().length < 2) {
@@ -85,7 +90,7 @@ export default function VacationForm() {
       setSuccess(
         count === 0
           ? `Updated! ${selected.name} is available for the full season.`
-          : `Updated! ${selected.name} marked as away for ${count} Sunday${count === 1 ? '' : 's'}.`
+          : `Updated! ${selected.name} marked as away for ${count} ${matchDay}${count === 1 ? '' : 's'}.`
       )
       setSelected(null)
       setSelectedDates([])
@@ -109,7 +114,7 @@ export default function VacationForm() {
       <AppShell title="Vacation Form">
         <div className="max-w-lg mx-auto rounded-xl border border-yellow-600/40 bg-yellow-900/20 p-5 text-center">
           <p className="text-yellow-400 font-medium">Season dates not configured yet.</p>
-          <p className="text-sm text-teal-300 mt-2">The auction admin needs to set the season start and end dates in the auction configuration.</p>
+          <p className="text-sm text-teal-300 mt-2">The auction admin needs to set the season start and end dates in Auctions → Configuration.</p>
         </div>
       </AppShell>
     )
@@ -121,7 +126,7 @@ export default function VacationForm() {
         <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-5 space-y-2">
           <h2 className="font-score text-xl text-white">Report your availability</h2>
           <p className="text-sm text-teal-300">
-            Select the Sundays you'll be unavailable this season ({formatSunday(auction.season_start_date)} – {formatSunday(auction.season_end_date)}).
+            Select the {matchDay}s you'll be unavailable this season ({formatMatchDay(auction.season_start_date, timezone)} – {formatMatchDay(auction.season_end_date, timezone)}).
           </p>
         </div>
 
@@ -193,7 +198,7 @@ export default function VacationForm() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-teal-200 font-medium">
-                  Select Sundays you'll be away
+                  Select {matchDay}s you'll be away
                   {selectedDates.length > 0 && (
                     <span className="text-yellow-400 ml-2">({selectedDates.length} selected)</span>
                   )}
@@ -216,7 +221,7 @@ export default function VacationForm() {
                         className="accent-gold shrink-0"
                       />
                       <span className={`text-sm ${checked ? 'text-yellow-400' : 'text-teal-200'}`}>
-                        {formatSunday(date)}
+                        {formatMatchDay(date, timezone)}
                       </span>
                     </label>
                   )

@@ -70,6 +70,8 @@ export default function Auctions() {
         auction_date: cfgForm.auction_date || null, auction_time: cfgForm.auction_time || null,
         season_start_date: cfgForm.season_start_date || null,
         season_end_date: cfgForm.season_end_date || null,
+        timezone: cfgForm.timezone || 'Australia/Sydney',
+        match_day: cfgForm.match_day || 'Sunday',
         squad_size: Number(cfgForm.squad_size || 0),
         default_team_budget: Number(cfgForm.default_team_budget || 0),
         default_base_price: Number(cfgForm.default_base_price || 0),
@@ -253,8 +255,26 @@ export default function Auctions() {
                     <CfgField label="Sport" value={cfgForm.sport} onChange={(v) => cfgSet('sport', v)} />
                     <CfgField label="Auction date" type="date" value={cfgForm.auction_date ?? ''} onChange={(v) => cfgSet('auction_date', v)} />
                     <CfgField label="Auction time" type="time" value={cfgForm.auction_time ?? ''} onChange={(v) => cfgSet('auction_time', v)} />
-                    <CfgField label="Season start (Sun)" type="date" value={cfgForm.season_start_date ?? ''} onChange={(v) => cfgSet('season_start_date', v)} />
-                    <CfgField label="Season end (Sun)" type="date" value={cfgForm.season_end_date ?? ''} onChange={(v) => cfgSet('season_end_date', v)} />
+                    <CfgField label="Season start date" type="date" value={cfgForm.season_start_date ?? ''} onChange={(v) => cfgSet('season_start_date', v)} />
+                    <CfgField label="Season end date" type="date" value={cfgForm.season_end_date ?? ''} onChange={(v) => cfgSet('season_end_date', v)} />
+                    <label className="block text-xs text-teal-300 capitalize">
+                      Match day
+                      <select value={cfgForm.match_day ?? 'Sunday'} onChange={(e) => cfgSet('match_day', e.target.value)}
+                        className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
+                        {['Sunday','Saturday','Monday','Tuesday','Wednesday','Thursday','Friday'].map(d => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block text-xs text-teal-300 capitalize">
+                      Timezone
+                      <select value={cfgForm.timezone ?? 'Australia/Sydney'} onChange={(e) => cfgSet('timezone', e.target.value)}
+                        className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
+                        {['Australia/Sydney','Australia/Melbourne','Australia/Brisbane','Australia/Adelaide','Australia/Perth','Australia/Hobart','Pacific/Auckland','Asia/Kolkata','Asia/Singapore','Europe/London','America/New_York','America/Los_Angeles','UTC'].map(tz => (
+                          <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>
+                        ))}
+                      </select>
+                    </label>
                     {NUMERIC.map((k) => (
                       <CfgField key={k} label={k.replaceAll('_', ' ')} value={cfgForm[k] ?? ''}
                         onChange={(v) => cfgSet(k, Number(v.replace(/[^\d]/g, '') || 0))} />
