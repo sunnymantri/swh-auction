@@ -34,12 +34,11 @@ export default function TeamsManagement() {
 
   const calculatedBudget = useMemo(() => {
     const readyPlayers = players.filter((p) => p.status === 'ready_for_auction')
-    // Sum of performance points (calculated_value) — not base price.
-    // Formula: totalPoints × multiplier ÷ numTeams
-    const totalPoints = readyPlayers.reduce((sum, p) => sum + (p.calculated_value || 0), 0)
+    // Formula: total ready base_price × multiplier ÷ number of teams.
+    const totalBasePrice = readyPlayers.reduce((sum, p) => sum + (p.base_price || 0), 0)
     const multiplier = auction?.budget_multiplier ?? 1.6
     const numTeams = teams.length || 1
-    return Math.round((totalPoints * multiplier) / numTeams)
+    return Math.round((totalBasePrice * multiplier) / numTeams)
   }, [players, teams, auction])
 
   if (!auction) {
@@ -184,7 +183,7 @@ export default function TeamsManagement() {
             {/* Calculated budget info */}
             <div className="mb-3 rounded-lg border border-teal-700/30 bg-ink-900/40 p-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-teal-300">
               <span>Ready for auction: <b className="text-white">{players.filter((p) => p.status === 'ready_for_auction').length}</b></span>
-              <span>Total points pool: <b className="text-white">{fmtPoints(players.filter((p) => p.status === 'ready_for_auction').reduce((s, p) => s + (p.calculated_value || 0), 0))}</b></span>
+              <span>Total base-price pool: <b className="text-white">{fmtPoints(players.filter((p) => p.status === 'ready_for_auction').reduce((s, p) => s + (p.base_price || 0), 0))}</b></span>
               <span>Multiplier: <b className="text-white">{auction?.budget_multiplier ?? 1.6}x</b></span>
               <span>Suggested team budget: <b className="text-gold">{fmtPoints(calculatedBudget)}</b></span>
             </div>

@@ -306,6 +306,9 @@ export const generateQueue = (auctionId) =>
 export const resetAuction = (auctionId) =>
   rpc('reset_auction', { p_auction_id: auctionId })
 
+export const recalculateTeamBudgets = (auctionId) =>
+  rpc('recalculate_team_budgets', { p_auction_id: auctionId })
+
 export const pauseCurrentClock = (auctionId) =>
   rpc('pause_current_clock', { p_auction_id: auctionId })
 

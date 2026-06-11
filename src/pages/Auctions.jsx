@@ -4,7 +4,7 @@ import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useAuctionContext } from '../context/AuctionContext'
 import { useActiveAuction } from '../hooks/useActiveAuction'
-import { createAuction, setAuctionStatus, updateAuction, uploadBranding, resetAuction } from '../lib/api'
+import { createAuction, setAuctionStatus, updateAuction, uploadBranding, resetAuction, recalculateTeamBudgets } from '../lib/api'
 import { fmtPoints } from '../lib/format'
 
 const STATUSES = ['draft', 'live', 'paused', 'completed']
@@ -31,6 +31,7 @@ export default function Auctions() {
   const [cfgMsg, setCfgMsg] = useState('')
   const [cfgBusy, setCfgBusy] = useState(false)
   const [resetBusy, setResetBusy] = useState(false)
+  const [recalcBusy, setRecalcBusy] = useState(false)
   const [uploadErr, setUploadErr] = useState('')
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingSponsor, setUploadingSponsor] = useState(false)
@@ -145,6 +146,21 @@ export default function Auctions() {
       setCfgMsg(e.message || 'Auction reset failed.')
     } finally {
       setResetBusy(false)
+    }
+  }
+
+  const handleRecalculateBudgets = async () => {
+    if (!auction) return
+    setRecalcBusy(true)
+    setCfgMsg('')
+    try {
+      const budget = await recalculateTeamBudgets(auction.id)
+      await reload()
+      setCfgMsg(`Team budgets recalculated to ${fmtPoints(Number(budget || 0))} per team.`)
+    } catch (e) {
+      setCfgMsg(e.message || 'Budget recalculation failed.')
+    } finally {
+      setRecalcBusy(false)
     }
   }
 
@@ -298,7 +314,7 @@ export default function Auctions() {
                         onChange={(e) => cfgSet('budget_multiplier', e.target.value.replace(/[^\d.]/g, ''))}
                         className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                       <span className="text-[0.7rem] sm:text-xs text-teal-500 mt-0.5 block">
-                        Team budget = (sum of auction player base prices) × multiplier ÷ number of teams
+                        Team budget = (sum of ready-for-auction player base prices) × multiplier ÷ number of teams
                       </span>
                     </label>
                   </div>
@@ -310,6 +326,13 @@ export default function Auctions() {
                   <button onClick={saveCfg} disabled={cfgBusy}
                     className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
                     {cfgBusy ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    onClick={handleRecalculateBudgets}
+                    disabled={recalcBusy}
+                    className="ml-2 px-4 py-2 rounded-lg bg-teal-800/60 border border-teal-600/50 text-teal-100 font-semibold disabled:opacity-50"
+                  >
+                    {recalcBusy ? 'Recalculating…' : 'Recalculate team budgets'}
                   </button>
                   <button
                     onClick={handleResetAuction}
