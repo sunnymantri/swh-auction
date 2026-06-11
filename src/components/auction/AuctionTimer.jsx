@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 
-export default function AuctionTimer({ duration, lastBidAt, onExpired, paused, deadlineTs = null }) {
+export default function AuctionTimer({
+  duration,
+  lastBidAt,
+  onExpired,
+  paused,
+  deadlineTs = null,
+  pausedRemainingSeconds = null
+}) {
   const [remaining, setRemaining] = useState(duration)
   const expiredRef = useRef(false)
   const intervalRef = useRef(null)
@@ -18,6 +25,12 @@ export default function AuctionTimer({ duration, lastBidAt, onExpired, paused, d
     const msRemaining = Math.max(0, new Date(deadlineTs).getTime() - Date.now())
     setRemaining(msRemaining / 1000)
   }, [deadlineTs])
+
+  useEffect(() => {
+    if (!paused) return
+    if (pausedRemainingSeconds == null) return
+    setRemaining(Math.max(0, pausedRemainingSeconds))
+  }, [paused, pausedRemainingSeconds])
 
   useEffect(() => {
     if (paused) {

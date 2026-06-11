@@ -207,6 +207,15 @@ export async function listSoldPlayers(auctionId) {
   return data ?? []
 }
 
+export async function listNonRegularBowlers(auctionId) {
+  const { data, error } = await supabase
+    .from('team_non_regular_bowlers')
+    .select('*')
+    .eq('auction_id', auctionId)
+  if (error) throw error
+  return data ?? []
+}
+
 // Active (un-reversed) sale for a player, for the Re-auction action.
 export async function getActiveSale(playerId) {
   const { data, error } = await supabase
@@ -296,6 +305,15 @@ export const generateQueue = (auctionId) =>
 
 export const resetAuction = (auctionId) =>
   rpc('reset_auction', { p_auction_id: auctionId })
+
+export const pauseCurrentClock = (auctionId) =>
+  rpc('pause_current_clock', { p_auction_id: auctionId })
+
+export const resumeCurrentClock = (auctionId) =>
+  rpc('resume_current_clock', { p_auction_id: auctionId })
+
+export const setNonRegularBowlers = (teamId, playerIds) =>
+  rpc('set_non_regular_bowlers', { p_team_id: teamId, p_player_ids: playerIds })
 
 export async function uploadTeamLogo(file) {
   const path = `team-${Date.now()}-${file.name}`

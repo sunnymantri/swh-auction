@@ -62,6 +62,9 @@ export default function TeamOwnerBidding() {
     ? (auction?.min_player_price ?? 0)
     : (current?.players?.base_price ?? 0)
   const minNext = Math.max(highestBid + calcIncrement(highestBid), bidFloor)
+  const timerDuration = bids.length > 0
+    ? (auction?.bid_timer_seconds ?? 15)
+    : (auction?.initial_bid_timer_seconds ?? 90)
   const cannotBidReason = !myTeam
     ? 'No team linked'
     : !isLive
@@ -115,10 +118,11 @@ export default function TeamOwnerBidding() {
                 </div>
                 {player && (lastBidAt || current?.current_bid_deadline) && isLive && (
                   <AuctionTimer
-                    duration={auction.bid_timer_seconds ?? 15}
+                    duration={timerDuration}
                     lastBidAt={lastBidAt}
                     deadlineTs={current?.current_bid_deadline ?? null}
-                    paused={false}
+                    paused={!!current?.clock_paused}
+                    pausedRemainingSeconds={current?.paused_remaining_seconds ?? null}
                   />
                 )}
                 <div className="sm:text-right min-w-0">
@@ -138,7 +142,7 @@ export default function TeamOwnerBidding() {
               <p className="text-sm text-teal-300">Team: <b className="text-white">{myTeam?.name ?? '—'}</b></p>
               <p className="text-sm text-teal-300">Remaining: <b className="text-white">{fmtPoints(myTeam?.points_remaining)}</b></p>
               <p className="text-sm text-teal-300">Squad: <b className="text-white">{myTeam?.players_count}/{myTeam?.squad_size}</b></p>
-              <p className="text-sm text-teal-300" title="Maximum bid you can place while keeping reserve for remaining squad slots.">Max safe bid: <b className="text-gold">{fmtPoints(myTeam?.max_safe_bid)}</b></p>
+              <p className="text-sm text-teal-300" title="Maximum bid from unauctioned-player pool average formula.">Max safe bid: <b className="text-gold">{fmtPoints(myTeam?.max_safe_bid)}</b></p>
               <button disabled={!myTeam || !isLive || busy || !!cannotBidReason} onClick={() => doBid(false)}
                 title={cannotBidReason || `Minimum next bid is ${fmtPoints(minNext)}`}
                 className="w-full px-3 py-2 rounded bg-gold text-ink-900 font-semibold disabled:opacity-40">

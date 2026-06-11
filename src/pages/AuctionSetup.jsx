@@ -11,8 +11,8 @@ const NUMERIC = [
   { key: 'default_team_budget',         label: 'Default team budget' },
   { key: 'default_base_price',          label: 'Default base price' },
   { key: 'min_player_price',            label: 'Min player price' },
-  { key: 'initial_bid_timer_seconds',   label: 'Initial timer (s)' },
-  { key: 'bid_timer_seconds',           label: 'Post-bid timer (s)' },
+  { key: 'initial_bid_timer_seconds',   label: 'Initial timer on player start (s)' },
+  { key: 'bid_timer_seconds',           label: 'Post-bid reset timer (s)' },
 ]
 
 export default function AuctionSetup() {
@@ -120,6 +120,9 @@ export default function AuctionSetup() {
               className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
               {busy ? 'Saving…' : 'Save'}
             </button>
+            <p className="text-xs text-teal-400">
+              Initial timer applies when a player first appears. Each accepted bid then resets to the post-bid timer (default 15s).
+            </p>
             {msg && <p className="text-teal-300 text-sm">{msg}</p>}
           </div>
 

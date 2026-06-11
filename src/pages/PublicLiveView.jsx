@@ -36,6 +36,9 @@ export default function PublicLiveView() {
   useAuctionRealtime(auction?.id, reload)
 
   const top = bids.reduce((m, b) => (b.bid_amount > (m?.bid_amount ?? -1) ? b : m), null)
+  const timerDuration = bids.length > 0
+    ? (auction?.bid_timer_seconds ?? 15)
+    : (auction?.initial_bid_timer_seconds ?? 90)
 
   const latestSoldEvent = events.find((e) => e.event_type === 'sold')
 
@@ -119,10 +122,11 @@ export default function PublicLiveView() {
             {current?.current_bid_deadline && (
               <div className="mt-3">
                 <AuctionTimer
-                  duration={auction.bid_timer_seconds ?? 15}
+                  duration={timerDuration}
                   lastBidAt={null}
                   deadlineTs={current.current_bid_deadline}
-                  paused={false}
+                  paused={!!current?.clock_paused}
+                  pausedRemainingSeconds={current?.paused_remaining_seconds ?? null}
                 />
               </div>
             )}

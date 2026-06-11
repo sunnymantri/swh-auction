@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useAuth } from '../context/AuthContext'
@@ -7,7 +8,7 @@ import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
 import {
   getCurrentQueueItem, listTeamSummaries,
   getBidsForPlayer, getRecentEvents, getNextPending, getActiveSale,
-  placeBid, markSold, markUnsold, reauctionPlayer, startPlayer
+  placeBid, markSold, markUnsold, reauctionPlayer, startPlayer, pauseCurrentClock, resumeCurrentClock
 } from '../lib/api'
 import { fmtPoints } from '../lib/format'
 import PlayerCard from '../components/auction/PlayerCard'
@@ -20,6 +21,7 @@ import SoldCelebration from '../components/auction/SoldCelebration'
 export default function AuctionCentre() {
   const { isAdmin, role } = useAuth()
   const { auction } = useActiveAuction()
+  const navigate = useNavigate()
   const [current, setCurrent] = useState(null)   // queue row + players(*)
   const [nextUp, setNextUp] = useState(null)
   const [teams, setTeams] = useState([])
@@ -78,6 +80,9 @@ export default function AuctionCentre() {
   const highestBid = top?.bid_amount ?? 0
   const leaderTeamId = top?.team_id ?? null
   const leaderName = teams.find(t => t.id === leaderTeamId)?.name
+  const timerDuration = bids.length > 0
+    ? (auction?.bid_timer_seconds ?? 15)
+    : (auction?.initial_bid_timer_seconds ?? 90)
 
   const act = async (fn) => {
     setBusy(true); setWarning(null)
@@ -114,8 +119,10 @@ export default function AuctionCentre() {
       if (next) await startPlayer(next.players.id)
       else setWarning('No more players in the queue.')
     }),
+    onPauseClock: () => player && act(() => pauseCurrentClock(auction.id)),
+    onResumeClock: () => player && act(() => resumeCurrentClock(auction.id)),
     onTimerExpired: () => {
-      if (!player || busy || !isLive) return
+      if (!player || busy || !isLive || current?.clock_paused) return
       setTimerPaused(true)
       if (bids.length > 0 && leaderTeamId) {
         const winningTeam = teams.find(t => t.id === leaderTeamId)
@@ -177,6 +184,15 @@ export default function AuctionCentre() {
                 >
                   {player ? 'Next player →' : '▶ Start auction'}
                 </button>
+                {!!player && (
+                  <button
+                    className="px-3 py-2 rounded-lg bg-teal-800 text-white font-semibold text-sm disabled:opacity-40"
+                    disabled={busy}
+                    onClick={current?.clock_paused ? handlers.onResumeClock : handlers.onPauseClock}
+                  >
+                    {current?.clock_paused ? 'Resume clock' : 'Pause clock'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -188,11 +204,12 @@ export default function AuctionCentre() {
               </div>
               {player && (lastBidAt || current?.current_bid_deadline) && isLive && (
                 <AuctionTimer
-                  duration={auction.bid_timer_seconds ?? 15}
+                  duration={timerDuration}
                   lastBidAt={lastBidAt}
                   deadlineTs={current?.current_bid_deadline ?? null}
                   onExpired={handlers.onTimerExpired}
-                  paused={timerPaused || !!celebration}
+                  paused={timerPaused || !!celebration || !!current?.clock_paused}
+                  pausedRemainingSeconds={current?.paused_remaining_seconds ?? null}
                 />
               )}
               <div className="sm:text-right min-w-0">
@@ -227,7 +244,7 @@ export default function AuctionCentre() {
           <div className="space-y-5">
             <div>
               <h3 className="font-score text-lg text-teal-200 mb-2">Team budgets</h3>
-              <TeamBudgetGrid teams={teams} leaderTeamId={leaderTeamId} />
+              <TeamBudgetGrid teams={teams} leaderTeamId={leaderTeamId} onTeamClick={(teamId) => navigate('/results', { state: { tab: 'Squads', teamId } })} />
             </div>
             <ActivityFeed events={events} />
           </div>

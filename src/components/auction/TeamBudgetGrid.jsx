@@ -1,14 +1,16 @@
 import { fmtPoints } from '../../lib/format'
 
-export default function TeamBudgetGrid({ teams, leaderTeamId }) {
+export default function TeamBudgetGrid({ teams, leaderTeamId, onTeamClick }) {
   return (
     <div className="grid gap-2.5 sm:grid-cols-2">
       {teams.map(t => {
         const leading = t.id === leaderTeamId
         const pct = Math.max(0, Math.min(100, (t.points_remaining / t.total_budget) * 100))
         return (
-          <div key={t.id}
-            className={`rounded-xl p-3.5 border transition ${
+          <button key={t.id} type="button"
+            onClick={() => onTeamClick?.(t.id)}
+            className={`rounded-xl p-3.5 border transition text-left w-full ${
+              onTeamClick ? 'cursor-pointer hover:border-teal-500/60' : ''} ${
               leading ? 'border-gold/70 bg-gold/10 shadow-glow'
                        : 'border-teal-700/40 bg-ink-800/70'}`}>
             <div className="flex items-center justify-between">
@@ -25,7 +27,7 @@ export default function TeamBudgetGrid({ teams, leaderTeamId }) {
               <span className="text-teal-400">Remaining <b className="text-white tabular">{fmtPoints(t.points_remaining)}</b></span>
               <span className="text-teal-400">Max safe <b className="text-gold tabular">{fmtPoints(t.max_safe_bid)}</b></span>
             </div>
-          </div>
+          </button>
         )
       })}
     </div>

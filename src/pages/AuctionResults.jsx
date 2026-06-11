@@ -1,28 +1,50 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import AppShell from '../components/layout/AppShell'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
-import { listSoldPlayers, listTeamSummaries, listPlayers } from '../lib/api'
+import { listNonRegularBowlers, listSoldPlayers, listTeamSummaries, listPlayers } from '../lib/api'
 import { fmtPoints } from '../lib/format'
 
 const TABS = ['Overview', 'Squads']
 
 export default function AuctionResults() {
   const { auction, loading: auctionLoading, error: auctionError, reload: reloadAuction } = useActiveAuction()
+  const location = useLocation()
   const [sold, setSold] = useState([])
   const [teams, setTeams] = useState([])
   const [players, setPlayers] = useState([])
+  const [nominations, setNominations] = useState([])
   const [tab, setTab] = useState('Overview')
   const [openId, setOpenId] = useState(null)
+  const [fetchError, setFetchError] = useState(null)
+
+  useEffect(() => {
+    const st = location.state
+    if (st?.tab && TABS.includes(st.tab)) setTab(st.tab)
+    if (st?.teamId) setOpenId(st.teamId)
+  }, [location.state])
 
   const reload = useCallback(async () => {
     if (!auction) return
-    const [s, t, p] = await Promise.all([
-      listSoldPlayers(auction.id),
-      listTeamSummaries(auction.id),
-      listPlayers(auction.id)
-    ])
-    setSold(s); setTeams(t); setPlayers(p)
+    setFetchError(null)
+    try {
+      const [s, t, p] = await Promise.all([
+        listSoldPlayers(auction.id),
+        listTeamSummaries(auction.id),
+        listPlayers(auction.id),
+      ])
+      setSold(s); setTeams(t); setPlayers(p)
+    } catch (e) {
+      setFetchError(e.message || 'Failed to load results')
+      return
+    }
+    try {
+      const n = await listNonRegularBowlers(auction.id)
+      setNominations(n)
+    } catch {
+      setNominations([])
+    }
   }, [auction])
 
   useEffect(() => { reload() }, [reload])
@@ -38,6 +60,14 @@ export default function AuctionResults() {
     }
     return map
   }, [sold])
+
+  const nominationByTeam = useMemo(() => {
+    const map = {}
+    for (const n of nominations) {
+      (map[n.team_id] ||= []).push(n.player_id)
+    }
+    return map
+  }, [nominations])
 
   if (auctionLoading) {
     return <AppShell title="Results"><p className="text-teal-400 animate-pulse">Loading auction…</p></AppShell>
@@ -56,6 +86,17 @@ export default function AuctionResults() {
 
   if (!auction) {
     return <AppShell title="Results"><p className="text-teal-400">No auction found.</p></AppShell>
+  }
+
+  if (fetchError) {
+    return (
+      <AppShell title="Results">
+        <div className="text-center py-12 space-y-3">
+          <p className="text-live text-sm">{fetchError}</p>
+          <button onClick={reload} className="px-4 py-2 rounded-lg border border-teal-700/40 text-teal-300 hover:text-white text-sm transition">Retry</button>
+        </div>
+      </AppShell>
+    )
   }
 
   return (
@@ -85,8 +126,9 @@ export default function AuctionResults() {
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
               {teams.map(t => {
                 const squad = byTeam[t.id] || []
+                const selected = nominationByTeam[t.id] || []
                 return (
-                  <div key={t.id} className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
+                  <div key={t.id} className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 cursor-pointer hover:border-teal-500/60 transition" onClick={() => { setTab('Squads'); setOpenId(t.id) }}>
                     <div className="flex items-center gap-2 mb-3">
                       {t.logo_url && <img src={t.logo_url} alt="" className="h-8 w-8 rounded object-cover" />}
                       <div>
@@ -103,6 +145,11 @@ export default function AuctionResults() {
                               : <div className="h-6 w-6 rounded bg-teal-800/50 shrink-0" />}
                             <span className="text-teal-100 truncate">{s.players?.name}</span>
                             <span className="text-teal-500 text-xs shrink-0">{s.players?.role}</span>
+                            {selected.includes(s.player_id) && (
+                              <span className="text-[0.65rem] px-1.5 py-0.5 rounded bg-gold/20 text-gold shrink-0">
+                                NR bowler
+                              </span>
+                            )}
                           </div>
                           <span className="text-gold tabular text-xs shrink-0 ml-2">{fmtPoints(s.sold_price)}</span>
                         </li>
@@ -134,6 +181,7 @@ export default function AuctionResults() {
           <div className="grid lg:grid-cols-2 gap-4">
             {teams.map((t) => {
               const squad = byTeam[t.id] || []
+              const selected = nominationByTeam[t.id] || []
               const open = openId === t.id
               return (
                 <div key={t.id} className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
@@ -156,6 +204,11 @@ export default function AuctionResults() {
                             <span className="text-teal-100">
                               {s.players?.name}
                               {s.players?.role && <span className="text-teal-500"> · {s.players.role}</span>}
+                              {selected.includes(s.player_id) && (
+                                <span className="text-[0.65rem] ml-2 px-1.5 py-0.5 rounded bg-gold/20 text-gold">
+                                  NR bowler
+                                </span>
+                              )}
                             </span>
                             <span className="text-gold tabular">{fmtPoints(s.sold_price)}</span>
                           </li>
