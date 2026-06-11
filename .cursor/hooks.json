@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterShellExecution": [
+      {
+        "command": ".cursor/hooks/deploy-sync-after-build.sh",
+        "matcher": "^npm run build$",
+        "timeout": 1800
+      }
+    ]
+  }
+}
