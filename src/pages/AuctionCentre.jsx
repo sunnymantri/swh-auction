@@ -186,10 +186,11 @@ export default function AuctionCentre() {
                 <div className="text-teal-400 text-xs uppercase tracking-widest">Current bid</div>
                 <div className="font-score text-4xl sm:text-5xl lg:text-6xl text-gold tabular leading-none">{fmtPoints(highestBid)}</div>
               </div>
-              {player && lastBidAt && isLive && (
+              {player && (lastBidAt || current?.current_bid_deadline) && isLive && (
                 <AuctionTimer
                   duration={auction.bid_timer_seconds ?? 15}
                   lastBidAt={lastBidAt}
+                  deadlineTs={current?.current_bid_deadline ?? null}
                   onExpired={handlers.onTimerExpired}
                   paused={timerPaused || !!celebration}
                 />

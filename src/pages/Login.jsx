@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const { signIn } = useAuth()
   const nav = useNavigate()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
   const [err, setErr] = useState(null)
@@ -21,7 +22,7 @@ export default function Login() {
     try {
       const { error } = await Promise.race([signIn(email, pw), timeout])
       if (error) setErr(error.message)
-      else nav('/')
+      else nav(location.state?.from?.pathname || '/', { replace: true })
     } catch (e) {
       setErr(e.message)
     } finally {
@@ -34,7 +35,7 @@ export default function Login() {
       <div className="w-full max-w-sm rounded-2xl bg-ink-800/80 border border-teal-700/50 shadow-card p-7">
         <div className="flex items-center gap-3 mb-1">
           <img src="/club-logo.png" alt="" className="h-10 w-10 rounded-lg object-cover" />
-          <h1 className="font-score text-4xl text-white leading-none">SWH Auction</h1>
+          <h1 className="font-score text-4xl text-white leading-none">Cricket Auction</h1>
         </div>
         <p className="text-teal-400 text-sm mt-1 mb-6">South West Hitters · Player Auction</p>
         <form onSubmit={submit} className="space-y-3">

@@ -28,7 +28,10 @@
       "Bash(curl -s -X GET https://cricheroes.in/api/v1/player/get-player-profile-web/13942169 -H 'api-key: cr!CkH3r0s' -H 'device-type: Chrome: 120.0.0.0' -H 'Accept: application/json' -H 'User-Agent: Mozilla/5.0 \\(Macintosh; Intel Mac OS X 10_15_7\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36' -H 'Origin: https://cricheroes.com' -H 'Referer: https://cricheroes.com/')",
       "Bash(git commit -m ' *)",
       "Bash(npx vite *)",
-      "Bash(lsof -ti:5173)"
+      "Bash(lsof -ti:5173)",
+      "Bash(ls netlify.toml)",
+      "Bash(cat netlify.toml)",
+      "Bash(npx supabase *)"
     ]
   }
 }

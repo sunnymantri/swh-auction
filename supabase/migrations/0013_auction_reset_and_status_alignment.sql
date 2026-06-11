@@ -13,7 +13,16 @@ alter table public.players
 
 alter table public.players
   add constraint players_status_check
-  check (status in ('registered','auction','in_auction','sold','unsold','reauction'));
+  check (status in (
+    'not_registered',
+    'registered',
+    'auction',
+    'ready_for_auction',
+    'in_auction',
+    'sold',
+    'unsold',
+    'reauction'
+  ));
 
 create or replace function public.start_player(p_player_id uuid)
 returns void language plpgsql security definer set search_path = public as $$

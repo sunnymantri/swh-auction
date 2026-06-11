@@ -22,6 +22,7 @@ export default function TeamsManagement() {
   const [creds, setCreds] = useState(null)
   const [msg, setMsg] = useState('')
   const [saving, setSaving] = useState(false)
+  const [uploadBusy, setUploadBusy] = useState(false)
 
   const reload = async () => {
     if (!auction) return
@@ -135,8 +136,15 @@ export default function TeamsManagement() {
                 onChange={async (e) => {
                   const f = e.target.files?.[0]
                   if (!f) return
-                  const url = await uploadTeamLogo(f)
-                  setForm((s) => ({ ...s, logo_url: url }))
+                  setUploadBusy(true)
+                  try {
+                    const url = await uploadTeamLogo(f)
+                    setForm((s) => ({ ...s, logo_url: url }))
+                  } catch (err) {
+                    setMsg(`Team logo upload failed: ${err.message}`)
+                  } finally {
+                    setUploadBusy(false)
+                  }
                 }} />
             </label>
             <label className="block text-xs text-teal-300">Sponsor logo
@@ -144,11 +152,18 @@ export default function TeamsManagement() {
                 onChange={async (e) => {
                   const f = e.target.files?.[0]
                   if (!f) return
-                  const url = await uploadBranding(f)
-                  setForm((s) => ({ ...s, sponsor_logo_url: url }))
+                  setUploadBusy(true)
+                  try {
+                    const url = await uploadBranding(f)
+                    setForm((s) => ({ ...s, sponsor_logo_url: url }))
+                  } catch (err) {
+                    setMsg(`Sponsor logo upload failed: ${err.message}`)
+                  } finally {
+                    setUploadBusy(false)
+                  }
                 }} />
             </label>
-            <button onClick={save} disabled={!form.name || saving}
+            <button onClick={save} disabled={!form.name || saving || uploadBusy}
               className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
               {saving ? 'Saving…' : 'Save team'}
             </button>
@@ -159,6 +174,7 @@ export default function TeamsManagement() {
                 <p className="text-teal-200 font-semibold">Owner login for {creds.team}:</p>
                 <p className="text-white">Email: <span className="tabular">{creds.email}</span></p>
                 <p className="text-white">Password: <span className="tabular">{creds.password}</span></p>
+                <p className="text-teal-400 text-xs mt-1">Ask the owner to change this password after first sign-in.</p>
               </div>
             )}
           </div>
@@ -205,7 +221,11 @@ export default function TeamsManagement() {
                       </button>
                     )}
                     <button onClick={(e) => { e.stopPropagation(); setEditId(t.id); setForm({ ...blankFor(auction), ...t }) }} className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
-                    <button onClick={async (e) => { e.stopPropagation(); await deleteTeam(t.id); reload() }} className="px-2 py-1 text-xs rounded bg-live/40">Delete</button>
+                    <button onClick={async (e) => {
+                      e.stopPropagation()
+                      if (!window.confirm(`Delete team "${t.name}"? This cannot be undone.`)) return
+                      await deleteTeam(t.id); reload()
+                    }} className="px-2 py-1 text-xs rounded bg-live/40">Delete</button>
                   </div>
                 </div>
               ))}

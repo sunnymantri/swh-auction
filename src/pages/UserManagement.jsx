@@ -87,6 +87,7 @@ export default function UserManagement() {
                 <p className="text-white">Email: <span className="tabular">{created.email}</span></p>
                 <p className="text-white">Password: <span className="tabular">{created.password}</span></p>
                 <p className="text-teal-400 text-xs mt-1">Role: {created.role}</p>
+                <p className="text-teal-400 text-xs mt-1">Ask the user to change this password right after first login.</p>
               </div>
             )}
           </div>

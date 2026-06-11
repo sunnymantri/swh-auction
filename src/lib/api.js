@@ -323,11 +323,26 @@ export async function uploadBranding(file) {
 
 
 async function rpc(fn, args) {
+  if (fn === 'generate_queue') {
+    // #region agent log
+    fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H2',location:'api.js:327',message:'RPC request start',data:{fn,args,supabaseUrl:import.meta.env.VITE_SUPABASE_URL || null},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+  }
   const { data, error } = await supabase.rpc(fn, args)
   if (error) {
+    if (fn === 'generate_queue') {
+      // #region agent log
+      fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H1',location:'api.js:333',message:'RPC request failed',data:{fn,message:error?.message || null,code:error?.code || null,details:error?.details || null,hint:error?.hint || null},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+    }
     // Surface the "BID_REJECTED: ..." message cleanly to the UI
     const msg = (error.message || '').replace(/^.*BID_REJECTED:\s*/, '')
     throw new Error(msg || error.message)
+  }
+  if (fn === 'generate_queue') {
+    // #region agent log
+    fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H4',location:'api.js:340',message:'RPC request success',data:{fn,data},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
   }
   return data
 }

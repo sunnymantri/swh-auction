@@ -11,6 +11,9 @@ export default function QueueManagement() {
   const [tab, setTab] = useState('Queue')
   const [queue, setQueue] = useState([])
   const [unsold, setUnsold] = useState([])
+  const [busy, setBusy] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [infoMsg, setInfoMsg] = useState('')
 
   const reloadQueue = async () => {
     if (!auction) return
@@ -23,12 +26,21 @@ export default function QueueManagement() {
   useEffect(() => { reloadQueue(); reloadUnsold() }, [auction])
 
   const reorder = async (id, direction) => {
+    if (busy) return
+    setErrorMsg('')
     const idx = queue.findIndex((q) => q.id === id)
     const target = queue[idx + direction]
     if (!target) return
-    await moveQueueItem(queue[idx].id, target.queue_order)
-    await moveQueueItem(target.id, queue[idx].queue_order)
-    await reloadQueue()
+    setBusy(true)
+    try {
+      await moveQueueItem(queue[idx].id, target.queue_order)
+      await moveQueueItem(target.id, queue[idx].queue_order)
+      await reloadQueue()
+    } catch (e) {
+      setErrorMsg(e.message || 'Could not reorder queue.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   if (!auction) {
@@ -57,9 +69,45 @@ export default function QueueManagement() {
         {tab === 'Queue' && (
           <>
             <div className="mb-3 flex flex-wrap gap-2">
-              <button onClick={async () => { await generateQueue(auction.id); reloadQueue() }}
-                className="px-3 py-1 rounded bg-gold text-ink-900 text-sm">Generate Random Queue</button>
+              <button onClick={async () => {
+                if (busy) return
+                setErrorMsg('')
+                setInfoMsg('')
+                // #region agent log
+                fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H2',location:'QueueManagement.jsx:76',message:'Generate queue clicked',data:{auctionId:auction?.id,busy},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
+                setBusy(true)
+                try {
+                  const generated = await generateQueue(auction.id)
+                  await reloadQueue()
+                  const count = Number(generated || 0)
+                  // #region agent log
+                  fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H4',location:'QueueManagement.jsx:83',message:'Generate queue RPC success',data:{generatedRaw:generated,count},timestamp:Date.now()})}).catch(()=>{});
+                  // #endregion
+                  if (count > 0) setInfoMsg(`Queue generated: ${count} player${count === 1 ? '' : 's'} added.`)
+                  else setInfoMsg('No ready-for-auction unsold players found for queue generation.')
+                } catch (e) {
+                  // #region agent log
+                  fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H1',location:'QueueManagement.jsx:89',message:'Generate queue RPC failed',data:{message:e?.message || 'unknown'},timestamp:Date.now()})}).catch(()=>{});
+                  // #endregion
+                  setErrorMsg(e.message || 'Queue generation failed.')
+                } finally {
+                  setBusy(false)
+                }
+              }}
+                disabled={busy}
+                className="px-3 py-1 rounded bg-gold text-ink-900 text-sm disabled:opacity-40">Generate Random Queue</button>
             </div>
+            {errorMsg && (
+              <div className="mb-3 rounded-lg border border-live/50 bg-live/10 px-3 py-2 text-sm text-live">
+                {errorMsg}
+              </div>
+            )}
+            {infoMsg && (
+              <div className="mb-3 rounded-lg border border-teal-700/40 bg-teal-900/30 px-3 py-2 text-sm text-teal-200">
+                {infoMsg}
+              </div>
+            )}
             {(() => {
               const pending = queue.filter(q => q.status !== 'completed')
               const completed = queue.filter(q => q.status === 'completed')
@@ -73,14 +121,24 @@ export default function QueueManagement() {
                           <p className="text-xs text-teal-300">{q.status} · {q.category}</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <button onClick={() => reorder(q.id, -1)} className="px-2 py-1 rounded text-xs bg-teal-700/50">Up</button>
-                          <button onClick={() => reorder(q.id, 1)} className="px-2 py-1 rounded text-xs bg-teal-700/50">Down</button>
+                          <button disabled={busy} onClick={() => reorder(q.id, -1)} className="px-2 py-1 rounded text-xs bg-teal-700/50 disabled:opacity-40">Up</button>
+                          <button disabled={busy} onClick={() => reorder(q.id, 1)} className="px-2 py-1 rounded text-xs bg-teal-700/50 disabled:opacity-40">Down</button>
                           <button
                             onClick={async () => {
                               if (!window.confirm(`Set "${q.players?.name}" as the current player? This will advance the auction.`)) return
-                              await startPlayer(q.player_id)
-                              reloadQueue()
+                              if (busy) return
+                              setErrorMsg('')
+                              setBusy(true)
+                              try {
+                                await startPlayer(q.player_id)
+                                await reloadQueue()
+                              } catch (e) {
+                                setErrorMsg(e.message || 'Could not set current player.')
+                              } finally {
+                                setBusy(false)
+                              }
                             }}
+                            disabled={busy}
                             className="px-2 py-1 rounded text-xs bg-gold text-ink-900 font-semibold">
                             Set Current
                           </button>
@@ -92,7 +150,7 @@ export default function QueueManagement() {
                   {completed.length > 0 && (
                     <details className="mt-4">
                       <summary className="text-xs text-teal-400 cursor-pointer hover:text-teal-200">
-                        {completed.length} completed player{completed.length !== 1 ? 's' : ''}
+                        {completed.length} sold player{completed.length !== 1 ? 's' : ''}
                       </summary>
                       <div className="space-y-1 mt-2 opacity-60">
                         {completed.map((q) => (
@@ -104,9 +162,19 @@ export default function QueueManagement() {
                             <button
                               onClick={async () => {
                                 if (!window.confirm(`Re-start "${q.players?.name}"? This will bring them back to auction.`)) return
-                                await startPlayer(q.player_id)
-                                reloadQueue()
+                                if (busy) return
+                                setErrorMsg('')
+                                setBusy(true)
+                                try {
+                                  await startPlayer(q.player_id)
+                                  await reloadQueue()
+                                } catch (e) {
+                                  setErrorMsg(e.message || 'Could not restart player.')
+                                } finally {
+                                  setBusy(false)
+                                }
                               }}
+                              disabled={busy}
                               className="px-2 py-1 rounded text-xs bg-gold text-ink-900 font-semibold">
                               Set Current
                             </button>
@@ -129,8 +197,13 @@ export default function QueueManagement() {
                   <p>{p.name}</p>
                   <p className="text-xs text-teal-300">{p.status} · {p.category}</p>
                 </div>
-                <button onClick={async () => { await startPlayer(p.id); reloadUnsold(); reloadQueue() }}
-                  className="px-3 py-1 rounded bg-gold text-ink-900 text-sm">Bring to Auction</button>
+                <button onClick={async () => {
+                  if (busy) return
+                  setBusy(true)
+                  try { await startPlayer(p.id); reloadUnsold(); reloadQueue() } finally { setBusy(false) }
+                }}
+                  disabled={busy}
+                  className="px-3 py-1 rounded bg-gold text-ink-900 text-sm disabled:opacity-40">Bring to Auction</button>
               </div>
             ))}
             {unsold.length === 0 && <p className="text-teal-500">No unsold/reauction players right now.</p>}

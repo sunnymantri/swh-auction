@@ -11,7 +11,7 @@ export default function RequireAuth({ children }) {
     return <div className="min-h-screen grid place-items-center text-teal-400">Loading…</div>
   }
   if (!session) {
-    return <Navigate to="/login" replace state={{ from: loc.pathname }} />
+    return <Navigate to="/login" replace state={{ from: loc }} />
   }
   return children
 }

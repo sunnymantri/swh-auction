@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-export default function AuctionTimer({ duration, lastBidAt, onExpired, paused }) {
+export default function AuctionTimer({ duration, lastBidAt, onExpired, paused, deadlineTs = null }) {
   const [remaining, setRemaining] = useState(duration)
   const expiredRef = useRef(false)
   const intervalRef = useRef(null)
@@ -13,13 +13,22 @@ export default function AuctionTimer({ duration, lastBidAt, onExpired, paused })
   }, [lastBidAt, duration])
 
   useEffect(() => {
+    if (!deadlineTs) return
+    expiredRef.current = false
+    const msRemaining = Math.max(0, new Date(deadlineTs).getTime() - Date.now())
+    setRemaining(msRemaining / 1000)
+  }, [deadlineTs])
+
+  useEffect(() => {
     if (paused) {
       clearInterval(intervalRef.current)
       return
     }
     intervalRef.current = setInterval(() => {
       setRemaining((prev) => {
-        const next = prev - 0.1
+        const next = deadlineTs
+          ? Math.max(0, (new Date(deadlineTs).getTime() - Date.now()) / 1000)
+          : prev - 0.1
         if (next <= 0 && !expiredRef.current) {
           expiredRef.current = true
           setTimeout(() => onExpiredRef.current?.(), 0)
@@ -29,10 +38,10 @@ export default function AuctionTimer({ duration, lastBidAt, onExpired, paused })
       })
     }, 100)
     return () => clearInterval(intervalRef.current)
-  }, [lastBidAt, paused, duration])
+  }, [lastBidAt, paused, duration, deadlineTs])
 
   const seconds = Math.ceil(remaining)
-  const progress = remaining / duration
+  const progress = duration > 0 ? remaining / duration : 0
   const isUrgent = remaining <= 3 && remaining > 0
   const showHammer = isUrgent
 

@@ -15,6 +15,7 @@ Behaviour:
 
 import json
 import math
+import os
 import re
 import sys
 import urllib.request
@@ -22,13 +23,8 @@ import urllib.error
 import openpyxl
 
 # ── Config ──────────────────────────────────────────────────────────────────
-SUPABASE_URL  = "https://sibvkudjhshdwqcrywdj.supabase.co"
-SERVICE_KEY   = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-    ".eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpYnZrdWRqaHNoZHdxY3J5d2RqIiwicm9sZSI6"
-    "InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDYyNjY4MywiZXhwIjoyMDk2MjAyNjgzfQ"
-    ".82sxy1hbvHwLbJSO19cNdPpOjNWD8eG7ZdFrnTc3FsI"
-)
+SUPABASE_URL  = os.environ.get("SUPABASE_URL", "").strip()
+SERVICE_KEY   = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
 XLSX_PATH     = "Auction-Exported-Players.xlsx"
 AUCTION_NAME  = "SWH Challenger Cup"
 
@@ -99,6 +95,9 @@ def canonical_role(raw):
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
+    if not SUPABASE_URL or not SERVICE_KEY:
+        sys.exit("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars.")
+
     # 1. Find auction
     auctions = api("GET", f"auctions?select=id,name&name=eq.{urllib.parse.quote(AUCTION_NAME)}")
     if not auctions:

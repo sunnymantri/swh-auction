@@ -6,6 +6,8 @@ import { getBidsForPlayer, getCurrentQueueItem, getRecentEvents, listTeamSummari
 import { fmtPoints } from '../lib/format'
 import PlayerCard from '../components/auction/PlayerCard'
 import ActivityFeed from '../components/auction/ActivityFeed'
+import AuctionTimer from '../components/auction/AuctionTimer'
+import SoldCelebration from '../components/auction/SoldCelebration'
 
 export default function PublicLiveView() {
   const { auction, loading: auctionLoading, error: auctionError, reload: reloadAuction } = useActiveAuction()
@@ -13,6 +15,8 @@ export default function PublicLiveView() {
   const [teams, setTeams] = useState([])
   const [events, setEvents] = useState([])
   const [bids, setBids] = useState([])
+  const [celebration, setCelebration] = useState(null)
+  const [celebratedEventId, setCelebratedEventId] = useState(null)
 
   const reload = useCallback(async () => {
     if (!auction) return
@@ -31,6 +35,19 @@ export default function PublicLiveView() {
   useAuctionRealtime(auction?.id, reload)
 
   const top = bids.reduce((m, b) => (b.bid_amount > (m?.bid_amount ?? -1) ? b : m), null)
+
+  const latestSoldEvent = events.find((e) => e.event_type === 'sold')
+
+  useEffect(() => {
+    if (!latestSoldEvent || !current?.players || latestSoldEvent.id === celebratedEventId) return
+    setCelebration({
+      player: current.players,
+      soldPrice: latestSoldEvent.amount,
+      teamName: latestSoldEvent.teams?.name ?? 'Unknown',
+      teamLogo: null
+    })
+    setCelebratedEventId(latestSoldEvent.id)
+  }, [latestSoldEvent, current?.players, celebratedEventId])
 
   if (auctionLoading) {
     return (
@@ -66,6 +83,15 @@ export default function PublicLiveView() {
 
   return (
     <AppShell title="Public Live View">
+      {celebration && (
+        <SoldCelebration
+          player={celebration.player}
+          soldPrice={celebration.soldPrice}
+          teamName={celebration.teamName}
+          teamLogo={celebration.teamLogo}
+          onDone={() => setCelebration(null)}
+        />
+      )}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-4">
           <PlayerCard player={current?.players} />
@@ -73,6 +99,16 @@ export default function PublicLiveView() {
             <p className="text-xs text-teal-300 uppercase">Current Bid</p>
             <p className="font-score text-4xl sm:text-5xl lg:text-6xl text-gold tabular">{fmtPoints(top?.bid_amount ?? 0)}</p>
             <p className="text-sm text-teal-100">Highest bidder: {top?.teams?.name || '—'}</p>
+            {current?.current_bid_deadline && (
+              <div className="mt-3">
+                <AuctionTimer
+                  duration={auction.bid_timer_seconds ?? 15}
+                  lastBidAt={null}
+                  deadlineTs={current.current_bid_deadline}
+                  paused={false}
+                />
+              </div>
+            )}
           </div>
           <div className="grid md:grid-cols-2 gap-2">
             {teams.map((t) => (

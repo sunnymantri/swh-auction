@@ -8,6 +8,7 @@ import { getBidsForPlayer, getCurrentQueueItem, listTeamSummaries, placeBid } fr
 import { fmtPoints } from '../lib/format'
 import PlayerCard from '../components/auction/PlayerCard'
 import AuctionTimer from '../components/auction/AuctionTimer'
+import { calcIncrement } from '../components/auction/AuctioneerControls'
 
 export default function TeamOwnerBidding() {
   const { auction } = useActiveAuction()
@@ -56,7 +57,16 @@ export default function TeamOwnerBidding() {
   const highestBid = top?.bid_amount ?? 0
   const leaderName = teams.find((t) => t.id === top?.team_id)?.name
   const iAmLeader = top?.team_id && myTeam && top.team_id === myTeam.id
-  const minNext = Math.max(highestBid + (auction?.default_bid_increment ?? 0), current?.players?.base_price ?? 0)
+  const minNext = Math.max(highestBid + calcIncrement(highestBid), current?.players?.base_price ?? 0)
+  const cannotBidReason = !myTeam
+    ? 'No team linked'
+    : !isLive
+      ? `Auction is ${auction?.status}`
+      : (myTeam.players_count >= myTeam.squad_size)
+        ? 'Squad is full'
+        : ((myTeam.max_safe_bid ?? 0) <= 0)
+          ? 'Insufficient budget reserve'
+          : ''
 
   const doBid = async (manual) => {
     if (!myTeam || !current?.player_id) return
@@ -95,10 +105,11 @@ export default function TeamOwnerBidding() {
                   <div className="text-teal-400 text-xs uppercase tracking-widest">Current bid</div>
                   <div className="font-score text-4xl sm:text-5xl text-gold tabular leading-none">{fmtPoints(highestBid)}</div>
                 </div>
-                {player && lastBidAt && isLive && (
+                {player && (lastBidAt || current?.current_bid_deadline) && isLive && (
                   <AuctionTimer
                     duration={auction.bid_timer_seconds ?? 15}
                     lastBidAt={lastBidAt}
+                    deadlineTs={current?.current_bid_deadline ?? null}
                     paused={false}
                   />
                 )}
@@ -119,8 +130,9 @@ export default function TeamOwnerBidding() {
               <p className="text-sm text-teal-300">Team: <b className="text-white">{myTeam?.name ?? '—'}</b></p>
               <p className="text-sm text-teal-300">Remaining: <b className="text-white">{fmtPoints(myTeam?.points_remaining)}</b></p>
               <p className="text-sm text-teal-300">Squad: <b className="text-white">{myTeam?.players_count}/{myTeam?.squad_size}</b></p>
-              <p className="text-sm text-teal-300">Max safe bid: <b className="text-gold">{fmtPoints(myTeam?.max_safe_bid)}</b></p>
-              <button disabled={!myTeam || !isLive || busy} onClick={() => doBid(false)}
+              <p className="text-sm text-teal-300" title="Maximum bid you can place while keeping reserve for remaining squad slots.">Max safe bid: <b className="text-gold">{fmtPoints(myTeam?.max_safe_bid)}</b></p>
+              <button disabled={!myTeam || !isLive || busy || !!cannotBidReason} onClick={() => doBid(false)}
+                title={cannotBidReason || `Minimum next bid is ${fmtPoints(minNext)}`}
                 className="w-full px-3 py-2 rounded bg-gold text-ink-900 font-semibold disabled:opacity-40">
                 Bid {fmtPoints(minNext)}
               </button>

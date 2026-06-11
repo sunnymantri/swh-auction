@@ -6,7 +6,14 @@ import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuctionContext } from '../context/AuctionContext'
 import { updateAuction, uploadBranding } from '../lib/api'
 
-const NUMERIC = ['squad_size', 'default_team_budget', 'default_base_price', 'default_bid_increment', 'min_player_price', 'bid_timer_seconds']
+const NUMERIC = [
+  { key: 'squad_size',                  label: 'Squad size' },
+  { key: 'default_team_budget',         label: 'Default team budget' },
+  { key: 'default_base_price',          label: 'Default base price' },
+  { key: 'min_player_price',            label: 'Min player price' },
+  { key: 'initial_bid_timer_seconds',   label: 'Initial timer (s)' },
+  { key: 'bid_timer_seconds',           label: 'Post-bid timer (s)' },
+]
 
 export default function AuctionSetup() {
   const { auction } = useActiveAuction()
@@ -43,8 +50,8 @@ export default function AuctionSetup() {
         squad_size: Number(form.squad_size || 0),
         default_team_budget: Number(form.default_team_budget || 0),
         default_base_price: Number(form.default_base_price || 0),
-        default_bid_increment: Number(form.default_bid_increment || 0),
         min_player_price: Number(form.min_player_price || 0),
+        initial_bid_timer_seconds: Number(form.initial_bid_timer_seconds || 90),
         bid_timer_seconds: Number(form.bid_timer_seconds || 15),
         reauction_refund_enabled: !!form.reauction_refund_enabled,
         banner_logo_url: form.banner_logo_url || null,
@@ -99,9 +106,9 @@ export default function AuctionSetup() {
               <Field label="Sport" value={form.sport} onChange={(v) => set('sport', v)} />
               <Field label="Date" type="date" value={form.auction_date ?? ''} onChange={(v) => set('auction_date', v)} />
               <Field label="Time" type="time" value={form.auction_time ?? ''} onChange={(v) => set('auction_time', v)} />
-              {NUMERIC.map((k) => (
-                <Field key={k} label={k.replaceAll('_', ' ')} value={form[k] ?? ''}
-                  onChange={(v) => set(k, Number(v.replace(/[^\d]/g, '') || 0))} />
+              {NUMERIC.map(({ key, label }) => (
+                <Field key={key} label={label} value={form[key] ?? ''}
+                  onChange={(v) => set(key, Number(v.replace(/[^\d]/g, '') || 0))} />
               ))}
             </div>
             <label className="flex items-center gap-2 text-sm text-teal-200">

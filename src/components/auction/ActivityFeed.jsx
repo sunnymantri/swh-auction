@@ -21,7 +21,7 @@ export default function ActivityFeed({ events }) {
       <h3 className="font-score text-lg text-teal-200 mb-3">Live Activity</h3>
       <ul className="space-y-2.5">
         {events.map(e => {
-          const m = META[e.event_type] || META.skipped
+          const m = META[e.event_type] || { dot: 'bg-gray-500', label: 'Other' }
           return (
             <li key={e.id} className="flex items-start gap-2 text-sm animate-rise">
               <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${m.dot}`} />

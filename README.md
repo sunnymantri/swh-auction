@@ -94,6 +94,11 @@ generated email + password are shown once so you can share them.
 The Edge Function runs on Supabase; the front-end stays on Netlify
 (`netlify deploy --prod`).
 
+## Security runbook
+
+If any key is leaked, follow `docs/security-incident-runbook.md` immediately.
+Rotate first, then perform history cleanup.
+
 ---
 
 ## How the auction rules are enforced

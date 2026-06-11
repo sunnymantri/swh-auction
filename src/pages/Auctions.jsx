@@ -8,7 +8,7 @@ import { createAuction, setAuctionStatus, updateAuction, uploadBranding, resetAu
 import { fmtPoints } from '../lib/format'
 
 const STATUSES = ['draft', 'live', 'paused', 'completed']
-const NUMERIC = ['squad_size', 'default_team_budget', 'default_base_price', 'default_bid_increment', 'min_player_price']
+const NUMERIC = ['squad_size', 'default_team_budget', 'default_base_price', 'min_player_price']
 const TABS = ['Auctions', 'Configuration']
 
 const blankAuction = {
@@ -34,6 +34,12 @@ export default function Auctions() {
   const [uploadErr, setUploadErr] = useState('')
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingSponsor, setUploadingSponsor] = useState(false)
+  const STATUS_TRANSITIONS = {
+    draft: ['draft', 'live'],
+    live: ['live', 'paused', 'completed'],
+    paused: ['paused', 'live', 'completed'],
+    completed: ['completed']
+  }
 
   useEffect(() => {
     if (auction) setCfgForm({ ...auction, sponsor_logos: Array.isArray(auction.sponsor_logos) ? auction.sponsor_logos : [] })
@@ -55,6 +61,11 @@ export default function Auctions() {
   }
 
   const changeStatus = async (id, status) => {
+    const current = auctions.find((a) => a.id === id)?.status
+    if (current && !(STATUS_TRANSITIONS[current] || []).includes(status)) {
+      setError(`Invalid status transition from ${current} to ${status}.`)
+      return
+    }
     await setAuctionStatus(id, status)
     await reload()
   }
@@ -120,8 +131,8 @@ export default function Auctions() {
 
   const handleResetAuction = async () => {
     if (!auction) return
-    const ok = window.confirm(`Reset auction "${auction.name}"? This clears queue, bids, sales and moves players back to auction/registered states.`)
-    if (!ok) return
+    const typed = window.prompt(`Type RESET to confirm reset for "${auction.name}".`)
+    if (typed !== 'RESET') return
     setResetBusy(true)
     setCfgMsg('')
     try {
@@ -217,7 +228,7 @@ export default function Auctions() {
               </label>
               {[
                 ['squad_size', 'Squad size'], ['default_team_budget', 'Team budget'],
-                ['default_base_price', 'Base price'], ['default_bid_increment', 'Bid increment'],
+                ['default_base_price', 'Base price'],
                 ['min_player_price', 'Min player price']
               ].map(([k, label]) => (
                 <label key={k} className="block text-xs text-teal-300">

@@ -106,7 +106,8 @@ function splitCsvLine(line) {
 
 function csvValue(value) {
   if (value === null || value === undefined) return ''
-  const str = String(value)
+  let str = String(value)
+  if (/^[=+\-@]/.test(str)) str = `'${str}`
   if (str.includes(',') || str.includes('"') || str.includes('\n')) {
     return `"${str.replaceAll('"', '""')}"`
   }

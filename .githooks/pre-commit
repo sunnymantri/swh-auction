@@ -3,4 +3,4 @@
 # package.json so the bump is part of the commit being made.
 # Enable once per clone with:  npm run setup:hooks
 node scripts/bump-version.mjs || exit 1
-git add package.json
+git add package.json || exit 1

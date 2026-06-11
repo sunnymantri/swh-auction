@@ -78,7 +78,10 @@ export default function CategoryConfig() {
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => { setEditId(c.id); setForm(c) }} className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
-                  <button onClick={async () => { await deleteCategory(c.id); reload() }} className="px-2 py-1 text-xs rounded bg-live/40">Delete</button>
+                  <button onClick={async () => {
+                    if (!window.confirm(`Delete category "${c.name}"? This cannot be undone.`)) return
+                    await deleteCategory(c.id); reload()
+                  }} className="px-2 py-1 text-xs rounded bg-live/40">Delete</button>
                 </div>
               </div>
             ))}

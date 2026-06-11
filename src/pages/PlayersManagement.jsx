@@ -12,7 +12,7 @@ import {
 import { supabase } from '../lib/supabase'
 import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier, buildTierIndexByPlayerId, computeCohortBasePrices } from '../lib/points'
 
-const TABS = ['Players', 'Add Player', 'Categories']
+const TABS = ['Players', 'Add Player', 'Categories', 'Vacation']
 
 // Human-readable labels for every player status value
 const STATUS_LABELS = {
@@ -134,6 +134,7 @@ export default function PlayersManagement() {
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState(null)
+  const [search, setSearch] = useState('')
   // Player profile view
   const [viewPlayer, setViewPlayer] = useState(null)
   const [recalculating, setRecalculating] = useState(false)
@@ -166,9 +167,11 @@ export default function PlayersManagement() {
   }, [players])
 
   const filteredPlayers = useMemo(() => {
-    if (!statusFilter) return players
-    return players.filter((p) => p.status === statusFilter)
-  }, [players, statusFilter])
+    const term = search.trim().toLowerCase()
+    return players
+      .filter((p) => !statusFilter || p.status === statusFilter)
+      .filter((p) => !term || p.name.toLowerCase().includes(term))
+  }, [players, statusFilter, search])
 
   const tierByPlayerId = useMemo(() => buildTierIndexByPlayerId(players), [players])
 
@@ -417,6 +420,7 @@ export default function PlayersManagement() {
               : p
           ))
           summary.success += 1
+          await new Promise(r => setTimeout(r, 200))
         } catch (e) {
           summary.failed.push(`${player.name}: ${e.message}`)
         }
@@ -763,6 +767,17 @@ export default function PlayersManagement() {
                 </div>
               )}
 
+              {/* Search */}
+              <div className="mb-3">
+                <input
+                  type="text"
+                  placeholder="Search players…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full max-w-xs rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-1.5 text-white text-sm placeholder:text-teal-600"
+                />
+              </div>
+
               {/* Status filter tags */}
               <div className="flex flex-wrap gap-2 mb-3">
                 <button onClick={() => setStatusFilter(null)}
@@ -856,7 +871,10 @@ export default function PlayersManagement() {
                           </button>
                           <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr(''); setTab('Add Player') }}
                             className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
-                          <button onClick={async () => { await deletePlayer(p.id); reloadPlayers() }}
+                          <button onClick={async () => {
+                            if (!window.confirm(`Delete player "${p.name}"? This cannot be undone.`)) return
+                            await deletePlayer(p.id); reloadPlayers()
+                          }}
                             className="px-2 py-1 text-xs rounded bg-red-900/50">Delete</button>
                         </div>
                       </div>
@@ -877,6 +895,43 @@ export default function PlayersManagement() {
                 {filteredPlayers.length === 0 && <p className="text-teal-500 text-sm">{players.length === 0 ? 'No players yet — add one or bulk import.' : 'No players match this filter.'}</p>}
               </div>
             </div>
+          </div>
+        )}
+
+        {tab === 'Vacation' && (
+          <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
+            <h3 className="font-score text-lg text-teal-200 mb-4">Player Vacation Dates</h3>
+            {(() => {
+              const onVacation = players.filter(p => (p.vacation_dates ?? []).length > 0)
+              if (onVacation.length === 0) {
+                return <p className="text-teal-500 text-sm">No players have submitted vacation dates.</p>
+              }
+              return (
+                <div className="space-y-3">
+                  {onVacation.map(p => (
+                    <div key={p.id} className="border border-teal-700/40 rounded-lg p-3 flex items-start gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-ink-900 border border-teal-700/40 overflow-hidden grid place-items-center shrink-0">
+                        {p.photo_url
+                          ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" />
+                          : <span className="text-[0.55rem] text-teal-500">no img</span>}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-white font-medium">{p.name}
+                          <span className="text-teal-400 text-xs ml-2">{p.role}{p.category ? ` / ${p.category}` : ''}</span>
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {(p.vacation_dates ?? []).map(d => (
+                            <span key={d} className="px-2 py-0.5 rounded-full bg-yellow-900/40 border border-yellow-700/40 text-yellow-300 text-xs">
+                              {new Date(d).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         )}
 
@@ -918,7 +973,10 @@ export default function PlayersManagement() {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => { setCatEditId(c.id); setCatForm(c) }} className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
-                    <button onClick={async () => { await deleteCategory(c.id); reloadCategories() }} className="px-2 py-1 text-xs rounded bg-live/40">Delete</button>
+                    <button onClick={async () => {
+                      if (!window.confirm(`Delete category "${c.name}"? This cannot be undone.`)) return
+                      await deleteCategory(c.id); reloadCategories()
+                    }} className="px-2 py-1 text-xs rounded bg-live/40">Delete</button>
                   </div>
                 </div>
               ))}
