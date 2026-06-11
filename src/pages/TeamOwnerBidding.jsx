@@ -57,7 +57,11 @@ export default function TeamOwnerBidding() {
   const highestBid = top?.bid_amount ?? 0
   const leaderName = teams.find((t) => t.id === top?.team_id)?.name
   const iAmLeader = top?.team_id && myTeam && top.team_id === myTeam.id
-  const minNext = Math.max(highestBid + calcIncrement(highestBid), current?.players?.base_price ?? 0)
+  const isReauction = current?.players?.status === 'reauction'
+  const bidFloor = isReauction
+    ? (auction?.min_player_price ?? 0)
+    : (current?.players?.base_price ?? 0)
+  const minNext = Math.max(highestBid + calcIncrement(highestBid), bidFloor)
   const cannotBidReason = !myTeam
     ? 'No team linked'
     : !isLive
@@ -71,6 +75,10 @@ export default function TeamOwnerBidding() {
   const doBid = async (manual) => {
     if (!myTeam || !current?.player_id) return
     const bidAmount = manual ? Number(amount || 0) : minNext
+    if (manual && isReauction && bidAmount < (auction?.min_player_price ?? 0)) {
+      setMsg(`Minimum bid for re-auction player is ${fmtPoints(auction?.min_player_price ?? 0)}.`)
+      return
+    }
     setBusy(true); setMsg('')
     try {
       await placeBid(current.player_id, myTeam.id, bidAmount, 'team_bid', false)

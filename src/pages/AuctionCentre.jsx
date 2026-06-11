@@ -205,6 +205,7 @@ export default function AuctionCentre() {
               <AuctioneerControls
                 player={player} teams={teams} highestBid={highestBid}
                 leaderTeamId={leaderTeamId} basePrice={player?.base_price ?? 0}
+                minPlayerPrice={auction?.min_player_price ?? 0}
                 hasBids={bids.length > 0}
                 activeSale={activeSale} busy={busy || !isLive} warning={warning} {...handlers} />
             )}

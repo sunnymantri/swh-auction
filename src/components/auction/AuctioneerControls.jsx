@@ -15,6 +15,7 @@ export function calcIncrement(currentBid) {
 
 export default function AuctioneerControls({
   player, teams, highestBid, leaderTeamId, basePrice,
+  minPlayerPrice = 0,
   hasBids, activeSale, busy, warning, onBid, onSold, onUnsold, onReauction, onNext, onStart
 }) {
   const [teamId, setTeamId] = useState('')
@@ -25,10 +26,9 @@ export default function AuctioneerControls({
 
   const dynamicIncrement = calcIncrement(highestBid)
 
-  // For re-auction: don't enforce base price floor
-  const nextBid = isReauction
-    ? (highestBid || 0) + dynamicIncrement
-    : Math.max((highestBid || 0) + dynamicIncrement, basePrice)
+  // Re-auction floor uses auction min player price instead of base price.
+  const bidFloor = isReauction ? minPlayerPrice : basePrice
+  const nextBid = Math.max((highestBid || 0) + dynamicIncrement, bidFloor)
 
   const leader = teams.find(t => t.id === leaderTeamId)
 
@@ -103,7 +103,9 @@ export default function AuctioneerControls({
             className={`${btn} bg-teal-600 hover:bg-teal-500 text-white`}
             disabled={busy || !teamId}
             onClick={() => onBid(teamId, nextBid, 'team_bid', isReauction)}
-            title={isReauction ? 'Re-auction: base price not enforced' : `Increment: +${fmtPoints(dynamicIncrement)}`}
+            title={isReauction
+              ? `Re-auction floor: ${fmtPoints(minPlayerPrice)}`
+              : `Increment: +${fmtPoints(dynamicIncrement)}`}
           >
             + {fmtPoints(dynamicIncrement)} → {fmtPoints(nextBid)}
           </button>
