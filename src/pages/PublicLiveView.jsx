@@ -50,6 +50,13 @@ export default function PublicLiveView() {
     }
 
     if (latestSoldEvent.id === celebratedEventId) return
+    const currentPlayerId = current?.player_id ?? current?.players?.id ?? null
+    const soldPlayerId = latestSoldEvent.player_id ?? null
+    if (currentPlayerId && soldPlayerId && soldPlayerId !== currentPlayerId) {
+      setCelebratedEventId(latestSoldEvent.id)
+      return
+    }
+
     setCelebration({
       player: current.players,
       soldPrice: latestSoldEvent.amount,
