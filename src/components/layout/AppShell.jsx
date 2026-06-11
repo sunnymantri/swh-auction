@@ -20,10 +20,11 @@ const NAV_GROUPS = [
     label: 'Setup',
     roles: ['admin'],
     links: [
-      { to: '/auctions', label: 'Auctions', roles: ['admin'] },
-      { to: '/teams',    label: 'Teams',    roles: ['admin'] },
-      { to: '/players',  label: 'Players',  roles: ['admin'] },
-      { to: '/users',    label: 'Users',    roles: ['admin'] },
+      { to: '/auctions',           label: 'Auctions',  roles: ['admin'] },
+      { to: '/teams',              label: 'Teams',     roles: ['admin'] },
+      { to: '/players',            label: 'Players',   roles: ['admin'] },
+      { to: '/users',              label: 'Users',     roles: ['admin'] },
+      { to: '/vacation-responses', label: 'Vacation Responses', roles: ['admin'] },
     ]
   },
   {
@@ -33,6 +34,7 @@ const NAV_GROUPS = [
     links: [
       { to: '/queue',   label: 'Queue',          roles: ['admin'] },
       { to: '/auction', label: 'Auction Centre', roles: ['admin'] },
+      { to: '/squads',  label: 'Squads',         roles: ['admin', 'team_owner'] },
     ]
   },
   {

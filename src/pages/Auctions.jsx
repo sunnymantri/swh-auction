@@ -8,7 +8,7 @@ import { createAuction, setAuctionStatus, updateAuction, uploadBranding, resetAu
 import { fmtPoints } from '../lib/format'
 
 const STATUSES = ['draft', 'live', 'paused', 'completed']
-const NUMERIC = ['squad_size', 'default_team_budget', 'default_base_price', 'min_player_price']
+const NUMERIC = ['squad_size', 'default_team_budget', 'default_base_price', 'min_player_price', 'initial_bid_timer_seconds', 'bid_timer_seconds']
 const TABS = ['Auctions', 'Configuration']
 
 const blankAuction = {
@@ -88,6 +88,8 @@ export default function Auctions() {
         default_base_price: Number(cfgForm.default_base_price || 0),
         default_bid_increment: Number(cfgForm.default_bid_increment || 0),
         min_player_price: Number(cfgForm.min_player_price || 0),
+        initial_bid_timer_seconds: Number(cfgForm.initial_bid_timer_seconds || 90),
+        bid_timer_seconds: Number(cfgForm.bid_timer_seconds || 15),
         budget_multiplier: Number(cfgForm.budget_multiplier || 1.6),
         reauction_refund_enabled: !!cfgForm.reauction_refund_enabled,
         banner_logo_url: cfgForm.banner_logo_url || null,

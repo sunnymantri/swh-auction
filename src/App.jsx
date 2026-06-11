@@ -14,6 +14,8 @@ import TeamOwnerBidding from './pages/TeamOwnerBidding'
 import PublicLiveView from './pages/PublicLiveView'
 import AuctionResults from './pages/AuctionResults'
 import VacationForm from './pages/VacationForm'
+import VacationResponses from './pages/VacationResponses'
+import TeamSquadSummary from './pages/TeamSquadSummary'
 
 export default function App() {
   return (
@@ -37,11 +39,12 @@ export default function App() {
             <Route path="/users" element={<RequireAuth><UserManagement /></RequireAuth>} />
             <Route path="/auction" element={<RequireAuth><AuctionCentre /></RequireAuth>} />
             <Route path="/team-bidding" element={<RequireAuth><TeamOwnerBidding /></RequireAuth>} />
+            <Route path="/squads" element={<RequireAuth><TeamSquadSummary /></RequireAuth>} />
+            <Route path="/vacation-responses" element={<RequireAuth><VacationResponses /></RequireAuth>} />
 
             {/* Redirects from removed routes */}
             <Route path="/setup" element={<Navigate to="/auctions" replace />} />
             <Route path="/categories" element={<Navigate to="/players" replace />} />
-            <Route path="/squads" element={<Navigate to="/results" replace />} />
             <Route path="/unsold" element={<Navigate to="/queue" replace />} />
             <Route path="/dashboard" element={<Navigate to="/auctions" replace />} />
 
