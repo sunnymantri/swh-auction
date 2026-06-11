@@ -31,7 +31,11 @@
       "Bash(lsof -ti:5173)",
       "Bash(ls netlify.toml)",
       "Bash(cat netlify.toml)",
-      "Bash(npx supabase *)"
+      "Bash(npx supabase *)",
+      "Bash(brew --prefix gh)",
+      "WebFetch(domain:app.netlify.com)",
+      "WebFetch(domain:6a2a65421656377410ace7e4--swh-auction.netlify.app)",
+      "WebFetch(domain:swh-auction.netlify.app)"
     ]
   }
 }
