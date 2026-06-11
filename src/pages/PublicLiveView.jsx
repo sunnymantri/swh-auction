@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
@@ -17,6 +17,7 @@ export default function PublicLiveView() {
   const [bids, setBids] = useState([])
   const [celebration, setCelebration] = useState(null)
   const [celebratedEventId, setCelebratedEventId] = useState(null)
+  const hasInitializedCelebrationRef = useRef(false)
 
   const reload = useCallback(async () => {
     if (!auction) return
@@ -39,7 +40,16 @@ export default function PublicLiveView() {
   const latestSoldEvent = events.find((e) => e.event_type === 'sold')
 
   useEffect(() => {
-    if (!latestSoldEvent || !current?.players || latestSoldEvent.id === celebratedEventId) return
+    if (!latestSoldEvent || !current?.players) return
+
+    // On first load/login, treat the latest sold event as already seen.
+    if (!hasInitializedCelebrationRef.current) {
+      hasInitializedCelebrationRef.current = true
+      setCelebratedEventId(latestSoldEvent.id)
+      return
+    }
+
+    if (latestSoldEvent.id === celebratedEventId) return
     setCelebration({
       player: current.players,
       soldPrice: latestSoldEvent.amount,
