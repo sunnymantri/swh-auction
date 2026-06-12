@@ -1,7 +1,7 @@
 {
   "name": "cricket-auction",
   "private": true,
-  "version": "2.41.0",
+  "version": "2.42.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint:nodebug": "bash -c '! grep -rn \"127.0.0.1:7661\" src/'",
+    "release": "bash scripts/release.sh",
     "version:bump": "node scripts/bump-version.mjs",
     "setup:hooks": "git config core.hooksPath .githooks"
   },

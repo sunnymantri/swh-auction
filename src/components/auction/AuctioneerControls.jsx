@@ -1,17 +1,10 @@
 import { useState } from 'react'
 import { fmtPoints } from '../../lib/format'
+import { calcIncrement } from '../../lib/bidding'
+
+export { calcIncrement }
 
 const btn = 'px-3 py-2 rounded-lg font-semibold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed'
-
-// Dynamic bid increment tiers:
-//   < 10,000      → +100
-//   10,000–15,000 → +500
-//   > 15,000      → +1,000
-export function calcIncrement(currentBid) {
-  if (currentBid < 10000) return 100
-  if (currentBid < 15000) return 500
-  return 1000
-}
 
 export default function AuctioneerControls({
   player, teams, highestBid, leaderTeamId, basePrice,

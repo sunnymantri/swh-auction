@@ -4,7 +4,19 @@
 --  a generated queue, and the first player started.
 --  All names/stats are FICTIONAL (no real players) for a club demo.
 --  Run on a fresh DB AFTER 0001-0005. Safe to re-run (clears its own data).
+--
+--  SAFETY GUARD: this file must never run against production.
+--  Set the GUC before running:
+--    psql -v ON_ERROR_STOP=1 -c "set app.allow_seed=true" -f seed.sql
+--  or via supabase CLI on a local / staging project only.
 -- =====================================================================
+do $guard$
+begin
+  if current_setting('app.allow_seed', true) is distinct from 'true' then
+    raise exception
+      'seed.sql: refusing to run — set app.allow_seed=true to proceed. Never run this against production.';
+  end if;
+end $guard$;
 
 do $$
 declare

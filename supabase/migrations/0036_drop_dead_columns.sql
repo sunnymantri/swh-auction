@@ -1,0 +1,12 @@
+-- =====================================================================
+--  Cricket Auction App  •  0036_drop_dead_columns.sql
+--
+--  AUD-010: auctions.default_bid_increment has been unused since 0016
+--  introduced hardcoded tiered increments. Dropping it removes the
+--  last place where a stale config value could cause confusion.
+--
+--  The canonical tiers live in src/lib/bidding.js (frontend) and are
+--  documented in supabase/migrations/0033_consolidate_bid_and_sale_rules.sql
+--  (place_bid inline comment). Changing a tier requires touching both.
+-- =====================================================================
+alter table public.auctions drop column if exists default_bid_increment;

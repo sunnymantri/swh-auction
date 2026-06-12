@@ -14,7 +14,7 @@ const TABS = ['Auctions', 'Configuration']
 const blankAuction = {
   name: '', season: '', sport: 'Cricket', squad_size: 11,
   default_team_budget: 100000, default_base_price: 500,
-  default_bid_increment: 500, min_player_price: 500, reauction_refund_enabled: true
+  min_player_price: 500, reauction_refund_enabled: true
 }
 
 export default function Auctions() {
@@ -87,7 +87,6 @@ export default function Auctions() {
         squad_size: Number(cfgForm.squad_size || 0),
         default_team_budget: Number(cfgForm.default_team_budget || 0),
         default_base_price: Number(cfgForm.default_base_price || 0),
-        default_bid_increment: Number(cfgForm.default_bid_increment || 0),
         min_player_price: Number(cfgForm.min_player_price || 0),
         initial_bid_timer_seconds: Number(cfgForm.initial_bid_timer_seconds || 90),
         bid_timer_seconds: Number(cfgForm.bid_timer_seconds || 15),
