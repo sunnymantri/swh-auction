@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useAuctionContext } from '../../context/AuctionContext'
+import { fmtStatus } from '../../lib/format'
 import packageMeta from '../../../package.json'
 
 const NAV_GROUPS = [
@@ -162,7 +163,7 @@ export default function AppShell({ title, children }) {
                       ? 'bg-gold/20 text-gold animate-pulsegold'
                       : 'bg-teal-700/40 text-teal-200'
                   }`}>
-                    {auction.status?.toUpperCase()}
+                    {fmtStatus(auction.status)}
                   </span>
                 )}
               </div>
@@ -181,7 +182,7 @@ export default function AppShell({ title, children }) {
                   className="appearance-none w-full rounded-lg bg-ink-800/60 hover:bg-ink-800 border border-teal-700/40 hover:border-teal-500 pl-3 pr-8 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-teal-500 transition cursor-pointer"
                 >
                   {auctions.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name} ({a.status})</option>
+                    <option key={a.id} value={a.id}>{a.name} ({fmtStatus(a.status)})</option>
                   ))}
                 </select>
                 <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-teal-400" viewBox="0 0 12 12" fill="none">

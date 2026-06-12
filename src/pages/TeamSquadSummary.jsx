@@ -47,8 +47,6 @@ export default function TeamSquadSummary() {
     return map
   }, [nominations])
 
-  const isBowler = (roleText = '') => roleText.toLowerCase().includes('bowler')
-
   const toggleNomination = async (teamId, playerId) => {
     const current = nominationByTeam[teamId] || []
     const exists = current.includes(playerId)
@@ -57,7 +55,7 @@ export default function TeamSquadSummary() {
       : [...current, playerId]
 
     if (!exists && next.length > 2) {
-      setMsg('A team can nominate only two non-regular bowlers.')
+      setMsg('A team can tag at most two non-regular players.')
       return
     }
 
@@ -115,13 +113,13 @@ export default function TeamSquadSummary() {
                           </span>
                           {selected.includes(s.player_id) && (
                             <span className="text-[0.65rem] px-1.5 py-0.5 rounded bg-gold/20 text-gold shrink-0">
-                              NR bowler
+                              Non-regular
                             </span>
                           )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-gold tabular">{fmtPoints(s.sold_price)}</span>
-                          {canManage && isBowler(s.players?.role || '') && (
+                          {canManage && (
                             <button
                               className={`px-2 py-0.5 text-[0.65rem] rounded border ${
                                 selected.includes(s.player_id)
@@ -140,7 +138,7 @@ export default function TeamSquadSummary() {
                   </ul>
                   {(role === 'admin' || (role === 'team_owner' && t.owner_user_id === profile?.id)) && (
                     <p className="text-[0.65rem] text-teal-400 mt-2">
-                      Nominate exactly two bowlers as non-regular for this team.
+                      You can tag up to two players as non-regular for this team.
                     </p>
                   )}
                   {squad.length > 0 && (

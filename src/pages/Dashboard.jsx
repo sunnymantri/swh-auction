@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import AppShell from '../components/layout/AppShell'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { listTeamSummaries, listPlayers, getRecentEvents } from '../lib/api'
-import { fmtPoints } from '../lib/format'
+import { fmtPoints, fmtStatus } from '../lib/format'
 import ActivityFeed from '../components/auction/ActivityFeed'
 
 export default function Dashboard() {
@@ -50,7 +50,7 @@ export default function Dashboard() {
                 auction.status === 'live'
                   ? 'bg-gold/20 text-gold'
                   : 'bg-teal-700/40 text-teal-200'
-              }`}>{auction.status?.toUpperCase()}</span>
+              }`}>{fmtStatus(auction.status)}</span>
               {auction.status !== 'live' && (
                 <Link to="/auctions" className="text-xs text-teal-300 hover:text-white">
                   Change status →
@@ -70,7 +70,7 @@ export default function Dashboard() {
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
             {/* Team budget table */}
             <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
-              <h3 className="font-score text-lg text-teal-200 mb-3">Team budgets</h3>
+              <h3 className="font-score text-lg text-teal-200 mb-3">Team budget</h3>
               <div className="space-y-2 overflow-x-auto">
                 {teams.map(t => {
                   const pct = Math.max(0, Math.min(100, (t.points_remaining / t.total_budget) * 100))

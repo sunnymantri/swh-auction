@@ -57,3 +57,35 @@ export async function resetUserPassword(profileId) {
   if (data?.error) throw new Error(data.error)
   return data
 }
+
+export async function notifyOwnerCredentials({
+  email,
+  teamName,
+  password,
+  includeEmail = true,
+  includeSms = false,
+  phone = '',
+  appUrl = ''
+}) {
+  const { data, error } = await supabase.functions.invoke('admin-notify-owner', {
+    body: {
+      email,
+      team_name: teamName,
+      password,
+      include_email: !!includeEmail,
+      include_sms: !!includeSms,
+      phone: phone || null,
+      app_url: appUrl || null
+    }
+  })
+  if (error) {
+    let detail = error.message
+    try {
+      const ctx = await error.context?.json?.()
+      if (ctx?.error) detail = ctx.error
+    } catch { /* ignore */ }
+    throw new Error(detail)
+  }
+  if (data?.error) throw new Error(data.error)
+  return data
+}

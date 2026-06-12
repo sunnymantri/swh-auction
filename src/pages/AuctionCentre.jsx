@@ -11,7 +11,7 @@ import {
   placeBid, markSold, markUnsold, reauctionPlayer, startPlayer,
   pauseCurrentClock, resumeCurrentClock, finalizeCurrentIfExpired
 } from '../lib/api'
-import { fmtPoints } from '../lib/format'
+import { fmtPoints, fmtStatus } from '../lib/format'
 import PlayerCard from '../components/auction/PlayerCard'
 import AuctioneerControls from '../components/auction/AuctioneerControls'
 import AuctionTimer from '../components/auction/AuctionTimer'
@@ -162,7 +162,7 @@ export default function AuctionCentre() {
       <RoleGate allow={['admin']}>
         {!isLive && (
           <div className="mb-4 rounded-xl border border-gold/40 bg-gold/10 text-gold p-3 text-sm">
-            This auction is <b>{auction.status}</b>. Set it to <b>live</b> on the <a href="/auctions" className="underline">Auctions</a> page to accept bids.
+            This auction is <b>{fmtStatus(auction.status)}</b>. Set it to <b>Live</b> on the <a href="/auctions" className="underline">Auctions</a> page to accept bids.
           </div>
         )}
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-5">
@@ -242,7 +242,7 @@ export default function AuctionCentre() {
 
           <div className="space-y-5">
             <div>
-              <h3 className="font-score text-lg text-teal-200 mb-2">Team budgets</h3>
+              <h3 className="font-score text-lg text-teal-200 mb-2">Team budget</h3>
               <TeamBudgetGrid teams={teams} leaderTeamId={leaderTeamId} onTeamClick={(teamId) => navigate('/results', { state: { tab: 'Squads', teamId } })} />
             </div>
             <ActivityFeed events={events} />

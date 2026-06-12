@@ -147,7 +147,7 @@ export default function AuctionResults() {
                             <span className="text-teal-500 text-xs shrink-0">{s.players?.role}</span>
                             {selected.includes(s.player_id) && (
                               <span className="text-[0.65rem] px-1.5 py-0.5 rounded bg-gold/20 text-gold shrink-0">
-                                NR bowler
+                                Non-regular
                               </span>
                             )}
                           </div>
@@ -206,7 +206,7 @@ export default function AuctionResults() {
                               {s.players?.role && <span className="text-teal-500"> · {s.players.role}</span>}
                               {selected.includes(s.player_id) && (
                                 <span className="text-[0.65rem] ml-2 px-1.5 py-0.5 rounded bg-gold/20 text-gold">
-                                  NR bowler
+                                  Non-regular
                                 </span>
                               )}
                             </span>

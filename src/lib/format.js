@@ -7,6 +7,13 @@ export const fmtAUD = (n) =>
   new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' })
     .format(Number(n ?? 0))
 
+export const fmtStatus = (value) =>
+  String(value ?? '')
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ')
+
 // Always DD/MM/YYYY as plain text
 export const fmtDate = (d) => {
   if (!d) return ''

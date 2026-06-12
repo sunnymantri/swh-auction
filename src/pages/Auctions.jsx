@@ -5,7 +5,7 @@ import RoleGate from '../components/common/RoleGate'
 import { useAuctionContext } from '../context/AuctionContext'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { createAuction, setAuctionStatus, updateAuction, uploadBranding, resetAuction, recalculateTeamBudgets } from '../lib/api'
-import { fmtPoints } from '../lib/format'
+import { fmtPoints, fmtStatus } from '../lib/format'
 
 const STATUSES = ['draft', 'live', 'paused', 'completed']
 const NUMERIC = ['squad_size', 'default_team_budget', 'default_base_price', 'min_player_price', 'initial_bid_timer_seconds', 'bid_timer_seconds']
@@ -160,7 +160,7 @@ export default function Auctions() {
     try {
       const budget = await recalculateTeamBudgets(auction.id)
       await reload()
-      setCfgMsg(`Team budgets recalculated to ${fmtPoints(Number(budget || 0))} per team.`)
+      setCfgMsg(`Team budget recalculated to ${fmtPoints(Number(budget || 0))} per team.`)
     } catch (e) {
       setCfgMsg(e.message || 'Budget recalculation failed.')
     } finally {
@@ -201,7 +201,7 @@ export default function Auctions() {
                             : a.status === 'completed'
                             ? 'bg-teal-900/60 text-teal-400'
                             : 'bg-ink-900 text-teal-300 border border-teal-700/40'
-                        }`}>{a.status}</span>
+                        }`}>{fmtStatus(a.status)}</span>
                         {a.id === auctionId && (
                           <span className="text-[0.7rem] sm:text-xs px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30 font-semibold">SELECTED</span>
                         )}
@@ -212,7 +212,7 @@ export default function Auctions() {
                     </div>
                     <select value={a.status} onChange={(e) => changeStatus(a.id, e.target.value)}
                       className="rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1.5 text-xs text-white shrink-0">
-                      {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                      {STATUSES.map((s) => <option key={s} value={s}>{fmtStatus(s)}</option>)}
                     </select>
                   </div>
                   <div className="mt-3 flex gap-2 flex-wrap">

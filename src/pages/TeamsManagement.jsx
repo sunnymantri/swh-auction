@@ -3,7 +3,7 @@ import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { createTeam, deleteTeam, listTeams, listPlayers, updateTeam, uploadTeamLogo, uploadBranding } from '../lib/api'
-import { createUserAccount, resetUserPassword } from '../lib/admin'
+import { createUserAccount, notifyOwnerCredentials, resetUserPassword } from '../lib/admin'
 import { fmtPoints } from '../lib/format'
 
 const blankFor = (auction) => ({
@@ -23,6 +23,7 @@ export default function TeamsManagement() {
   const [msg, setMsg] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploadBusy, setUploadBusy] = useState(false)
+  const [notifyPrefs, setNotifyPrefs] = useState({ email: true, sms: false, phone: '' })
 
   const reload = async () => {
     if (!auction) return
@@ -54,6 +55,8 @@ export default function TeamsManagement() {
   const save = async () => {
     setMsg('')
     setSaving(true)
+    setCreds(null)
+    const existing = editId ? teams.find((t) => t.id === editId) : null
     const payload = {
       name: form.name, short_name: form.short_name,
       owner_name: form.owner_name, owner_email: form.owner_email,
@@ -66,8 +69,40 @@ export default function TeamsManagement() {
     try {
       if (editId) await updateTeam(editId, payload)
       else await createTeam(payload)
+
+      const previousEmail = String(existing?.owner_email ?? '').trim().toLowerCase()
+      const nextEmail = String(payload.owner_email ?? '').trim().toLowerCase()
+      const emailChanged = !!editId && !!nextEmail && nextEmail !== previousEmail
+
+      if (emailChanged) {
+        const created = await createUserAccount({
+          email: nextEmail,
+          fullName: payload.owner_name || payload.name,
+          role: 'team_owner',
+          teamId: editId
+        })
+        setCreds({ team: payload.name, email: created.email, password: created.password })
+
+        if (notifyPrefs.email || notifyPrefs.sms) {
+          if (notifyPrefs.sms && !String(notifyPrefs.phone || '').trim()) {
+            throw new Error('SMS notifications require a phone number.')
+          }
+          const notifyRes = await notifyOwnerCredentials({
+            email: created.email,
+            teamName: payload.name,
+            password: created.password,
+            includeEmail: notifyPrefs.email,
+            includeSms: notifyPrefs.sms,
+            phone: notifyPrefs.phone,
+            appUrl: window.location.origin
+          })
+          if (notifyRes?.warning) setMsg(notifyRes.warning)
+        }
+      }
+
       setEditId(null)
       setForm(blankFor(auction))
+      setNotifyPrefs({ email: true, sms: false, phone: '' })
       await reload()
     } catch (e) {
       setMsg(e.message || 'Save failed — check the browser console for details.')
@@ -162,6 +197,36 @@ export default function TeamsManagement() {
                   }
                 }} />
             </label>
+            <div className="rounded-lg border border-teal-700/40 bg-ink-900/40 p-3 space-y-2">
+              <p className="text-xs text-teal-300 font-semibold">Owner notification on email change</p>
+              <label className="flex items-center gap-2 text-xs text-teal-200">
+                <input
+                  type="checkbox"
+                  checked={notifyPrefs.email}
+                  onChange={(e) => setNotifyPrefs((s) => ({ ...s, email: e.target.checked }))}
+                />
+                Notify by Email
+              </label>
+              <label className="flex items-center gap-2 text-xs text-teal-200">
+                <input
+                  type="checkbox"
+                  checked={notifyPrefs.sms}
+                  onChange={(e) => setNotifyPrefs((s) => ({ ...s, sms: e.target.checked }))}
+                />
+                Notify by SMS
+              </label>
+              {notifyPrefs.sms && (
+                <input
+                  placeholder="SMS phone number (e.g. +61400000000)"
+                  value={notifyPrefs.phone}
+                  onChange={(e) => setNotifyPrefs((s) => ({ ...s, phone: e.target.value }))}
+                  className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-xs"
+                />
+              )}
+              <p className="text-[0.68rem] text-teal-500">
+                When owner email changes on an existing team, a fresh login is created and linked to that team.
+              </p>
+            </div>
             <button onClick={save} disabled={!form.name || saving || uploadBusy}
               className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
               {saving ? 'Saving…' : 'Save team'}

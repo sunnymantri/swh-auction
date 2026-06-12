@@ -5,7 +5,12 @@ export default function TeamBudgetGrid({ teams, leaderTeamId, onTeamClick }) {
     <div className="grid gap-2.5 sm:grid-cols-2">
       {teams.map(t => {
         const leading = t.id === leaderTeamId
-        const pct = Math.max(0, Math.min(100, (t.points_remaining / t.total_budget) * 100))
+        const totalBudget = Number(t.total_budget || 0)
+        const pointsSpent = Number(t.points_spent || 0)
+        const pointsRemaining = Number(t.points_remaining || 0)
+        const pct = totalBudget > 0
+          ? Math.max(0, Math.min(100, (pointsRemaining / totalBudget) * 100))
+          : 0
         return (
           <button key={t.id} type="button"
             onClick={() => onTeamClick?.(t.id)}
@@ -24,8 +29,11 @@ export default function TeamBudgetGrid({ teams, leaderTeamId, onTeamClick }) {
               <div className="h-full rounded-full bg-teal-500" style={{ width: `${pct}%` }} />
             </div>
             <div className="mt-2 flex justify-between text-xs">
-              <span className="text-teal-400">Remaining <b className="text-white tabular">{fmtPoints(t.points_remaining)}</b></span>
+              <span className="text-teal-400">Remaining <b className="text-white tabular">{fmtPoints(pointsRemaining)}</b></span>
               <span className="text-teal-400">Max safe <b className="text-gold tabular">{fmtPoints(t.max_safe_bid)}</b></span>
+            </div>
+            <div className="mt-1 text-[0.68rem] text-teal-500 tabular">
+              Spent {fmtPoints(pointsSpent)} / Budget {fmtPoints(totalBudget)}
             </div>
           </button>
         )

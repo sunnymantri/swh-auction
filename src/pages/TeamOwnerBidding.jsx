@@ -5,7 +5,7 @@ import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuth } from '../context/AuthContext'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
 import { getBidsForPlayer, getCurrentQueueItem, listTeamSummaries, placeBid } from '../lib/api'
-import { fmtPoints } from '../lib/format'
+import { fmtPoints, fmtStatus } from '../lib/format'
 import PlayerCard from '../components/auction/PlayerCard'
 import AuctionTimer from '../components/auction/AuctionTimer'
 import { calcIncrement } from '../components/auction/AuctioneerControls'
@@ -135,7 +135,7 @@ export default function TeamOwnerBidding() {
             <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-3 h-fit">
               {!isLive && (
                 <div className="rounded-lg border border-gold/40 bg-gold/10 text-gold p-2 text-xs">
-                  Auction is {auction.status}. Bidding opens when it is live.
+                  Auction is {fmtStatus(auction.status)}. Bidding opens when it is Live.
                 </div>
               )}
               {iAmLeader && <p className="text-xs text-gold font-semibold">You are the highest bidder.</p>}
