@@ -151,6 +151,11 @@ export default function Auctions() {
 
   const handleRecalculateBudgets = async () => {
     if (!auction) return
+    if (!window.confirm(
+      'Recalculate team budgets from the current ready-for-auction player pool?\n\n' +
+      'Budgets are reset to the new value. This is only valid before the auction starts — ' +
+      'the server will block this if any sales already exist.'
+    )) return
     setRecalcBusy(true)
     setCfgMsg('')
     try {

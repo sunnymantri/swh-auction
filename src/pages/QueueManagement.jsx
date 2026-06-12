@@ -73,23 +73,14 @@ export default function QueueManagement() {
                 if (busy) return
                 setErrorMsg('')
                 setInfoMsg('')
-                // #region agent log
-                fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H2',location:'QueueManagement.jsx:76',message:'Generate queue clicked',data:{auctionId:auction?.id,busy},timestamp:Date.now()})}).catch(()=>{});
-                // #endregion
                 setBusy(true)
                 try {
                   const generated = await generateQueue(auction.id)
                   await reloadQueue()
                   const count = Number(generated || 0)
-                  // #region agent log
-                  fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H4',location:'QueueManagement.jsx:83',message:'Generate queue RPC success',data:{generatedRaw:generated,count},timestamp:Date.now()})}).catch(()=>{});
-                  // #endregion
                   if (count > 0) setInfoMsg(`Queue generated: ${count} player${count === 1 ? '' : 's'} added.`)
                   else setInfoMsg('No ready-for-auction unsold players found for queue generation.')
                 } catch (e) {
-                  // #region agent log
-                  fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H1',location:'QueueManagement.jsx:89',message:'Generate queue RPC failed',data:{message:e?.message || 'unknown'},timestamp:Date.now()})}).catch(()=>{});
-                  // #endregion
                   setErrorMsg(e.message || 'Queue generation failed.')
                 } finally {
                   setBusy(false)

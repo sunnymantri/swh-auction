@@ -27,21 +27,10 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 0
 fi
 
-# 1) Bump version.
+# Bump version only. Migration + deploy are intentional manual steps
+# so that DB changes are reviewed and applied before the frontend ships.
+# See scripts/release.sh for the full release sequence.
 npm run version:bump
 version="$(node -p "require('./package.json').version")"
 
-# 2) Commit + push any resulting changes.
-if [[ -n "$(git status --porcelain)" ]]; then
-  git add -A
-  git commit -m "chore: release v${version}"
-  git push origin HEAD
-fi
-
-# 3) Push pending Supabase migrations.
-printf 'y\n' | npx supabase db push
-
-# 4) Deploy current state to Netlify production.
-npx netlify deploy --prod --dir=dist
-
-echo "Hook completed: GitHub, Supabase, and Netlify synced for v${version}."
+echo "Build hook: version bumped to v${version}. Run scripts/release.sh to deploy."

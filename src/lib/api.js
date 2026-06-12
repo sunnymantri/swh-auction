@@ -8,16 +8,6 @@ import { supabase } from './supabase'
 export { exportPlayersCsv, parsePlayersCsv, parsePlayersCsvDetailed, playersCsvTemplate } from './csv'
 
 // ---- Auction ----
-export async function getActiveAuction() {
-  const { data, error } = await supabase
-    .from('auctions').select('*')
-    .in('status', ['live', 'paused', 'draft'])
-    .order('created_at', { ascending: false })
-    .limit(1).maybeSingle()
-  if (error) throw error
-  return data
-}
-
 export async function getAuctionById(auctionId) {
   const { data, error } = await supabase
     .from('auctions')
@@ -200,7 +190,7 @@ export async function moveQueueItem(queueId, queueOrder) {
 export async function listSoldPlayers(auctionId) {
   const { data, error } = await supabase
     .from('sold_players')
-    .select('*, players(*), teams(*)')
+    .select('*, players(*), teams(id, auction_id, name, short_name, logo_url, owner_user_id)')
     .eq('auction_id', auctionId)
     .order('sold_at', { ascending: false })
   if (error) throw error
@@ -315,6 +305,9 @@ export const pauseCurrentClock = (auctionId) =>
 export const resumeCurrentClock = (auctionId) =>
   rpc('resume_current_clock', { p_auction_id: auctionId })
 
+export const finalizeCurrentIfExpired = (auctionId) =>
+  rpc('finalize_current_if_expired', { p_auction_id: auctionId })
+
 export const setNonRegularBowlers = (teamId, playerIds) =>
   rpc('set_non_regular_bowlers', { p_team_id: teamId, p_player_ids: playerIds })
 
@@ -344,26 +337,11 @@ export async function uploadBranding(file) {
 
 
 async function rpc(fn, args) {
-  if (fn === 'generate_queue') {
-    // #region agent log
-    fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H2',location:'api.js:327',message:'RPC request start',data:{fn,args,supabaseUrl:import.meta.env.VITE_SUPABASE_URL || null},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-  }
   const { data, error } = await supabase.rpc(fn, args)
   if (error) {
-    if (fn === 'generate_queue') {
-      // #region agent log
-      fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H1',location:'api.js:333',message:'RPC request failed',data:{fn,message:error?.message || null,code:error?.code || null,details:error?.details || null,hint:error?.hint || null},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-    }
-    // Surface the "BID_REJECTED: ..." message cleanly to the UI
-    const msg = (error.message || '').replace(/^.*BID_REJECTED:\s*/, '')
+    const msg = (error.message || '')
+      .replace(/^.*(?:BID_REJECTED|STATE_REJECTED|AUTH_REQUIRED):\s*/, '')
     throw new Error(msg || error.message)
-  }
-  if (fn === 'generate_queue') {
-    // #region agent log
-    fetch('http://127.0.0.1:7661/ingest/e5551554-9d66-4e73-84e5-de6e8e067a67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6c6f5d'},body:JSON.stringify({sessionId:'6c6f5d',runId:'run1',hypothesisId:'H4',location:'api.js:340',message:'RPC request success',data:{fn,data},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
   }
   return data
 }

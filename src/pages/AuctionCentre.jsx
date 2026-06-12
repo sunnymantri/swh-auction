@@ -8,7 +8,8 @@ import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
 import {
   getCurrentQueueItem, listTeamSummaries,
   getBidsForPlayer, getRecentEvents, getNextPending, getActiveSale,
-  placeBid, markSold, markUnsold, reauctionPlayer, startPlayer, pauseCurrentClock, resumeCurrentClock
+  placeBid, markSold, markUnsold, reauctionPlayer, startPlayer,
+  pauseCurrentClock, resumeCurrentClock, finalizeCurrentIfExpired
 } from '../lib/api'
 import { fmtPoints } from '../lib/format'
 import PlayerCard from '../components/auction/PlayerCard'
@@ -124,20 +125,18 @@ export default function AuctionCentre() {
     onTimerExpired: () => {
       if (!player || busy || !isLive || current?.clock_paused) return
       setTimerPaused(true)
-      if (bids.length > 0 && leaderTeamId) {
-        const winningTeam = teams.find(t => t.id === leaderTeamId)
-        act(async () => {
-          await markSold(player.id, leaderTeamId, highestBid)
+      act(async () => {
+        const result = await finalizeCurrentIfExpired(auction.id)
+        if (result === 'sold' && leaderTeamId) {
+          const winningTeam = teams.find(t => t.id === leaderTeamId)
           setCelebration({
             player,
             soldPrice: highestBid,
             teamName: winningTeam?.name ?? 'Unknown',
             teamLogo: winningTeam?.logo_url ?? null,
           })
-        })
-      } else {
-        act(() => markUnsold(player.id))
-      }
+        }
+      })
     }
   }
 
