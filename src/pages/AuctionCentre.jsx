@@ -227,7 +227,7 @@ export default function AuctionCentre() {
             )}
 
             <div className="rounded-2xl bg-ink-800/70 border border-teal-700/40 p-4">
-              <h3 className="font-score text-lg text-teal-200 mb-2">Bid history</h3>
+              <h3 className="font-score text-lg text-teal-200 mb-2">Bid History</h3>
               <ul className="space-y-1.5 max-h-48 overflow-y-auto">
                 {bids.map(b => (
                   <li key={b.id} className="flex justify-between text-sm">
@@ -242,7 +242,7 @@ export default function AuctionCentre() {
 
           <div className="space-y-5">
             <div>
-              <h3 className="font-score text-lg text-teal-200 mb-2">Team budget</h3>
+              <h3 className="font-score text-lg text-teal-200 mb-2">Team Summary</h3>
               <TeamBudgetGrid teams={teams} leaderTeamId={leaderTeamId} onTeamClick={(teamId) => navigate('/results', { state: { tab: 'Squads', teamId } })} />
             </div>
             <ActivityFeed events={events} />

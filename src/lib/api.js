@@ -387,6 +387,12 @@ export function subscribeToAuction(auctionId, cb) {
 }
 
 // ---- CricHeroes stats fetch ----
+export async function verifyPublicCode(code) {
+  const { data, error } = await supabase.rpc('verify_public_code', { p_code: code ?? '' })
+  if (error) throw new Error(error.message)
+  return data === true
+}
+
 export async function fetchCricHeroesStats(profileUrl) {
   const { data, error } = await supabase.functions.invoke('fetch-cricheroes', {
     body: { profile_url: profileUrl }

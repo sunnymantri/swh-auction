@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { AuctionProvider } from './context/AuctionContext'
 import RequireAuth from './components/common/RequireAuth'
+import RequirePublicAuth from './components/common/RequirePublicAuth'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import AuctionCentre from './pages/AuctionCentre'
@@ -26,9 +27,9 @@ export default function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
 
-            {/* Public (no login required) */}
-            <Route path="/public-live" element={<PublicLiveView />} />
-            <Route path="/results" element={<AuctionResults />} />
+            {/* Public (no login required, but may require access code) */}
+            <Route path="/public-live" element={<RequirePublicAuth><PublicLiveView /></RequirePublicAuth>} />
+            <Route path="/results" element={<RequirePublicAuth><AuctionResults /></RequirePublicAuth>} />
             <Route path="/vacation" element={<VacationForm />} />
 
             {/* Authenticated */}

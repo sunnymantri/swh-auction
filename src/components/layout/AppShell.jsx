@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useAuctionContext } from '../../context/AuctionContext'
 import { fmtStatus } from '../../lib/format'
@@ -118,6 +119,19 @@ export default function AppShell({ title, children }) {
   const nav = useNavigate()
   const [signingOut, setSigningOut] = useState(false)
   const [openDropdown, setOpenDropdown] = useState(null)
+  const [ddPos, setDdPos] = useState({ top: 0, left: 0 })
+  const ddTimerRef = useRef(null)
+
+  const handleDdEnter = (to, el) => {
+    clearTimeout(ddTimerRef.current)
+    const rect = el.getBoundingClientRect()
+    setDdPos({ top: rect.bottom + 2, left: rect.left })
+    setOpenDropdown(to)
+  }
+  const handleDdLeave = () => {
+    ddTimerRef.current = setTimeout(() => setOpenDropdown(null), 100)
+  }
+  const handleDdPanelEnter = () => clearTimeout(ddTimerRef.current)
 
   const handleSignOut = async () => {
     if (signingOut) return
@@ -227,28 +241,17 @@ export default function AppShell({ title, children }) {
                     const active = loc.pathname === l.to
                     if (l.dropdown) {
                       return (
-                        <div key={l.to} className="relative"
-                          onMouseEnter={() => setOpenDropdown(l.to)}
-                          onMouseLeave={() => setOpenDropdown(null)}>
+                        <div key={l.to}
+                          onMouseEnter={(e) => handleDdEnter(l.to, e.currentTarget)}
+                          onMouseLeave={handleDdLeave}>
                           <Link to={l.to}
-                            className={`relative px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors inline-block ${active ? 'text-gold' : 'text-teal-300 hover:text-white'}`}>
+                            className={`relative px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors inline-flex items-center gap-1 ${active ? 'text-gold' : 'text-teal-300 hover:text-white'}`}>
                             {l.label}
+                            <svg className="w-2.5 h-2.5 opacity-60" viewBox="0 0 10 10" fill="none">
+                              <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
                             {active && <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-gold" />}
                           </Link>
-                          {openDropdown === l.to && (
-                            <div className="absolute top-full left-0 z-30 mt-0.5 rounded-xl border border-teal-700/40 bg-ink-900 shadow-card overflow-hidden min-w-[10rem]">
-                              {l.dropdown.map(item => (
-                                <Link
-                                  key={item.tab}
-                                  to={`/players?tab=${encodeURIComponent(item.tab)}`}
-                                  onClick={() => setOpenDropdown(null)}
-                                  className="block px-3 py-2 text-xs text-teal-200 hover:bg-ink-800 hover:text-white transition"
-                                >
-                                  {item.label}
-                                </Link>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       )
                     }
@@ -286,6 +289,26 @@ export default function AppShell({ title, children }) {
         </div>
       )}
 
+      {openDropdown && createPortal(
+        <div
+          style={{ position: 'fixed', top: ddPos.top, left: ddPos.left, zIndex: 9999 }}
+          className="rounded-xl border border-teal-700/40 bg-ink-900 shadow-card overflow-hidden min-w-[11rem] py-1"
+          onMouseEnter={handleDdPanelEnter}
+          onMouseLeave={handleDdLeave}
+        >
+          {NAV_GROUPS.flatMap(g => g.links).find(l => l.to === openDropdown)?.dropdown?.map(item => (
+            <Link
+              key={item.tab}
+              to={`/players?tab=${encodeURIComponent(item.tab)}`}
+              onClick={() => setOpenDropdown(null)}
+              className="flex items-center px-4 py-2.5 text-sm text-teal-200 hover:bg-ink-800/80 hover:text-white transition gap-2"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>,
+        document.body
+      )}
       <main className="max-w-7xl mx-auto p-3 sm:p-4">{children}</main>
       <footer className="border-t border-teal-700/30 mt-12 py-6">
         <div className="max-w-7xl mx-auto px-4 text-center space-y-1">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
@@ -14,6 +14,9 @@ export default function QueueManagement() {
   const [busy, setBusy] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [infoMsg, setInfoMsg] = useState('')
+  const [dragId, setDragId] = useState(null)
+  const [dragOverId, setDragOverId] = useState(null)
+  const dragIdRef = useRef(null)
 
   const reloadQueue = async () => {
     if (!auction) return
@@ -24,6 +27,28 @@ export default function QueueManagement() {
     setUnsold(await getUnsoldOrReauction(auction.id))
   }
   useEffect(() => { reloadQueue(); reloadUnsold() }, [auction])
+
+  const handleDrop = async (toId) => {
+    const fromId = dragIdRef.current
+    setDragId(null); setDragOverId(null); dragIdRef.current = null
+    if (!fromId || fromId === toId) return
+    const pending = queue.filter(q => q.status !== 'completed')
+    const fromIdx = pending.findIndex(q => q.id === fromId)
+    const toIdx = pending.findIndex(q => q.id === toId)
+    if (fromIdx < 0 || toIdx < 0) return
+    const arr = [...pending]
+    const [item] = arr.splice(fromIdx, 1)
+    arr.splice(toIdx, 0, item)
+    setBusy(true); setErrorMsg('')
+    try {
+      await Promise.all(arr.map((q, i) => moveQueueItem(q.id, i + 1)))
+      await reloadQueue()
+    } catch (e) {
+      setErrorMsg(e.message || 'Reorder failed.')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const reorder = async (id, direction) => {
     if (busy) return
@@ -106,10 +131,27 @@ export default function QueueManagement() {
                 <>
                   <div className="space-y-2">
                     {pending.map((q) => (
-                      <div key={q.id} className={`border rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 ${q.status === 'current' ? 'border-gold bg-gold/10' : 'border-teal-700/40 bg-ink-800/60'}`}>
-                        <div>
-                          <p>{q.queue_order}. {q.players?.name}</p>
-                          <p className="text-xs text-teal-300">{q.status} · {q.category}</p>
+                      <div key={q.id}
+                        draggable={!busy && q.status !== 'current'}
+                        onDragStart={() => { setDragId(q.id); dragIdRef.current = q.id }}
+                        onDragOver={(e) => { e.preventDefault(); setDragOverId(q.id) }}
+                        onDragLeave={() => setDragOverId(null)}
+                        onDrop={() => handleDrop(q.id)}
+                        onDragEnd={() => { setDragId(null); setDragOverId(null) }}
+                        className={`border rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 transition-all
+                          ${q.status === 'current' ? 'border-gold bg-gold/10' : 'border-teal-700/40 bg-ink-800/60'}
+                          ${dragOverId === q.id && dragId !== q.id ? 'border-teal-400 bg-teal-900/30 scale-[1.01]' : ''}
+                          ${dragId === q.id ? 'opacity-50' : ''}
+                          ${!busy && q.status !== 'current' ? 'cursor-grab active:cursor-grabbing' : ''}
+                        `}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          {!busy && q.status !== 'current' && (
+                            <span className="text-teal-600 text-lg select-none shrink-0" title="Drag to reorder">⠿</span>
+                          )}
+                          <div>
+                            <p>{q.queue_order}. {q.players?.name}</p>
+                            <p className="text-xs text-teal-300">{q.status} · {q.category}</p>
+                          </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <button disabled={busy} onClick={() => reorder(q.id, -1)} className="px-2 py-1 rounded text-xs bg-teal-700/50 disabled:opacity-40">Up</button>

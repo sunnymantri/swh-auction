@@ -139,6 +139,7 @@ export default function PlayersManagement() {
   const [fetchingStats, setFetchingStats] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const [bulkBusy, setBulkBusy] = useState(false)
+  const [addStep, setAddStep] = useState(1)
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState('ready_for_auction')
@@ -164,6 +165,7 @@ export default function PlayersManagement() {
   }
   useEffect(() => { reloadPlayers(); reloadCategories() }, [auction])
   useEffect(() => { if (!editId) setForm(blankFor(auction)) }, [auction, editId])
+  useEffect(() => { setAddStep(1) }, [editId])
   useEffect(() => {
     const t = new URLSearchParams(location.search).get('tab')
     if (t && TABS.includes(t)) setTab(t)
@@ -535,193 +537,244 @@ export default function PlayersManagement() {
         )}
 
         {(tab === 'Players' || tab === 'Add Player') && (
-          <div className="grid gap-4 xl:grid-cols-3">
+          <div className={tab === 'Add Player' ? '' : 'grid gap-4 xl:grid-cols-3'}>
             {/* Create / Edit form */}
-            <div className={`${tab === 'Add Player' ? '' : 'hidden'} rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 flex flex-col gap-3`}>
-              <h3 className="font-score text-lg text-teal-200 shrink-0">{editId ? 'Edit player' : 'Create player'}</h3>
-
-              {/* Scrollable field area */}
-              <div className="overflow-y-auto max-h-[70vh] pr-1 space-y-4">
-
-                {/* CricHeroes fetch — full width */}
-                <div>
-                  <p className="text-xs text-teal-300 mb-1">Profile URL (CricHeroes)</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={form.profile_url ?? ''}
-                      onChange={(e) => set('profile_url', e.target.value)}
-                      placeholder="https://cricheroes.com/player-profile/..."
-                      className="flex-1 min-w-0 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-1.5 text-white text-sm"
-                    />
-                    <button type="button" onClick={fetchFromCricHeroes} disabled={fetchingStats || !form.profile_url}
-                      className="px-3 py-1.5 rounded-lg bg-teal-600/70 text-white text-xs font-semibold whitespace-nowrap disabled:opacity-40">
-                      {fetchingStats ? 'Fetching…' : 'Fetch stats'}
-                    </button>
-                  </div>
+            {tab === 'Add Player' && (
+              <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-5">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-score text-xl text-teal-200">{editId ? 'Edit player' : 'Add player'}</h3>
+                  {editId && (
+                    <button onClick={() => { setEditId(null); setForm(blankFor(auction)); setErr('') }}
+                      className="text-xs text-teal-400 hover:text-white transition">✕ Cancel edit</button>
+                  )}
                 </div>
 
-                {/* Identity — 2 columns */}
-                <fieldset className="border border-teal-700/30 rounded-lg p-3 space-y-2">
-                  <legend className="text-[0.65rem] text-teal-400 uppercase tracking-wider px-1">Identity</legend>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'name', label: 'Full name', type: 'text', span: true },
-                      { key: 'role', label: 'Role', type: 'text' },
-                      { key: 'category', label: 'Category', type: 'text' },
-                      { key: 'batting_style', label: 'Batting style', type: 'text' },
-                      { key: 'bowling_style', label: 'Bowling style', type: 'text' },
-                      { key: 'base_price', label: 'Base price', type: 'number' },
-                    ].map(({ key, label, type, span }) => (
-                      <label key={key} className={`block text-xs text-teal-300 ${span ? 'col-span-2' : ''}`}>
-                        {label}
-                        <input
-                          type="text"
-                          inputMode={type === 'number' ? 'numeric' : 'text'}
-                          value={form[key] ?? ''}
-                          onChange={(e) => set(key, type === 'number'
-                            ? Number(e.target.value.replace(/[^\d.]/g, '') || 0)
-                            : e.target.value)}
-                          className="mt-0.5 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2.5 py-1.5 text-white text-sm"
-                        />
+                {/* Step indicator */}
+                <div className="flex items-center mb-6">
+                  <button onClick={() => setAddStep(1)}
+                    className={`flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${addStep === 1 ? 'text-gold' : addStep > 1 ? 'text-teal-400' : 'text-teal-600'}`}>
+                    <span className={`h-6 w-6 rounded-full grid place-items-center text-xs font-bold shrink-0 ${addStep === 1 ? 'bg-gold text-ink-900' : addStep > 1 ? 'bg-teal-700/60 text-teal-200' : 'bg-ink-900 border border-teal-700/40 text-teal-600'}`}>1</span>
+                    <span className="hidden sm:inline">Identity</span>
+                  </button>
+                  <div className={`flex-1 h-px mx-2 ${addStep > 1 ? 'bg-teal-500' : 'bg-teal-700/30'}`} />
+                  <button onClick={() => setAddStep(2)}
+                    className={`flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${addStep === 2 ? 'text-gold' : addStep > 2 ? 'text-teal-400' : 'text-teal-600'}`}>
+                    <span className={`h-6 w-6 rounded-full grid place-items-center text-xs font-bold shrink-0 ${addStep === 2 ? 'bg-gold text-ink-900' : addStep > 2 ? 'bg-teal-700/60 text-teal-200' : 'bg-ink-900 border border-teal-700/40 text-teal-600'}`}>2</span>
+                    <span className="hidden sm:inline">Batting</span>
+                  </button>
+                  <div className={`flex-1 h-px mx-2 ${addStep > 2 ? 'bg-teal-500' : 'bg-teal-700/30'}`} />
+                  <button onClick={() => setAddStep(3)}
+                    className={`flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${addStep === 3 ? 'text-gold' : 'text-teal-600'}`}>
+                    <span className={`h-6 w-6 rounded-full grid place-items-center text-xs font-bold shrink-0 ${addStep === 3 ? 'bg-gold text-ink-900' : 'bg-ink-900 border border-teal-700/40 text-teal-600'}`}>3</span>
+                    <span className="hidden sm:inline">Bowling &amp; Fielding</span>
+                  </button>
+                </div>
+
+                {/* Step 1: Identity */}
+                {addStep === 1 && (
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div className="space-y-3">
+                      <label className="block text-xs text-teal-300">
+                        Full name *
+                        <input type="text" value={form.name ?? ''} onChange={(e) => set('name', e.target.value)}
+                          className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
                       </label>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="block text-xs text-teal-300">
-                      Status
-                      <select className="mt-0.5 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2.5 py-1.5 text-white text-sm"
-                        value={form.status} onChange={(e) => set('status', e.target.value)}>
-                        {['not_registered', 'registered', 'ready_for_auction', 'in_auction', 'sold', 'unsold', 'reauction', 'retired'].map((s) => (
-                          <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="block text-xs text-teal-300">
-                      Player photo
-                      <div className="mt-0.5 flex items-center gap-2">
-                        {form.photo_url && (
-                          <img src={form.photo_url} alt="" className="h-8 w-8 rounded object-cover border border-teal-700/40 shrink-0" />
-                        )}
-                        <input type="file" accept="image/*" className="text-xs min-w-0"
-                          disabled={uploadingPhoto}
-                          onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f) }} />
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className="block text-xs text-teal-300">
+                          Role
+                          <input type="text" value={form.role ?? ''} onChange={(e) => set('role', e.target.value)}
+                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                        </label>
+                        <label className="block text-xs text-teal-300">
+                          Category
+                          <input type="text" value={form.category ?? ''} onChange={(e) => set('category', e.target.value)}
+                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                        </label>
+                        <label className="block text-xs text-teal-300">
+                          Status
+                          <select value={form.status} onChange={(e) => set('status', e.target.value)}
+                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm">
+                            {['not_registered','registered','ready_for_auction','in_auction','sold','unsold','reauction','retired'].map((s) => (
+                              <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="block text-xs text-teal-300">
+                          Base price
+                          <input type="text" inputMode="numeric" value={form.base_price ?? ''}
+                            onChange={(e) => set('base_price', Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
+                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                        </label>
+                        <label className="block text-xs text-teal-300">
+                          Batting style
+                          <input type="text" value={form.batting_style ?? ''} onChange={(e) => set('batting_style', e.target.value)}
+                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                        </label>
+                        <label className="block text-xs text-teal-300">
+                          Bowling style
+                          <input type="text" value={form.bowling_style ?? ''} onChange={(e) => set('bowling_style', e.target.value)}
+                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                        </label>
                       </div>
-                      {uploadingPhoto && <p className="text-teal-400 text-xs mt-0.5 animate-pulse">Uploading…</p>}
-                    </label>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="rounded-lg border border-teal-700/30 bg-ink-900/40 p-3 space-y-2">
+                        <p className="text-[0.65rem] text-teal-400 uppercase tracking-wider font-semibold">CricHeroes</p>
+                        <div className="flex gap-2">
+                          <input type="text" value={form.profile_url ?? ''}
+                            onChange={(e) => set('profile_url', e.target.value)}
+                            placeholder="https://cricheroes.com/player-profile/..."
+                            className="flex-1 min-w-0 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                          <button type="button" onClick={fetchFromCricHeroes}
+                            disabled={fetchingStats || !form.profile_url}
+                            className="px-3 py-2 rounded-lg bg-teal-600/70 text-white text-xs font-semibold whitespace-nowrap disabled:opacity-40">
+                            {fetchingStats ? 'Fetching…' : 'Fetch'}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-teal-700/30 bg-ink-900/40 p-3 space-y-2">
+                        <p className="text-[0.65rem] text-teal-400 uppercase tracking-wider font-semibold">Photo</p>
+                        <div className="flex items-center gap-3">
+                          {form.photo_url ? (
+                            <img src={form.photo_url} alt="" className="h-20 w-20 rounded-lg object-cover border border-teal-700/40 shrink-0" />
+                          ) : (
+                            <div className="h-20 w-20 rounded-lg bg-ink-900 border border-teal-700/40 grid place-items-center shrink-0">
+                              <span className="text-teal-600 text-2xl">?</span>
+                            </div>
+                          )}
+                          <label className={`text-xs px-3 py-2 rounded-lg cursor-pointer font-medium transition ${uploadingPhoto ? 'bg-teal-900/60 text-teal-400' : 'bg-teal-700/50 text-white hover:bg-teal-700/70'}`}>
+                            {uploadingPhoto ? 'Uploading…' : 'Upload photo'}
+                            <input type="file" accept="image/*" className="hidden" disabled={uploadingPhoto}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f) }} />
+                          </label>
+                        </div>
+                      </div>
+                      {duplicates.length > 0 && (
+                        <div className="rounded-lg border border-yellow-600/50 bg-yellow-900/20 p-3">
+                          <p className="text-yellow-400 text-xs font-semibold">Possible duplicate{duplicates.length > 1 ? 's' : ''} found:</p>
+                          <ul className="text-xs text-yellow-300 mt-1 space-y-0.5">
+                            {duplicates.map((d) => <li key={d.id}>{d.name} — {d.role} ({d.status})</li>)}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </fieldset>
-
-                {/* Batting stats — 2 columns */}
-                <fieldset className="border border-teal-700/30 rounded-lg p-3 space-y-2">
-                  <legend className="text-[0.65rem] text-teal-400 uppercase tracking-wider px-1">Batting</legend>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'matches', label: 'Matches' },
-                      { key: 'runs', label: 'Runs' },
-                      { key: 'bat_avg', label: 'Average' },
-                      { key: 'strike_rate', label: 'Strike rate' },
-                      { key: 'fifties', label: '50s' },
-                      { key: 'hundreds', label: '100s' },
-                      { key: 'sixes', label: 'Sixes' },
-                    ].map(({ key, label }) => (
-                      <label key={key} className="block text-xs text-teal-300">
-                        {label}
-                        <input type="text" inputMode="numeric"
-                          value={form[key] ?? ''}
-                          onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
-                          className="mt-0.5 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2.5 py-1.5 text-white text-sm" />
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-                {/* Bowling stats — 2 columns */}
-                <fieldset className="border border-teal-700/30 rounded-lg p-3 space-y-2">
-                  <legend className="text-[0.65rem] text-teal-400 uppercase tracking-wider px-1">Bowling</legend>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'wickets', label: 'Wickets' },
-                      { key: 'bowl_avg', label: 'Average' },
-                      { key: 'economy', label: 'Economy' },
-                      { key: 'dot_balls', label: 'Dot balls' },
-                      { key: 'three_wicket_hauls', label: '3-wkt hauls' },
-                      { key: 'five_wicket_hauls', label: '5-wkt hauls' },
-                    ].map(({ key, label }) => (
-                      <label key={key} className="block text-xs text-teal-300">
-                        {label}
-                        <input type="text" inputMode="numeric"
-                          value={form[key] ?? ''}
-                          onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
-                          className="mt-0.5 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2.5 py-1.5 text-white text-sm" />
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-                {/* Fielding stats — 2 columns */}
-                <fieldset className="border border-teal-700/30 rounded-lg p-3 space-y-2">
-                  <legend className="text-[0.65rem] text-teal-400 uppercase tracking-wider px-1">Fielding</legend>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'catches', label: 'Catches' },
-                      { key: 'run_outs', label: 'Run outs' },
-                      { key: 'stumpings', label: 'Stumpings' },
-                    ].map(({ key, label }) => (
-                      <label key={key} className="block text-xs text-teal-300">
-                        {label}
-                        <input type="text" inputMode="numeric"
-                          value={form[key] ?? ''}
-                          onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
-                          className="mt-0.5 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2.5 py-1.5 text-white text-sm" />
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-              </div>{/* end scrollable area */}
-
-              {/* Auto-calculated points preview */}
-              {form.matches > 0 && (
-                <div className="rounded-lg border border-teal-700/40 bg-ink-900/50 p-3 shrink-0">
-                  <p className="text-xs font-semibold text-teal-200 uppercase tracking-wide mb-1">Calculated Points (PPM)</p>
-                  <div className="grid grid-cols-3 gap-x-3 gap-y-1 text-xs">
-                    <span className="text-teal-400">Batting:</span><span className="text-white col-span-2">{calcBattingPoints(form).toFixed(1)}</span>
-                    <span className="text-teal-400">Bowling:</span><span className="text-white col-span-2">{calcBowlingPoints(form).toFixed(1)}</span>
-                    <span className="text-teal-400">Fielding:</span><span className="text-white col-span-2">{calcFieldingPoints(form).toFixed(1)}</span>
-                    <span className="text-teal-400 font-semibold">Total:</span><span className="text-white font-semibold col-span-2">{calcTotalPoints(form).toFixed(1)}</span>
-                    <span className="text-teal-400 font-semibold">PPM:</span>
-                    <span className={`font-semibold col-span-2 ${formTier.color}`}>
-                      {calcPPM(form).toFixed(2)} ({formTier.label})
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Duplicate warning */}
-              {duplicates.length > 0 && (
-                <div className="rounded-lg border border-yellow-600/50 bg-yellow-900/20 p-2">
-                  <p className="text-yellow-400 text-xs font-semibold">Possible duplicate{duplicates.length > 1 ? 's' : ''} found:</p>
-                  <ul className="text-xs text-yellow-300 mt-1 space-y-0.5">
-                    {duplicates.map((d) => (
-                      <li key={d.id}>{d.name} — {d.role} ({d.status})</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {err && <p className="text-red-400 text-xs">{err}</p>}
-              <div className="flex flex-wrap gap-2">
-                <button onClick={save} disabled={!form.name || saving || uploadingPhoto}
-                  className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
-                  {saving ? 'Saving…' : 'Save player'}
-                </button>
-                {editId && (
-                  <button onClick={() => { setEditId(null); setForm(blankFor(auction)); setErr('') }}
-                    className="text-xs text-teal-300">Cancel</button>
                 )}
+
+                {/* Step 2: Batting */}
+                {addStep === 2 && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {[
+                        { key: 'matches', label: 'Matches' },
+                        { key: 'runs', label: 'Runs' },
+                        { key: 'bat_avg', label: 'Average' },
+                        { key: 'strike_rate', label: 'Strike rate' },
+                        { key: 'fifties', label: '50s' },
+                        { key: 'hundreds', label: '100s' },
+                        { key: 'sixes', label: 'Sixes' },
+                      ].map(({ key, label }) => (
+                        <label key={key} className="block text-xs text-teal-300">
+                          {label}
+                          <input type="text" inputMode="numeric" value={form[key] ?? ''}
+                            onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
+                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                        </label>
+                      ))}
+                    </div>
+                    {form.matches > 0 && (
+                      <div className="rounded-lg border border-teal-700/40 bg-ink-900/50 p-3">
+                        <p className="text-xs font-semibold text-teal-200 uppercase tracking-wide mb-2">Calculated Points (PPM)</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-xs">
+                          <span className="text-teal-400">Batting:</span><span className="text-white">{calcBattingPoints(form).toFixed(1)}</span>
+                          <span className="text-teal-400">Bowling:</span><span className="text-white">{calcBowlingPoints(form).toFixed(1)}</span>
+                          <span className="text-teal-400">Fielding:</span><span className="text-white">{calcFieldingPoints(form).toFixed(1)}</span>
+                          <span className="text-teal-400 font-semibold">Total:</span><span className="text-white font-semibold">{calcTotalPoints(form).toFixed(1)}</span>
+                          <span className="text-teal-400 font-semibold">PPM:</span>
+                          <span className={`font-semibold col-span-3 ${formTier.color}`}>{calcPPM(form).toFixed(2)} ({formTier.label})</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Step 3: Bowling & Fielding */}
+                {addStep === 3 && (
+                  <div className="space-y-5">
+                    <div>
+                      <p className="text-[0.65rem] text-teal-400 uppercase tracking-wider font-semibold mb-3">Bowling</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {[
+                          { key: 'wickets', label: 'Wickets' },
+                          { key: 'bowl_avg', label: 'Average' },
+                          { key: 'economy', label: 'Economy' },
+                          { key: 'dot_balls', label: 'Dot balls' },
+                          { key: 'three_wicket_hauls', label: '3-wkt hauls' },
+                          { key: 'five_wicket_hauls', label: '5-wkt hauls' },
+                        ].map(({ key, label }) => (
+                          <label key={key} className="block text-xs text-teal-300">
+                            {label}
+                            <input type="text" inputMode="numeric" value={form[key] ?? ''}
+                              onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
+                              className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[0.65rem] text-teal-400 uppercase tracking-wider font-semibold mb-3">Fielding</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {[
+                          { key: 'catches', label: 'Catches' },
+                          { key: 'run_outs', label: 'Run outs' },
+                          { key: 'stumpings', label: 'Stumpings' },
+                        ].map(({ key, label }) => (
+                          <label key={key} className="block text-xs text-teal-300">
+                            {label}
+                            <input type="text" inputMode="numeric" value={form[key] ?? ''}
+                              onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
+                              className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    {form.matches > 0 && (
+                      <div className="rounded-lg border border-teal-700/40 bg-ink-900/50 p-3">
+                        <p className="text-xs font-semibold text-teal-200 uppercase tracking-wide mb-2">Calculated Points (PPM)</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-xs">
+                          <span className="text-teal-400">Batting:</span><span className="text-white">{calcBattingPoints(form).toFixed(1)}</span>
+                          <span className="text-teal-400">Bowling:</span><span className="text-white">{calcBowlingPoints(form).toFixed(1)}</span>
+                          <span className="text-teal-400">Fielding:</span><span className="text-white">{calcFieldingPoints(form).toFixed(1)}</span>
+                          <span className="text-teal-400 font-semibold">Total:</span><span className="text-white font-semibold">{calcTotalPoints(form).toFixed(1)}</span>
+                          <span className="text-teal-400 font-semibold">PPM:</span>
+                          <span className={`font-semibold col-span-3 ${formTier.color}`}>{calcPPM(form).toFixed(2)} ({formTier.label})</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {err && <p className="text-red-400 text-xs mt-3">{err}</p>}
+                <div className="flex items-center gap-3 mt-5">
+                  {addStep > 1 && (
+                    <button type="button" onClick={() => setAddStep(s => s - 1)}
+                      className="px-4 py-2 rounded-lg border border-teal-700/40 text-teal-300 hover:text-white text-sm transition">
+                      ← Prev
+                    </button>
+                  )}
+                  {addStep < 3 && (
+                    <button type="button" onClick={() => setAddStep(s => s + 1)}
+                      className="px-4 py-2 rounded-lg border border-teal-500/50 text-teal-200 hover:text-white hover:border-teal-400 text-sm transition">
+                      Next →
+                    </button>
+                  )}
+                  <button onClick={save} disabled={!form.name || saving || uploadingPhoto}
+                    className="ml-auto px-5 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50 text-sm">
+                    {saving ? 'Saving…' : 'Save player'}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Player list */}
             <div className={`${tab === 'Players' ? 'xl:col-span-3' : 'hidden'} rounded-xl border border-teal-700/40 bg-ink-800/60 p-4`}>

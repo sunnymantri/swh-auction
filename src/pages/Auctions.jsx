@@ -92,6 +92,7 @@ export default function Auctions() {
         bid_timer_seconds: Number(cfgForm.bid_timer_seconds || 15),
         budget_multiplier: Number(cfgForm.budget_multiplier || 1.6),
         reauction_refund_enabled: !!cfgForm.reauction_refund_enabled,
+        public_code: cfgForm.public_code || null,
         banner_logo_url: cfgForm.banner_logo_url || null,
         sponsor_logos: cfgForm.sponsor_logos || []
       }
@@ -279,77 +280,116 @@ export default function Auctions() {
             {!auction || !cfgForm ? (
               <p className="text-teal-400">No auction selected. Switch to the Auctions tab and select or create one.</p>
             ) : (
-              <div className="grid gap-4 xl:grid-cols-2">
-                <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-3">
-                  <h3 className="font-score text-lg text-teal-200">Rules & details</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <CfgField label="Name" value={cfgForm.name} onChange={(v) => cfgSet('name', v)} />
-                    <CfgField label="Season" value={cfgForm.season} onChange={(v) => cfgSet('season', v)} />
-                    <CfgField label="Sport" value={cfgForm.sport} onChange={(v) => cfgSet('sport', v)} />
-                    <CfgField label="Auction date" type="date" value={cfgForm.auction_date ?? ''} onChange={(v) => cfgSet('auction_date', v)} />
-                    <CfgField label="Auction time" type="time" value={cfgForm.auction_time ?? ''} onChange={(v) => cfgSet('auction_time', v)} />
-                    <CfgField label="Season start date" type="date" value={cfgForm.season_start_date ?? ''} onChange={(v) => cfgSet('season_start_date', v)} />
-                    <CfgField label="Season end date" type="date" value={cfgForm.season_end_date ?? ''} onChange={(v) => cfgSet('season_end_date', v)} />
-                    <label className="block text-xs text-teal-300 capitalize">
-                      Match day
-                      <select value={cfgForm.match_day ?? 'Sunday'} onChange={(e) => cfgSet('match_day', e.target.value)}
-                        className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
-                        {['Sunday','Saturday','Monday','Tuesday','Wednesday','Thursday','Friday'].map(d => (
-                          <option key={d} value={d}>{d}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="block text-xs text-teal-300 capitalize">
-                      Timezone
-                      <select value={cfgForm.timezone ?? 'Australia/Sydney'} onChange={(e) => cfgSet('timezone', e.target.value)}
-                        className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
-                        {['Australia/Sydney','Australia/Melbourne','Australia/Brisbane','Australia/Adelaide','Australia/Perth','Australia/Hobart','Pacific/Auckland','Asia/Kolkata','Asia/Singapore','Europe/London','America/New_York','America/Los_Angeles','UTC'].map(tz => (
-                          <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>
-                        ))}
-                      </select>
-                    </label>
-                    {NUMERIC.map((k) => (
-                      <CfgField key={k} label={k.replaceAll('_', ' ')} value={cfgForm[k] ?? ''}
-                        onChange={(v) => cfgSet(k, Number(v.replace(/[^\d]/g, '') || 0))} />
-                    ))}
-                    <label className="block text-xs text-teal-300 capitalize">
-                      Budget multiplier
-                      <input type="text" inputMode="decimal" value={cfgForm.budget_multiplier ?? 1.6}
-                        onChange={(e) => cfgSet('budget_multiplier', e.target.value.replace(/[^\d.]/g, ''))}
-                        className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
-                      <span className="text-[0.7rem] sm:text-xs text-teal-500 mt-0.5 block">
-                        Team budget = (sum of ready-for-auction player base prices) × multiplier ÷ number of teams
-                      </span>
-                    </label>
+              <div className="max-w-3xl">
+                {/* Action bar */}
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
+                  <p className="text-sm text-teal-400">Editing: <span className="text-white font-medium">{cfgForm.name}</span></p>
+                  <div className="flex gap-2 flex-wrap">
+                    <button onClick={saveCfg} disabled={cfgBusy}
+                      className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50 text-sm">
+                      {cfgBusy ? 'Saving…' : 'Save changes'}
+                    </button>
+                    <button onClick={handleRecalculateBudgets} disabled={recalcBusy}
+                      className="px-4 py-2 rounded-lg bg-teal-800/60 border border-teal-600/50 text-teal-100 font-semibold disabled:opacity-50 text-sm">
+                      {recalcBusy ? 'Recalculating…' : 'Recalculate budgets'}
+                    </button>
+                    <button onClick={handleResetAuction} disabled={resetBusy}
+                      className="px-4 py-2 rounded-lg bg-red-900/60 border border-red-600/50 text-red-200 font-semibold disabled:opacity-50 text-sm">
+                      {resetBusy ? 'Resetting…' : 'Reset auction'}
+                    </button>
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-teal-200">
+                </div>
+                {cfgMsg && <p className="mb-4 text-sm text-teal-300">{cfgMsg}</p>}
+
+                {/* Section: General */}
+                <div className="sticky top-14 z-10 -mx-4 px-4 py-2.5 bg-[#0d1520]/95 backdrop-blur border-b border-teal-700/30 mb-4">
+                  <h4 className="text-xs font-bold text-teal-200 uppercase tracking-widest">General</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8 px-1">
+                  <CfgField label="Name" value={cfgForm.name} onChange={(v) => cfgSet('name', v)} />
+                  <CfgField label="Season" value={cfgForm.season} onChange={(v) => cfgSet('season', v)} />
+                  <label className="block text-xs text-teal-300 capitalize">
+                    Sport
+                    <select value={cfgForm.sport} onChange={(e) => cfgSet('sport', e.target.value)}
+                      className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
+                      {['Cricket','Football','Basketball','Rugby'].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <CfgField label="Auction date" type="date" value={cfgForm.auction_date ?? ''} onChange={(v) => cfgSet('auction_date', v)} />
+                  <CfgField label="Auction time" type="time" value={cfgForm.auction_time ?? ''} onChange={(v) => cfgSet('auction_time', v)} />
+                  <CfgField label="Season start date" type="date" value={cfgForm.season_start_date ?? ''} onChange={(v) => cfgSet('season_start_date', v)} />
+                  <CfgField label="Season end date" type="date" value={cfgForm.season_end_date ?? ''} onChange={(v) => cfgSet('season_end_date', v)} />
+                  <label className="block text-xs text-teal-300 capitalize">
+                    Match day
+                    <select value={cfgForm.match_day ?? 'Sunday'} onChange={(e) => cfgSet('match_day', e.target.value)}
+                      className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
+                      {['Sunday','Saturday','Monday','Tuesday','Wednesday','Thursday','Friday'].map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-xs text-teal-300 capitalize">
+                    Timezone
+                    <select value={cfgForm.timezone ?? 'Australia/Sydney'} onChange={(e) => cfgSet('timezone', e.target.value)}
+                      className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
+                      {['Australia/Sydney','Australia/Melbourne','Australia/Brisbane','Australia/Adelaide','Australia/Perth','Australia/Hobart','Pacific/Auckland','Asia/Kolkata','Asia/Singapore','Europe/London','America/New_York','America/Los_Angeles','UTC'].map(tz => (
+                        <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                {/* Section: Rules */}
+                <div className="sticky top-14 z-10 -mx-4 px-4 py-2.5 bg-[#0d1520]/95 backdrop-blur border-b border-teal-700/30 mb-4">
+                  <h4 className="text-xs font-bold text-teal-200 uppercase tracking-widest">Rules</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8 px-1">
+                  <CfgField label="Squad size" value={cfgForm.squad_size ?? ''} onChange={(v) => cfgSet('squad_size', Number(v.replace(/[^\d]/g, '') || 0))} />
+                  <CfgField label="Default base price" value={cfgForm.default_base_price ?? ''} onChange={(v) => cfgSet('default_base_price', Number(v.replace(/[^\d]/g, '') || 0))} />
+                  <CfgField label="Min player price" value={cfgForm.min_player_price ?? ''} onChange={(v) => cfgSet('min_player_price', Number(v.replace(/[^\d]/g, '') || 0))} />
+                  <CfgField label="Initial bid timer (s)" value={cfgForm.initial_bid_timer_seconds ?? ''} onChange={(v) => cfgSet('initial_bid_timer_seconds', Number(v.replace(/[^\d]/g, '') || 0))} />
+                  <CfgField label="Bid timer (s)" value={cfgForm.bid_timer_seconds ?? ''} onChange={(v) => cfgSet('bid_timer_seconds', Number(v.replace(/[^\d]/g, '') || 0))} />
+                  <label className="block text-xs text-teal-300 capitalize md:col-span-2">
+                    Public viewer access code
+                    <input type="text" value={cfgForm.public_code ?? ''}
+                      onChange={(e) => cfgSet('public_code', e.target.value)}
+                      placeholder="Leave blank for open access"
+                      className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white font-mono tracking-widest" />
+                    <span className="text-[0.7rem] text-teal-500 mt-0.5 block">
+                      When set, public viewers must enter this code on the login page.
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-teal-200 md:col-span-2">
                     <input type="checkbox" checked={!!cfgForm.reauction_refund_enabled}
                       onChange={(e) => cfgSet('reauction_refund_enabled', e.target.checked)} />
                     Re-auction refund enabled
                   </label>
-                  <button onClick={saveCfg} disabled={cfgBusy}
-                    className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
-                    {cfgBusy ? 'Saving…' : 'Save'}
-                  </button>
-                  <button
-                    onClick={handleRecalculateBudgets}
-                    disabled={recalcBusy}
-                    className="ml-2 px-4 py-2 rounded-lg bg-teal-800/60 border border-teal-600/50 text-teal-100 font-semibold disabled:opacity-50"
-                  >
-                    {recalcBusy ? 'Recalculating…' : 'Recalculate team budgets'}
-                  </button>
-                  <button
-                    onClick={handleResetAuction}
-                    disabled={resetBusy}
-                    className="ml-2 px-4 py-2 rounded-lg bg-red-900/60 border border-red-600/50 text-red-200 font-semibold disabled:opacity-50"
-                  >
-                    {resetBusy ? 'Resetting…' : 'Reset auction'}
-                  </button>
-                  {cfgMsg && <p className="text-teal-300 text-sm">{cfgMsg}</p>}
                 </div>
 
-                <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-3">
-                  <h3 className="font-score text-lg text-teal-200">Branding</h3>
+                {/* Section: Budget */}
+                <div className="sticky top-14 z-10 -mx-4 px-4 py-2.5 bg-[#0d1520]/95 backdrop-blur border-b border-teal-700/30 mb-4">
+                  <h4 className="text-xs font-bold text-teal-200 uppercase tracking-widest">Budget</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8 px-1">
+                  <CfgField label="Default team budget" value={cfgForm.default_team_budget ?? ''} onChange={(v) => cfgSet('default_team_budget', Number(v.replace(/[^\d]/g, '') || 0))} />
+                  <label className="block text-xs text-teal-300 capitalize">
+                    Budget multiplier
+                    <input type="text" inputMode="decimal" value={cfgForm.budget_multiplier ?? 1.6}
+                      onChange={(e) => cfgSet('budget_multiplier', e.target.value.replace(/[^\d.]/g, ''))}
+                      className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
+                    <span className="text-[0.7rem] sm:text-xs text-teal-500 mt-0.5 block">
+                      Budget = (ready-for-auction player base prices sum) × multiplier ÷ teams
+                    </span>
+                  </label>
+                </div>
+
+                {/* Section: Branding */}
+                <div className="sticky top-14 z-10 -mx-4 px-4 py-2.5 bg-[#0d1520]/95 backdrop-blur border-b border-teal-700/30 mb-4">
+                  <h4 className="text-xs font-bold text-teal-200 uppercase tracking-widest">Branding</h4>
+                </div>
+                <div className="space-y-4 pb-4 px-1">
                   <div className="flex items-center gap-3">
                     <div className="h-16 w-16 rounded-lg bg-ink-900 border border-teal-700/40 grid place-items-center overflow-hidden">
                       {cfgForm.banner_logo_url
