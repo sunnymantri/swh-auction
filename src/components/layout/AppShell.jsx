@@ -5,6 +5,8 @@ import { useAuctionContext } from '../../context/AuctionContext'
 import { fmtStatus } from '../../lib/format'
 import packageMeta from '../../../package.json'
 
+const ROLE_LABELS = { admin: 'Administrator', team_owner: 'Team Owner', public: 'Player' }
+
 const NAV_GROUPS = [
   {
     id: 'overview',
@@ -23,9 +25,13 @@ const NAV_GROUPS = [
     links: [
       { to: '/auctions',           label: 'Auctions',  roles: ['admin'] },
       { to: '/teams',              label: 'Teams',     roles: ['admin'] },
-      { to: '/players',            label: 'Players',   roles: ['admin'] },
+      { to: '/players', label: 'Players', roles: ['admin'], dropdown: [
+        { label: 'Players list', tab: 'Players' },
+        { label: 'Add Player',   tab: 'Add Player' },
+        { label: 'Categories',   tab: 'Categories' },
+        { label: 'Vacation',     tab: 'Vacation' },
+      ]},
       { to: '/users',              label: 'Users',     roles: ['admin'] },
-      { to: '/vacation-responses', label: 'Vacation Responses', roles: ['admin'] },
     ]
   },
   {
@@ -90,7 +96,7 @@ function UserMenu({ email, role, onSignOut, signingOut }) {
         >
           <div className="px-3 py-2.5 border-b border-teal-700/30">
             <p className="text-xs text-white truncate">{email}</p>
-            <p className="text-[0.65rem] uppercase tracking-wider text-teal-500 mt-0.5">{role}</p>
+            <p className="text-[0.65rem] uppercase tracking-wider text-teal-500 mt-0.5">{ROLE_LABELS[role] ?? role}</p>
           </div>
           <button
             onClick={onSignOut}
@@ -111,6 +117,7 @@ export default function AppShell({ title, children }) {
   const loc = useLocation()
   const nav = useNavigate()
   const [signingOut, setSigningOut] = useState(false)
+  const [openDropdown, setOpenDropdown] = useState(null)
 
   const handleSignOut = async () => {
     if (signingOut) return
@@ -218,6 +225,33 @@ export default function AppShell({ title, children }) {
                   )}
                   {visibleLinks.map(l => {
                     const active = loc.pathname === l.to
+                    if (l.dropdown) {
+                      return (
+                        <div key={l.to} className="relative"
+                          onMouseEnter={() => setOpenDropdown(l.to)}
+                          onMouseLeave={() => setOpenDropdown(null)}>
+                          <Link to={l.to}
+                            className={`relative px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors inline-block ${active ? 'text-gold' : 'text-teal-300 hover:text-white'}`}>
+                            {l.label}
+                            {active && <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-gold" />}
+                          </Link>
+                          {openDropdown === l.to && (
+                            <div className="absolute top-full left-0 z-30 mt-0.5 rounded-xl border border-teal-700/40 bg-ink-900 shadow-card overflow-hidden min-w-[10rem]">
+                              {l.dropdown.map(item => (
+                                <Link
+                                  key={item.tab}
+                                  to={`/players?tab=${encodeURIComponent(item.tab)}`}
+                                  onClick={() => setOpenDropdown(null)}
+                                  className="block px-3 py-2 text-xs text-teal-200 hover:bg-ink-800 hover:text-white transition"
+                                >
+                                  {item.label}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    }
                     return (
                       <Link
                         key={l.to}

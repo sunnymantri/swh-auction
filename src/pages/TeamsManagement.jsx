@@ -23,7 +23,7 @@ export default function TeamsManagement() {
   const [msg, setMsg] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploadBusy, setUploadBusy] = useState(false)
-  const [notifyPrefs, setNotifyPrefs] = useState({ email: true, sms: false, phone: '' })
+  const [notifyPrefs, setNotifyPrefs] = useState({ email: false, sms: false, phone: '' })
 
   const reload = async () => {
     if (!auction) return
@@ -102,7 +102,7 @@ export default function TeamsManagement() {
 
       setEditId(null)
       setForm(blankFor(auction))
-      setNotifyPrefs({ email: true, sms: false, phone: '' })
+      setNotifyPrefs({ email: false, sms: false, phone: '' })
       await reload()
     } catch (e) {
       setMsg(e.message || 'Save failed — check the browser console for details.')
@@ -227,11 +227,18 @@ export default function TeamsManagement() {
                 When owner email changes on an existing team, a fresh login is created and linked to that team.
               </p>
             </div>
-            <button onClick={save} disabled={!form.name || saving || uploadBusy}
-              className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
-              {saving ? 'Saving…' : 'Save team'}
-            </button>
-            {editId && <button onClick={() => { setEditId(null); setForm(blankFor(auction)) }} className="text-xs text-teal-300">Cancel edit</button>}
+            <div className="flex gap-3 mt-1">
+              <button onClick={save} disabled={!form.name || saving || uploadBusy}
+                className="flex-1 px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
+                {saving ? 'Saving…' : 'Save team'}
+              </button>
+              {editId && (
+                <button onClick={() => { setEditId(null); setForm(blankFor(auction)) }}
+                  className="flex-1 px-4 py-2 rounded-lg border border-teal-700/40 text-teal-300 hover:text-white hover:border-teal-500 font-semibold transition">
+                  Cancel
+                </button>
+              )}
+            </div>
             {msg && <p className="text-live text-sm">{msg}</p>}
             {creds && (
               <div className="rounded-lg border border-teal-600/50 bg-teal-900/30 p-3 text-sm">

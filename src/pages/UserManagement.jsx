@@ -6,6 +6,7 @@ import { createUserAccount, listProfiles, setProfileRole } from '../lib/admin'
 import { listTeams } from '../lib/api'
 
 const ROLES = ['admin', 'team_owner', 'public']
+const ROLE_LABELS = { admin: 'Administrator', team_owner: 'Team Owner', public: 'Player' }
 
 export default function UserManagement() {
   const { auction } = useActiveAuction()
@@ -65,8 +66,8 @@ export default function UserManagement() {
             <select value={form.role}
               onChange={(e) => setForm((s) => ({ ...s, role: e.target.value }))}
               className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2">
-              <option value="team_owner">Team owner</option>
-              <option value="admin">Admin</option>
+              <option value="team_owner">Team Owner</option>
+              <option value="admin">Administrator</option>
             </select>
             {form.role === 'team_owner' && (
               <select value={form.teamId}
@@ -86,7 +87,7 @@ export default function UserManagement() {
                 <p className="text-teal-200 font-semibold mb-1">Account created — share these credentials:</p>
                 <p className="text-white">Email: <span className="tabular">{created.email}</span></p>
                 <p className="text-white">Password: <span className="tabular">{created.password}</span></p>
-                <p className="text-teal-400 text-xs mt-1">Role: {created.role}</p>
+                <p className="text-teal-400 text-xs mt-1">Role: {ROLE_LABELS[created.role] ?? created.role}</p>
                 <p className="text-teal-400 text-xs mt-1">Ask the user to change this password right after first login.</p>
               </div>
             )}
@@ -99,11 +100,11 @@ export default function UserManagement() {
                 <div key={p.id} className="border border-teal-700/40 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                   <div className="min-w-0">
                     <p className="text-white truncate">{p.full_name || '—'}</p>
-                    <p className="text-xs text-teal-400">{p.role}</p>
+                    <p className="text-xs text-teal-400">{ROLE_LABELS[p.role] ?? p.role}</p>
                   </div>
                   <select value={p.role} onChange={(e) => changeRole(p.id, e.target.value)}
                     className="rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1 text-xs">
-                    {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                    {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
                   </select>
                 </div>
               ))}

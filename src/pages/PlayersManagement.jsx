@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import PlayerCard from '../components/auction/PlayerCard'
@@ -6,6 +7,7 @@ import { useActiveAuction } from '../hooks/useActiveAuction'
 import {
   createPlayer, deletePlayer, exportPlayersCsv, listPlayers,
   parsePlayersCsvDetailed, playersCsvTemplate, updatePlayer, uploadPlayerPhoto,
+  updatePlayerVacation,
   createCategory, deleteCategory, listCategories, updateCategory,
   fetchCricHeroesStats
 } from '../lib/api'
@@ -23,6 +25,7 @@ const STATUS_LABELS = {
   sold:              'Sold',
   unsold:            'Unsold',
   reauction:         'Re-auction',
+  retired:           'Retired',
 }
 
 const blankFor = (auction) => ({
@@ -118,7 +121,12 @@ const buildStatsUpdatePayload = (player) => ({
 
 export default function PlayersManagement() {
   const { auction } = useActiveAuction()
-  const [tab, setTab] = useState('Players')
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [tab, setTab] = useState(() => {
+    const t = new URLSearchParams(location.search).get('tab')
+    return TABS.includes(t) ? t : 'Players'
+  })
 
   // Player state
   const [players, setPlayers] = useState([])
@@ -133,7 +141,7 @@ export default function PlayersManagement() {
   const [bulkBusy, setBulkBusy] = useState(false)
 
   // Filter state
-  const [statusFilter, setStatusFilter] = useState(null)
+  const [statusFilter, setStatusFilter] = useState('ready_for_auction')
   const [search, setSearch] = useState('')
   // Player profile view
   const [viewPlayer, setViewPlayer] = useState(null)
@@ -156,6 +164,10 @@ export default function PlayersManagement() {
   }
   useEffect(() => { reloadPlayers(); reloadCategories() }, [auction])
   useEffect(() => { if (!editId) setForm(blankFor(auction)) }, [auction, editId])
+  useEffect(() => {
+    const t = new URLSearchParams(location.search).get('tab')
+    if (t && TABS.includes(t)) setTab(t)
+  }, [location.search])
 
   // Status counts and filtered list
   const statusCounts = useMemo(() => {
@@ -493,7 +505,7 @@ export default function PlayersManagement() {
         {/* Tab bar */}
         <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5 overflow-x-auto scrollbar-none">
           {TABS.map(t => (
-            <button key={t} onClick={() => setTab(t)}
+            <button key={t} onClick={() => { setTab(t); navigate(`/players?tab=${encodeURIComponent(t)}`, { replace: true }) }}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${tab === t ? 'bg-ink-800/60 text-gold border border-teal-700/40 border-b-transparent -mb-px' : 'text-teal-300 hover:text-white'}`}>
               {t}
             </button>
@@ -580,7 +592,7 @@ export default function PlayersManagement() {
                       Status
                       <select className="mt-0.5 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2.5 py-1.5 text-white text-sm"
                         value={form.status} onChange={(e) => set('status', e.target.value)}>
-                        {['not_registered', 'registered', 'ready_for_auction', 'in_auction', 'sold', 'unsold', 'reauction'].map((s) => (
+                        {['not_registered', 'registered', 'ready_for_auction', 'in_auction', 'sold', 'unsold', 'reauction', 'retired'].map((s) => (
                           <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
                         ))}
                       </select>
@@ -784,7 +796,7 @@ export default function PlayersManagement() {
                   className={`px-2.5 py-1 text-xs rounded-full font-medium transition ${!statusFilter ? 'bg-teal-600 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300 hover:text-white'}`}>
                   All ({players.length})
                 </button>
-                {['not_registered', 'registered', 'ready_for_auction', 'in_auction', 'sold', 'unsold'].map((s) => {
+                {['not_registered', 'registered', 'ready_for_auction', 'in_auction', 'sold', 'unsold', 'retired'].map((s) => {
                   const count = statusCounts[s] || 0
                   if (count === 0 && s !== 'ready_for_auction' && s !== 'registered') return null
                   const colors = {
@@ -794,9 +806,11 @@ export default function PlayersManagement() {
                     in_auction: 'bg-yellow-900/40 border-yellow-600/50 text-yellow-400',
                     sold: 'bg-gold/20 border-gold/50 text-gold',
                     unsold: 'bg-red-900/40 border-red-600/50 text-red-400',
+                    retired: 'bg-slate-800/60 border-slate-600/50 text-slate-400',
                   }
+                  const tooltip = s === 'registered' ? 'Club member — not playing this season' : undefined
                   return (
-                    <button key={s} onClick={() => setStatusFilter(statusFilter === s ? null : s)}
+                    <button key={s} title={tooltip} onClick={() => setStatusFilter(statusFilter === s ? null : s)}
                       className={`px-2.5 py-1 text-xs rounded-full font-medium border transition ${statusFilter === s ? colors[s] : 'bg-ink-900 border-teal-700/50 text-teal-300 hover:text-white'}`}>
                       {STATUS_LABELS[s]} ({count})
                     </button>
@@ -821,6 +835,10 @@ export default function PlayersManagement() {
                       <button onClick={() => bulkSetStatus('registered')} disabled={bulkBusy}
                         className="px-2 py-1 text-xs rounded bg-ink-900 border border-teal-700/50 disabled:opacity-50">
                         {bulkBusy ? '…' : 'Move to registered'}
+                      </button>
+                      <button onClick={() => bulkSetStatus('retired')} disabled={bulkBusy}
+                        className="px-2 py-1 text-xs rounded bg-slate-800/60 border border-slate-600/50 text-slate-400 disabled:opacity-50">
+                        {bulkBusy ? '…' : 'Retire selected'}
                       </button>
                     </>
                   )}
@@ -865,9 +883,19 @@ export default function PlayersManagement() {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-2 shrink-0">
-                          <button onClick={() => toggleApprove(p)}
-                            className={`px-2 py-1 text-xs rounded ${p.status === 'ready_for_auction' ? 'bg-green-700/50 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300'}`}>
-                            {p.status === 'ready_for_auction' ? '✓ Ready — Remove' : 'Set Ready for Auction'}
+                          {p.status !== 'retired' && (
+                            <button onClick={() => toggleApprove(p)}
+                              className={`px-2 py-1 text-xs rounded ${p.status === 'ready_for_auction' ? 'bg-green-700/50 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300'}`}>
+                              {p.status === 'ready_for_auction' ? '✓ Ready — Remove' : 'Set Ready for Auction'}
+                            </button>
+                          )}
+                          <button
+                            onClick={async () => {
+                              await updatePlayer(p.id, { status: p.status === 'retired' ? 'registered' : 'retired' })
+                              await reloadPlayers()
+                            }}
+                            className={`px-2 py-1 text-xs rounded ${p.status === 'retired' ? 'bg-teal-700/50 text-teal-200' : 'bg-slate-800/60 border border-slate-600/50 text-slate-400'}`}>
+                            {p.status === 'retired' ? 'Unretire' : 'Retire'}
                           </button>
                           <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr(''); setTab('Add Player') }}
                             className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
@@ -916,9 +944,17 @@ export default function PlayersManagement() {
                           : <span className="text-[0.55rem] text-teal-500">no img</span>}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-white font-medium">{p.name}
-                          <span className="text-teal-400 text-xs ml-2">{p.role}{p.category ? ` / ${p.category}` : ''}</span>
-                        </p>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-white font-medium">{p.name}
+                            <span className="text-teal-400 text-xs ml-2">{p.role}{p.category ? ` / ${p.category}` : ''}</span>
+                          </p>
+                          <button
+                            onClick={async () => { await updatePlayerVacation(p.id, []); await reloadPlayers() }}
+                            className="shrink-0 text-xs px-2 py-1 rounded border border-red-700/40 text-red-400 hover:bg-red-900/30 transition"
+                          >
+                            Reset dates
+                          </button>
+                        </div>
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {(p.vacation_dates ?? []).map(d => (
                             <span key={d} className="px-2 py-0.5 rounded-full bg-yellow-900/40 border border-yellow-700/40 text-yellow-300 text-xs">
