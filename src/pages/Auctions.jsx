@@ -4,7 +4,8 @@ import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useAuctionContext } from '../context/AuctionContext'
 import { useActiveAuction } from '../hooks/useActiveAuction'
-import { createAuction, setAuctionStatus, updateAuction, uploadBranding, resetAuction, recalculateTeamBudgets } from '../lib/api'
+import { createAuction, setAuctionStatus, updateAuction, uploadBranding, resetAuction, recalculateTeamBudgets,
+         listTeamSummaries, getQueue, listSoldPlayers, exportAuctionStatusCsv } from '../lib/api'
 import { fmtPoints, fmtStatus } from '../lib/format'
 
 const STATUSES = ['draft', 'live', 'paused', 'completed']
@@ -169,6 +170,29 @@ export default function Auctions() {
     }
   }
 
+  const handleDownloadStatusCsv = async () => {
+    if (!auction) return
+    setCfgMsg('')
+    try {
+      const [teams, queue, sold] = await Promise.all([
+        listTeamSummaries(auction.id),
+        getQueue(auction.id),
+        listSoldPlayers(auction.id),
+      ])
+      const csv = exportAuctionStatusCsv({ teams, queue, sold })
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.setAttribute('download', `auction-status-${auction.name || 'auction'}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(link.href)
+    } catch (e) {
+      setCfgMsg(e.message || 'Status export failed.')
+    }
+  }
+
   return (
     <AppShell title="Auctions">
       <RoleGate allow={['admin']}>
@@ -292,6 +316,11 @@ export default function Auctions() {
                     <button onClick={handleRecalculateBudgets} disabled={recalcBusy}
                       className="px-4 py-2 rounded-lg bg-teal-800/60 border border-teal-600/50 text-teal-100 font-semibold disabled:opacity-50 text-sm">
                       {recalcBusy ? 'Recalculating…' : 'Recalculate budgets'}
+                    </button>
+                    <button onClick={handleDownloadStatusCsv}
+                      className="px-4 py-2 rounded-lg bg-teal-800/60 border border-teal-600/50 text-teal-100 font-semibold disabled:opacity-50 text-sm"
+                      title="Download a full auction-status CSV (teams, queue, outcomes) for manual fallback">
+                      ↓ Status CSV
                     </button>
                     <button onClick={handleResetAuction} disabled={resetBusy}
                       className="px-4 py-2 rounded-lg bg-red-900/60 border border-red-600/50 text-red-200 font-semibold disabled:opacity-50 text-sm">

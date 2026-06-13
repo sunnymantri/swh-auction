@@ -3,13 +3,15 @@ import { useLocation } from 'react-router-dom'
 import AppShell from '../components/layout/AppShell'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
-import { listNonRegularBowlers, listSoldPlayers, listTeamSummaries, listPlayers } from '../lib/api'
+import { listNonRegularBowlers, listSoldPlayers, listTeamSummaries, listPlayers, reauctionPlayer } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
 import { fmtPoints } from '../lib/format'
 
 const TABS = ['Overview', 'Squads']
 
 export default function AuctionResults() {
   const { auction, loading: auctionLoading, error: auctionError, reload: reloadAuction } = useActiveAuction()
+  const { role } = useAuth()
   const location = useLocation()
   const [sold, setSold] = useState([])
   const [teams, setTeams] = useState([])
@@ -18,6 +20,7 @@ export default function AuctionResults() {
   const [tab, setTab] = useState('Overview')
   const [openId, setOpenId] = useState(null)
   const [fetchError, setFetchError] = useState(null)
+  const [reauctioningId, setReauctioningId] = useState(null)
 
   useEffect(() => {
     const st = location.state
@@ -49,6 +52,28 @@ export default function AuctionResults() {
 
   useEffect(() => { reload() }, [reload])
   useAuctionRealtime(auction?.id, reload)
+
+  // Bug 7: pull a sold player back into the auction. Reverses the sale via the
+  // reauction_player RPC, which re-queues the player as 'reauction' and (if
+  // enabled) refunds the team.
+  const handleReauction = async (sale) => {
+    if (!sale?.id) return
+    if (!window.confirm(
+      `Re-auction "${sale.players?.name ?? 'this player'}"?\n\n` +
+      'This reverses the sale and returns the player to the auction queue. ' +
+      'The team\'s budget is refunded if refunds are enabled for this auction.'
+    )) return
+    setReauctioningId(sale.id)
+    setFetchError(null)
+    try {
+      await reauctionPlayer(sale.id)
+      await reload()
+    } catch (e) {
+      setFetchError(e.message || 'Re-auction failed.')
+    } finally {
+      setReauctioningId(null)
+    }
+  }
 
   const unsoldList = players.filter(p => p.status === 'unsold')
   const totalSpend = sold.reduce((sum, s) => sum + (s.reauctioned ? 0 : s.sold_price), 0)
@@ -200,8 +225,8 @@ export default function AuctionResults() {
                       {squad.length === 0 && <p className="text-teal-500 text-sm">No players bought yet.</p>}
                       <ul className="space-y-1.5">
                         {squad.map((s) => (
-                          <li key={s.id} className="flex items-center justify-between text-sm">
-                            <span className="text-teal-100">
+                          <li key={s.id} className="flex items-center justify-between gap-2 text-sm">
+                            <span className="text-teal-100 min-w-0">
                               {s.players?.name}
                               {s.players?.role && <span className="text-teal-500"> · {s.players.role}</span>}
                               {selected.includes(s.player_id) && (
@@ -210,7 +235,19 @@ export default function AuctionResults() {
                                 </span>
                               )}
                             </span>
-                            <span className="text-gold tabular">{fmtPoints(s.sold_price)}</span>
+                            <span className="flex items-center gap-2 shrink-0">
+                              {role === 'admin' && (
+                                <button
+                                  onClick={() => handleReauction(s)}
+                                  disabled={reauctioningId === s.id}
+                                  title="Reverse this sale and return the player to the auction queue"
+                                  className="text-[0.65rem] px-1.5 py-0.5 rounded border border-teal-700/50 text-teal-300 hover:text-white hover:border-teal-500 transition disabled:opacity-50"
+                                >
+                                  {reauctioningId === s.id ? '…' : '↻ Re-auction'}
+                                </button>
+                              )}
+                              <span className="text-gold tabular">{fmtPoints(s.sold_price)}</span>
+                            </span>
                           </li>
                         ))}
                       </ul>

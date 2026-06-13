@@ -1,18 +1,6 @@
 // @ts-nocheck
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('APP_ORIGIN') ?? Deno.env.get('VITE_APP_ORIGIN') ?? 'http://localhost:5173',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
-}
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-  })
-}
+import { corsHeaders } from '../_shared/cors.ts'
 
 function extractPlayerId(url: string): string | null {
   const match = url.match(/player-profile\/(\d+)/)
@@ -62,7 +50,14 @@ function inferRole(player: Record<string, unknown>, statementStats: Record<strin
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  const cors = corsHeaders(req)
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...cors, 'Content-Type': 'application/json' }
+    })
+
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!

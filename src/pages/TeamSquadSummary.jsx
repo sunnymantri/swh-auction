@@ -2,9 +2,20 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
-import { listNonRegularBowlers, listSoldPlayers, listTeamSummaries, setNonRegularBowlers } from '../lib/api'
+import { exportSquadsCsv, listNonRegularBowlers, listSoldPlayers, listTeamSummaries, setNonRegularBowlers } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { fmtPoints } from '../lib/format'
+
+function downloadCsv(filename, text) {
+  const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.setAttribute('download', filename)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(link.href)
+}
 
 const roleBadgeClass = (role = '') => {
   const r = role.toLowerCase()
@@ -57,8 +68,15 @@ export default function TeamSquadSummary() {
 
   const toggleNomination = async (teamId, playerId) => {
     const current = nominationByTeam[teamId] || []
+    // Only players still in the team's active squad can be tagged. A previously
+    // tagged player who was later re-auctioned away would otherwise be re-sent
+    // and rejected by the server, so drop any such stale ids first.
+    const squadIds = new Set((byTeam[teamId] || []).map((s) => s.player_id))
     const exists = current.includes(playerId)
-    const next = exists ? current.filter((id) => id !== playerId) : [...current, playerId]
+    const next = (exists
+      ? current.filter((id) => id !== playerId)
+      : [...current, playerId]
+    ).filter((id) => squadIds.has(id))
     if (!exists && next.length > 2) {
       setMsg('A team can tag at most two non-regular players.')
       return
@@ -94,8 +112,20 @@ export default function TeamSquadSummary() {
 
         {/* Left: team list */}
         <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 overflow-hidden h-fit">
-          <div className="px-4 py-3 border-b border-teal-700/30">
+          <div className="px-4 py-3 border-b border-teal-700/30 flex items-center justify-between gap-2">
             <h3 className="font-score text-base text-teal-200">Teams</h3>
+            {role === 'admin' && teams.length > 0 && (
+              <button
+                onClick={() => downloadCsv(
+                  `squads-${auction.name || 'auction'}.csv`,
+                  exportSquadsCsv(teams, sold)
+                )}
+                className="text-[0.65rem] px-2 py-1 rounded border border-teal-700/50 text-teal-300 hover:text-white hover:border-teal-500 transition"
+                title="Download all team squads as CSV (no points)"
+              >
+                ↓ Squads CSV
+              </button>
+            )}
           </div>
           <ul className="divide-y divide-teal-700/20">
             {teams.map((t) => (

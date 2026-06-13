@@ -4,10 +4,12 @@ import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuth } from '../context/AuthContext'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
-import { getBidsForPlayer, getCurrentQueueItem, listTeamSummaries, placeBid } from '../lib/api'
+import { getBidsForPlayer, getCurrentQueueItem, getRecentEvents, listTeamSummaries, placeBid } from '../lib/api'
 import { fmtPoints, fmtStatus } from '../lib/format'
+import { useSoldCelebration } from '../hooks/useSoldCelebration'
 import PlayerCard from '../components/auction/PlayerCard'
 import AuctionTimer from '../components/auction/AuctionTimer'
+import SoldCelebration from '../components/auction/SoldCelebration'
 import { calcIncrement } from '../components/auction/AuctioneerControls'
 
 export default function TeamOwnerBidding() {
@@ -16,6 +18,7 @@ export default function TeamOwnerBidding() {
   const [current, setCurrent] = useState(null)
   const [teams, setTeams] = useState([])
   const [bids, setBids] = useState([])
+  const [events, setEvents] = useState([])
   const [amount, setAmount] = useState('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
@@ -24,14 +27,19 @@ export default function TeamOwnerBidding() {
 
   const reload = useCallback(async () => {
     if (!auction) return
-    const [cur, t] = await Promise.all([getCurrentQueueItem(auction.id), listTeamSummaries(auction.id)])
+    const [cur, t, e] = await Promise.all([
+      getCurrentQueueItem(auction.id), listTeamSummaries(auction.id), getRecentEvents(auction.id, 20)
+    ])
     setCurrent(cur)
     setTeams(t)
+    setEvents(e)
     setBids(cur?.player_id ? await getBidsForPlayer(cur.player_id) : [])
   }, [auction])
 
   useEffect(() => { reload() }, [reload])
   useAuctionRealtime(auction?.id, reload)
+
+  const { celebration, dismiss: dismissCelebration } = useSoldCelebration(events)
 
   const myTeam = useMemo(
     () => (profile ? teams.find((t) => t.owner_user_id === profile.id) || null : null),
@@ -97,6 +105,15 @@ export default function TeamOwnerBidding() {
 
   return (
     <AppShell title="Team Owner Bidding">
+      {celebration && (
+        <SoldCelebration
+          player={celebration.player}
+          soldPrice={celebration.soldPrice}
+          teamName={celebration.teamName}
+          teamLogo={celebration.teamLogo}
+          onDone={dismissCelebration}
+        />
+      )}
       <RoleGate allow={['team_owner', 'admin']}>
         {!auction && <p className="text-teal-400">No auction selected.</p>}
         {auction && !myTeam && role === 'team_owner' && (
@@ -121,7 +138,7 @@ export default function TeamOwnerBidding() {
                     duration={timerDuration}
                     lastBidAt={lastBidAt}
                     deadlineTs={current?.current_bid_deadline ?? null}
-                    paused={!!current?.clock_paused}
+                    paused={!!celebration || !!current?.clock_paused}
                     pausedRemainingSeconds={current?.paused_remaining_seconds ?? null}
                   />
                 )}

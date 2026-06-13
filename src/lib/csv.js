@@ -83,6 +83,92 @@ export function parsePlayersCsvDetailed(text) {
   return { rows, total: dataLines.length, skipped: dataLines.length - rows.length, errors }
 }
 
+// ---------------------------------------------------------------------
+// Squads export (Bug 10) — one row per sold player, grouped by team.
+// Deliberately omits points/PPM/value columns: this is the roster-only
+// view for sharing team line-ups without revealing valuation data.
+//   teams: rows from listTeamSummaries(auctionId)
+//   sold:  rows from listSoldPlayers(auctionId) (joined players + teams)
+// ---------------------------------------------------------------------
+export function exportSquadsCsv(teams, sold) {
+  const headers = ['team', 'slot', 'player', 'role', 'category', 'sold_price']
+  const lines = [headers.join(',')]
+  const active = (sold ?? []).filter((s) => !s.reauctioned)
+  const byTeam = new Map()
+  for (const s of active) {
+    if (!byTeam.has(s.team_id)) byTeam.set(s.team_id, [])
+    byTeam.get(s.team_id).push(s)
+  }
+  // Stable team order: follow the team_summary ordering passed in.
+  for (const t of teams ?? []) {
+    const squad = byTeam.get(t.id) ?? []
+    squad.forEach((s, i) => {
+      lines.push([
+        csvValue(t.name),
+        csvValue(i + 1),
+        csvValue(s.players?.name),
+        csvValue(s.players?.role),
+        csvValue(s.players?.category),
+        csvValue(s.sold_price),
+      ].join(','))
+    })
+  }
+  return lines.join('\n')
+}
+
+// ---------------------------------------------------------------------
+// Full auction status export (Bug 11) — a manual-fallback snapshot the
+// admin can use to resume the auction by hand if the app is unavailable.
+// Emits three labelled sections in one file: team budgets, the run order
+// with each player's outcome, and a summary of unsold players.
+//   teams:  rows from listTeamSummaries(auctionId)
+//   queue:  rows from getQueue(auctionId) (joined players)
+//   sold:   rows from listSoldPlayers(auctionId)
+// ---------------------------------------------------------------------
+export function exportAuctionStatusCsv({ teams = [], queue = [], sold = [] } = {}) {
+  const soldByPlayer = new Map(
+    (sold ?? []).filter((s) => !s.reauctioned).map((s) => [s.player_id, s])
+  )
+  const teamName = new Map((teams ?? []).map((t) => [t.id, t.name]))
+
+  const sections = []
+
+  // Section 1 — team budgets
+  const teamHeaders = ['team', 'players', 'squad_size', 'spent', 'remaining', 'max_safe_bid']
+  const teamLines = ['# TEAMS', teamHeaders.join(',')]
+  for (const t of teams) {
+    teamLines.push([
+      csvValue(t.name),
+      csvValue(t.players_count),
+      csvValue(t.squad_size),
+      csvValue(t.points_spent),
+      csvValue(t.points_remaining),
+      csvValue(t.max_safe_bid),
+    ].join(','))
+  }
+  sections.push(teamLines.join('\n'))
+
+  // Section 2 — run order with outcome
+  const queueHeaders = ['queue_order', 'player', 'category', 'queue_status', 'outcome', 'sold_to', 'sold_price']
+  const queueLines = ['# QUEUE', queueHeaders.join(',')]
+  for (const q of queue) {
+    const sale = soldByPlayer.get(q.player_id)
+    const outcome = sale ? 'sold' : (q.players?.status ?? q.status ?? '')
+    queueLines.push([
+      csvValue(q.queue_order),
+      csvValue(q.players?.name),
+      csvValue(q.players?.category ?? q.category),
+      csvValue(q.status),
+      csvValue(outcome),
+      csvValue(sale ? teamName.get(sale.team_id) : ''),
+      csvValue(sale ? sale.sold_price : ''),
+    ].join(','))
+  }
+  sections.push(queueLines.join('\n'))
+
+  return sections.join('\n\n')
+}
+
 // RFC 4180-compliant CSV line splitter — handles quoted commas and escaped quotes
 function splitCsvLine(line) {
   const result = []

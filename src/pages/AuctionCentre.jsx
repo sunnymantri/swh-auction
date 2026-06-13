@@ -39,6 +39,25 @@ export default function AuctionCentre() {
   const player = current?.players ?? null
   const isLive = auction?.status === 'live'
 
+  // Bug 4: after a sale/no-sale the queue row leaves 'current', so `current`
+  // goes null. Instead of dropping to a blank "no player" card, freeze the
+  // just-decided player on screen (with its outcome) until the auctioneer
+  // calls the next player. We derive the outcome from the latest event.
+  const lastDecided = (() => {
+    if (player) return null
+    const ev = events.find((e) => e.event_type === 'sold' || e.event_type === 'unsold')
+    if (!ev || !ev.players) return null
+    const soldTeam = ev.event_type === 'sold'
+      ? teams.find((t) => t.id === ev.team_id)
+      : null
+    return {
+      player: ev.players,
+      outcome: ev.event_type, // 'sold' | 'unsold'
+      price: ev.amount,
+      teamName: soldTeam?.name ?? null,
+    }
+  })()
+
   const reload = useCallback(async () => {
     if (!auction) return
     const [cur, tms, evs, nxt] = await Promise.all([
@@ -167,7 +186,31 @@ export default function AuctionCentre() {
         )}
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-5">
           <div className="space-y-5">
-            <PlayerCard player={player} />
+            {player ? (
+              <PlayerCard player={player} />
+            ) : lastDecided ? (
+              <div className="relative">
+                <div className="absolute top-3 right-3 z-10">
+                  {lastDecided.outcome === 'sold' ? (
+                    <span className="px-3 py-1 rounded-full bg-gold text-ink-900 font-score text-sm tracking-wider shadow">
+                      ✓ SOLD{lastDecided.teamName ? ` → ${lastDecided.teamName}` : ''}{lastDecided.price != null ? ` · ${fmtPoints(lastDecided.price)}` : ''}
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 rounded-full bg-live/80 text-white font-score text-sm tracking-wider shadow">
+                      ✕ UNSOLD
+                    </span>
+                  )}
+                </div>
+                <div className="opacity-80">
+                  <PlayerCard player={lastDecided.player} />
+                </div>
+                <p className="text-center text-teal-400 text-xs mt-2">
+                  Press <span className="text-gold font-semibold">Next player →</span> to call the next player.
+                </p>
+              </div>
+            ) : (
+              <PlayerCard player={null} />
+            )}
 
             {/* Up next + start/next control (always visible to admin) */}
             <div className="rounded-2xl bg-ink-800/70 border border-teal-700/40 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

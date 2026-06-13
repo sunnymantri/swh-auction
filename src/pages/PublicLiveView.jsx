@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
 import { getBidsForPlayer, getCurrentQueueItem, getRecentEvents, listTeamSummaries } from '../lib/api'
 import { fmtPoints } from '../lib/format'
+import { useSoldCelebration } from '../hooks/useSoldCelebration'
 import PlayerCard from '../components/auction/PlayerCard'
 import ActivityFeed from '../components/auction/ActivityFeed'
 import AuctionTimer from '../components/auction/AuctionTimer'
@@ -15,9 +16,6 @@ export default function PublicLiveView() {
   const [teams, setTeams] = useState([])
   const [events, setEvents] = useState([])
   const [bids, setBids] = useState([])
-  const [celebration, setCelebration] = useState(null)
-  const [celebratedEventId, setCelebratedEventId] = useState(null)
-  const hasInitializedCelebrationRef = useRef(false)
 
   const reload = useCallback(async () => {
     if (!auction) return
@@ -40,34 +38,7 @@ export default function PublicLiveView() {
     ? (auction?.bid_timer_seconds ?? 15)
     : (auction?.initial_bid_timer_seconds ?? 90)
 
-  const latestSoldEvent = events.find((e) => e.event_type === 'sold')
-
-  useEffect(() => {
-    if (!latestSoldEvent || !current?.players) return
-
-    // On first load/login, treat the latest sold event as already seen.
-    if (!hasInitializedCelebrationRef.current) {
-      hasInitializedCelebrationRef.current = true
-      setCelebratedEventId(latestSoldEvent.id)
-      return
-    }
-
-    if (latestSoldEvent.id === celebratedEventId) return
-    const currentPlayerId = current?.player_id ?? current?.players?.id ?? null
-    const soldPlayerId = latestSoldEvent.player_id ?? null
-    if (currentPlayerId && soldPlayerId && soldPlayerId !== currentPlayerId) {
-      setCelebratedEventId(latestSoldEvent.id)
-      return
-    }
-
-    setCelebration({
-      player: current.players,
-      soldPrice: latestSoldEvent.amount,
-      teamName: latestSoldEvent.teams?.name ?? 'Unknown',
-      teamLogo: null
-    })
-    setCelebratedEventId(latestSoldEvent.id)
-  }, [latestSoldEvent, current?.players, celebratedEventId])
+  const { celebration, dismiss: dismissCelebration } = useSoldCelebration(events)
 
   if (auctionLoading) {
     return (
@@ -109,7 +80,7 @@ export default function PublicLiveView() {
           soldPrice={celebration.soldPrice}
           teamName={celebration.teamName}
           teamLogo={celebration.teamLogo}
-          onDone={() => setCelebration(null)}
+          onDone={dismissCelebration}
         />
       )}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">

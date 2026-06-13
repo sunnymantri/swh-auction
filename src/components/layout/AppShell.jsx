@@ -14,8 +14,8 @@ const NAV_GROUPS = [
     label: 'Overview',
     roles: ['admin', 'team_owner', 'public'],
     links: [
-      { to: '/public-live', label: 'Live',     roles: ['public', 'team_owner', 'admin'] },
-      { to: '/results',     label: 'Results',  roles: ['public', 'team_owner', 'admin'] },
+      { to: '/public-live', label: 'Live',     roles: ['public', 'admin'] },
+      { to: '/results',     label: 'Results',  roles: ['public', 'admin'] },
       { to: '/vacation',    label: 'Vacation', roles: ['public', 'team_owner', 'admin'] },
     ]
   },

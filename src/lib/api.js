@@ -5,7 +5,8 @@
 //  enforced server-side and are race-safe.
 // =====================================================================
 import { supabase } from './supabase'
-export { exportPlayersCsv, parsePlayersCsv, parsePlayersCsvDetailed, playersCsvTemplate } from './csv'
+export { exportPlayersCsv, parsePlayersCsv, parsePlayersCsvDetailed, playersCsvTemplate,
+         exportSquadsCsv, exportAuctionStatusCsv } from './csv'
 
 // ---- Auction ----
 export async function getAuctionById(auctionId) {
@@ -228,7 +229,7 @@ export async function getBidsForPlayer(playerId) {
 export async function getRecentEvents(auctionId, limit = 25) {
   const { data, error } = await supabase
     .from('auction_events')
-    .select('*, players(name), teams(name, short_name)')
+    .select('*, players(name, photo_url), teams(name, short_name, logo_url)')
     .eq('auction_id', auctionId)
     .order('created_at', { ascending: false }).limit(limit)
   if (error) throw error
