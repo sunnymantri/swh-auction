@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
-import { createUserAccount, listProfiles, resetUserPassword, setProfileRole, updateUserProfile, uploadUserPhoto } from '../lib/admin'
+import { createUserAccount, listAuthUsers, listProfiles, resetUserPassword, setProfileRole, updateUserProfile, uploadUserPhoto } from '../lib/admin'
 import { listTeams, updateTeam } from '../lib/api'
 
 const ROLES = ['admin', 'team_owner', 'public']
@@ -11,6 +11,7 @@ const ROLE_LABELS = { admin: 'Administrator', team_owner: 'Team Owner', public: 
 export default function UserManagement() {
   const { auction } = useActiveAuction()
   const [profiles, setProfiles] = useState([])
+  const [authUsers, setAuthUsers] = useState([])
   const [teams, setTeams] = useState([])
   const [form, setForm] = useState({ email: '', fullName: '', role: 'team_owner', teamId: '' })
   const [created, setCreated] = useState(null)
@@ -24,7 +25,9 @@ export default function UserManagement() {
   const [resettingId, setResettingId] = useState(null)
 
   const reload = async () => {
-    setProfiles(await listProfiles())
+    const [p, a] = await Promise.all([listProfiles(), listAuthUsers()])
+    setProfiles(p)
+    setAuthUsers(a)
     if (auction) setTeams(await listTeams(auction.id))
   }
   useEffect(() => { reload() }, [auction])
@@ -151,6 +154,7 @@ export default function UserManagement() {
             <div className="space-y-2 max-h-[60vh] overflow-y-auto">
               {profiles.map((p) => {
                 const linkedTeam = teams.find(t => t.owner_user_id === p.id)
+                const authEmail = authUsers.find((u) => u.user_id === p.user_id)?.email || ''
                 return (
                   <div key={p.id} className="border border-teal-700/40 rounded-lg overflow-hidden">
                     <div className="p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
@@ -164,6 +168,7 @@ export default function UserManagement() {
                           <p className="text-white truncate">{p.full_name || '—'}</p>
                         </div>
                         <p className="text-xs text-teal-400">{ROLE_LABELS[p.role] ?? p.role}</p>
+                        <p className="text-[0.65rem] text-teal-500 truncate">{authEmail || 'Auth email unavailable'}</p>
                         {p.role === 'team_owner' && (
                           linkedTeam ? (
                             <div className="flex items-center gap-1.5 mt-0.5">
@@ -249,7 +254,7 @@ export default function UserManagement() {
                         )}
                         {editId !== p.id && (
                           <button
-                            onClick={() => handleResetPassword(p.id, p.full_name || '—')}
+                            onClick={() => handleResetPassword(p.id, authEmail || p.full_name || '—')}
                             disabled={resettingId === p.id}
                             className="rounded-lg bg-teal-700/40 border border-teal-700/50 px-2 py-1 text-xs text-teal-100 disabled:opacity-50"
                           >

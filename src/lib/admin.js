@@ -10,6 +10,20 @@ export async function listProfiles() {
   return data ?? []
 }
 
+export async function listAuthUsers() {
+  const { data, error } = await supabase.functions.invoke('admin-list-auth-users', { body: {} })
+  if (error) {
+    let detail = error.message
+    try {
+      const ctx = await error.context?.json?.()
+      if (ctx?.error) detail = ctx.error
+    } catch { /* ignore */ }
+    throw new Error(detail)
+  }
+  if (data?.error) throw new Error(data.error)
+  return data?.users ?? []
+}
+
 export async function setProfileRole(profileId, role) {
   const { data, error } = await supabase
     .from('profiles')
