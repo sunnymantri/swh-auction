@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { verifyPublicCode } from '../lib/api'
+import { supabase } from '../lib/supabase'
 import { setPublicAuthGranted } from '../components/common/RequirePublicAuth'
 import packageMeta from '../../package.json'
 
@@ -15,6 +16,14 @@ export default function Login() {
   const [pw, setPw] = useState('')
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [showReset, setShowReset] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetBusy, setResetBusy] = useState(false)
+  const [resetMsg, setResetMsg] = useState(null)
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [recoveryBusy, setRecoveryBusy] = useState(false)
 
   const [showPublicForm, setShowPublicForm] = useState(needPublicCode)
   const [publicCode, setPublicCode] = useState('')
@@ -22,6 +31,12 @@ export default function Login() {
   const [publicBusy, setPublicBusy] = useState(false)
 
   const footerVersion = `v${String(packageMeta.version || '0.0.0').split('.').slice(0, 2).join('.')}`
+
+  useEffect(() => {
+    const hash = window.location.hash || ''
+    if (!hash.includes('type=recovery')) return
+    setIsRecoveryMode(true)
+  }, [])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -58,6 +73,50 @@ export default function Login() {
     }
   }
 
+  const sendResetLink = async (e) => {
+    e.preventDefault()
+    setResetBusy(true)
+    setResetMsg(null)
+    setErr(null)
+    try {
+      const appOrigin = import.meta.env.VITE_APP_ORIGIN || window.location.origin
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail || email, {
+        redirectTo: `${appOrigin}/login`
+      })
+      if (error) throw error
+      setResetMsg('Password reset email sent. Check your inbox and spam folder.')
+    } catch (e) {
+      setErr(e.message || 'Could not send reset email.')
+    } finally {
+      setResetBusy(false)
+    }
+  }
+
+  const completeRecovery = async (e) => {
+    e.preventDefault()
+    setErr(null)
+    setRecoveryBusy(true)
+    try {
+      if (!newPassword || newPassword.length < 8) {
+        throw new Error('Password must be at least 8 characters.')
+      }
+      if (newPassword !== confirmNewPassword) {
+        throw new Error('Passwords do not match.')
+      }
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+      setResetMsg('Password updated. You can now sign in with your new password.')
+      setIsRecoveryMode(false)
+      window.history.replaceState({}, document.title, '/login')
+      setNewPassword('')
+      setConfirmNewPassword('')
+    } catch (e) {
+      setErr(e.message || 'Could not update password.')
+    } finally {
+      setRecoveryBusy(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 grid place-items-center p-6">
@@ -69,19 +128,77 @@ export default function Login() {
               <h1 className="font-score text-4xl text-white leading-none">Auction</h1>
             </div>
             <p className="text-teal-400 text-sm mt-1 mb-6">South West Hitters · Player Auction</p>
-            <form onSubmit={submit} className="space-y-3">
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="Email" autoComplete="username"
-                className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2.5 text-white" />
-              <input type="password" value={pw} onChange={e => setPw(e.target.value)}
-                placeholder="Password" autoComplete="current-password"
-                className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2.5 text-white" />
-              {err && <p className="text-live text-sm">{err}</p>}
-              <button disabled={busy}
-                className="w-full rounded-lg bg-gold text-ink-900 font-semibold py-2.5 hover:bg-gold-soft disabled:opacity-50">
-                {busy ? 'Signing in…' : 'Sign in'}
-              </button>
-            </form>
+            {isRecoveryMode ? (
+              <form onSubmit={completeRecovery} className="space-y-3">
+                <p className="text-sm text-teal-300">Set your new password</p>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New password"
+                  autoComplete="new-password"
+                  className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2.5 text-white"
+                />
+                <input
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  autoComplete="new-password"
+                  className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2.5 text-white"
+                />
+                {err && <p className="text-live text-sm">{err}</p>}
+                {resetMsg && <p className="text-teal-300 text-sm">{resetMsg}</p>}
+                <button
+                  disabled={recoveryBusy}
+                  className="w-full rounded-lg bg-gold text-ink-900 font-semibold py-2.5 hover:bg-gold-soft disabled:opacity-50"
+                >
+                  {recoveryBusy ? 'Updating…' : 'Update password'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={submit} className="space-y-3">
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="Email" autoComplete="username"
+                  className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2.5 text-white" />
+                <input type="password" value={pw} onChange={e => setPw(e.target.value)}
+                  placeholder="Password" autoComplete="current-password"
+                  className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2.5 text-white" />
+                {err && <p className="text-live text-sm">{err}</p>}
+                {resetMsg && <p className="text-teal-300 text-sm">{resetMsg}</p>}
+                <button disabled={busy}
+                  className="w-full rounded-lg bg-gold text-ink-900 font-semibold py-2.5 hover:bg-gold-soft disabled:opacity-50">
+                  {busy ? 'Signing in…' : 'Sign in'}
+                </button>
+              </form>
+            )}
+            <button
+              type="button"
+              onClick={() => { setShowReset((v) => !v); setResetMsg(null) }}
+              className="mt-2 text-xs text-teal-300 hover:text-white transition"
+            >
+              {showReset ? 'Hide reset password' : 'Reset password'}
+            </button>
+            {showReset && (
+              <form onSubmit={sendResetLink} className="mt-3 space-y-2 rounded-lg border border-teal-700/40 bg-ink-900/50 p-3">
+                <p className="text-[0.7rem] uppercase tracking-wider text-teal-400">Password reset</p>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="Email for reset link"
+                  className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={resetBusy || !(resetEmail || email)}
+                  className="w-full rounded-lg bg-teal-700 text-white font-semibold py-2 text-sm disabled:opacity-50"
+                >
+                  {resetBusy ? 'Sending…' : 'Send reset link'}
+                </button>
+                {resetMsg && <p className="text-xs text-teal-300">{resetMsg}</p>}
+              </form>
+            )}
 
             <div className="mt-4 border-t border-teal-700/30 pt-4">
               {!showPublicForm ? (

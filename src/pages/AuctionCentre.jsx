@@ -286,7 +286,7 @@ export default function AuctionCentre() {
           <div className="space-y-5">
             <div>
               <h3 className="font-score text-lg text-teal-200 mb-2">Team Summary</h3>
-              <TeamBudgetGrid teams={teams} leaderTeamId={leaderTeamId} onTeamClick={(teamId) => navigate('/results', { state: { tab: 'Squads', teamId } })} />
+              <TeamBudgetGrid teams={teams} leaderTeamId={leaderTeamId} onTeamClick={(teamId) => navigate('/squads', { state: { teamId } })} />
             </div>
             <ActivityFeed events={events} />
           </div>

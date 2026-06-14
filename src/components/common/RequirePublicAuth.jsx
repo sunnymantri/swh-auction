@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { verifyPublicCode } from '../../lib/api'
+import { useAuth } from '../../context/AuthContext'
 
 const SESSION_KEY = 'ca.publicAuth'
 
@@ -9,9 +10,15 @@ export function setPublicAuthGranted() {
 }
 
 export default function RequirePublicAuth({ children }) {
+  const { session } = useAuth()
   const [status, setStatus] = useState(
     sessionStorage.getItem(SESSION_KEY) === 'true' ? 'ok' : 'loading'
   )
+
+  useEffect(() => {
+    // Signed-in users should always be able to view public pages.
+    if (session) setStatus('ok')
+  }, [session])
 
   useEffect(() => {
     if (status !== 'loading') return

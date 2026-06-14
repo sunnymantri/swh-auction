@@ -21,6 +21,25 @@ export async function setProfileRole(profileId, role) {
   return data
 }
 
+export async function updateUserProfile(profileId, payload) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(payload)
+    .eq('id', profileId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function uploadUserPhoto(file) {
+  const path = `profile-${Date.now()}-${file.name}`
+  const { error } = await supabase.storage.from('player-photos').upload(path, file, { upsert: true })
+  if (error) throw error
+  const { data } = supabase.storage.from('player-photos').getPublicUrl(path)
+  return data.publicUrl
+}
+
 // ---- Account creation via the admin-create-user Edge Function ----
 // Returns { ok, email, password, role, profile_id } so the admin can share
 // the generated credentials with the new team owner.

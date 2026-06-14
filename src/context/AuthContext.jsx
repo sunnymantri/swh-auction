@@ -89,6 +89,10 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function refreshProfile() {
+    await loadProfile(session?.user ?? null)
+  }
+
   const value = {
     session,
     user: session?.user ?? null,
@@ -97,6 +101,7 @@ export function AuthProvider({ children }) {
     isAdmin: profile?.role === 'admin',
     isTeamOwner: profile?.role === 'team_owner',
     loading,
+    refreshProfile,
     signIn: (email, password) =>
       supabase.auth.signInWithPassword({ email, password }),
     signOut: signOutSafe

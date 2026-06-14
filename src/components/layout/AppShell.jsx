@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useAuctionContext } from '../../context/AuctionContext'
 import { fmtStatus } from '../../lib/format'
+import { updateUserProfile, uploadUserPhoto } from '../../lib/admin'
 import packageMeta from '../../../package.json'
 
 const ROLE_LABELS = { admin: 'Administrator', team_owner: 'Team Owner', public: 'Player' }
@@ -60,8 +61,22 @@ function getOverviewPath(role) {
   return '/public-live'
 }
 
-function UserMenu({ email, role, onSignOut, signingOut }) {
+function UserMenu({
+  email,
+  role,
+  fullName,
+  photoUrl,
+  onSignOut,
+  signingOut,
+  onSaveProfile,
+  savingProfile
+}) {
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [nameDraft, setNameDraft] = useState(fullName || '')
+  const [photoDraft, setPhotoDraft] = useState(photoUrl || '')
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [editMsg, setEditMsg] = useState('')
   const ref = useRef(null)
 
   useEffect(() => {
@@ -73,7 +88,15 @@ function UserMenu({ email, role, onSignOut, signingOut }) {
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [open])
 
-  const initial = (email || '?').trim().charAt(0).toUpperCase()
+  const initial = (fullName || email || '?').trim().charAt(0).toUpperCase()
+
+  useEffect(() => {
+    if (!editing) {
+      setNameDraft(fullName || '')
+      setPhotoDraft(photoUrl || '')
+      setEditMsg('')
+    }
+  }, [editing, fullName, photoUrl])
 
   return (
     <div ref={ref} className="relative">
@@ -83,8 +106,10 @@ function UserMenu({ email, role, onSignOut, signingOut }) {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <span className="h-7 w-7 rounded-full bg-teal-700/40 text-teal-100 grid place-items-center text-xs font-semibold">
-          {initial}
+        <span className="h-7 w-7 rounded-full bg-teal-700/40 text-teal-100 grid place-items-center text-xs font-semibold overflow-hidden">
+          {photoUrl
+            ? <img src={photoUrl} alt="" className="h-full w-full object-cover" />
+            : initial}
         </span>
         <svg className="w-3 h-3 text-teal-400" viewBox="0 0 12 12" fill="none">
           <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -96,9 +121,74 @@ function UserMenu({ email, role, onSignOut, signingOut }) {
           className="absolute right-0 mt-2 w-60 rounded-xl border border-teal-700/40 bg-ink-900 shadow-card overflow-hidden z-30"
         >
           <div className="px-3 py-2.5 border-b border-teal-700/30">
-            <p className="text-xs text-white truncate">{email}</p>
+            <p className="text-xs text-white truncate">{fullName || email}</p>
+            {fullName && <p className="text-[0.65rem] text-teal-400 truncate">{email}</p>}
             <p className="text-[0.65rem] uppercase tracking-wider text-teal-500 mt-0.5">{ROLE_LABELS[role] ?? role}</p>
           </div>
+          {editing && (
+            <div className="px-3 py-2.5 border-b border-teal-700/30 space-y-2">
+              <input
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                placeholder="Full name"
+                className="w-full rounded-lg bg-ink-800 border border-teal-700/50 px-2 py-1.5 text-xs text-white"
+              />
+              <input
+                value={photoDraft}
+                onChange={(e) => setPhotoDraft(e.target.value)}
+                placeholder="Photo URL"
+                className="w-full rounded-lg bg-ink-800 border border-teal-700/50 px-2 py-1.5 text-xs text-white"
+              />
+              <label className="inline-flex items-center text-[0.7rem] px-2 py-1 rounded bg-teal-700/40 cursor-pointer text-teal-100">
+                {uploadingPhoto ? 'Uploading…' : 'Upload photo'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingPhoto}
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0]
+                    if (!f) return
+                    setUploadingPhoto(true)
+                    setEditMsg('')
+                    try {
+                      const url = await uploadUserPhoto(f)
+                      setPhotoDraft(url)
+                    } catch (err) {
+                      setEditMsg(err.message || 'Photo upload failed')
+                    } finally {
+                      setUploadingPhoto(false)
+                    }
+                  }}
+                />
+              </label>
+              {editMsg && <p className="text-[0.65rem] text-live">{editMsg}</p>}
+            </div>
+          )}
+          <button
+            onClick={async () => {
+              if (!editing) {
+                setEditing(true)
+                return
+              }
+              setEditMsg('')
+              try {
+                await onSaveProfile?.({
+                  full_name: nameDraft || null,
+                  photo_url: photoDraft || null
+                })
+                setEditing(false)
+              } catch (err) {
+                setEditMsg(err.message || 'Failed to save profile')
+              }
+            }}
+            disabled={savingProfile || uploadingPhoto}
+            className="w-full text-left px-3 py-2 text-xs text-teal-200 hover:bg-ink-800 hover:text-white transition disabled:opacity-60"
+          >
+            {editing
+              ? (savingProfile ? 'Saving profile…' : 'Save my profile')
+              : 'Edit my profile'}
+          </button>
           <button
             onClick={onSignOut}
             disabled={signingOut}
@@ -113,7 +203,7 @@ function UserMenu({ email, role, onSignOut, signingOut }) {
 }
 
 export default function AppShell({ title, children }) {
-  const { role, signOut, user, session } = useAuth()
+  const { role, signOut, user, session, profile, refreshProfile } = useAuth()
   const { auction, auctions, auctionId, selectAuction } = useAuctionContext()
   const loc = useLocation()
   const nav = useNavigate()
@@ -121,6 +211,7 @@ export default function AppShell({ title, children }) {
   const [openDropdown, setOpenDropdown] = useState(null)
   const [ddPos, setDdPos] = useState({ top: 0, left: 0 })
   const ddTimerRef = useRef(null)
+  const [savingProfile, setSavingProfile] = useState(false)
 
   const handleDdEnter = (to, el) => {
     clearTimeout(ddTimerRef.current)
@@ -143,6 +234,17 @@ export default function AppShell({ title, children }) {
       nav('/login', { replace: true })
       window.location.assign('/login')
       setSigningOut(false)
+    }
+  }
+
+  const handleSaveMyProfile = async (payload) => {
+    if (!profile?.id) throw new Error('No profile found')
+    setSavingProfile(true)
+    try {
+      await updateUserProfile(profile.id, payload)
+      await refreshProfile()
+    } finally {
+      setSavingProfile(false)
     }
   }
 
@@ -215,8 +317,12 @@ export default function AppShell({ title, children }) {
               <UserMenu
                 email={user?.email}
                 role={role}
+                fullName={profile?.full_name}
+                photoUrl={profile?.photo_url}
                 onSignOut={handleSignOut}
                 signingOut={signingOut}
+                onSaveProfile={handleSaveMyProfile}
+                savingProfile={savingProfile}
               />
             ) : (
               <Link to="/login" className="text-xs px-2.5 py-1.5 rounded-lg border border-teal-700/40 text-teal-300 hover:text-white transition">
