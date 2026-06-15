@@ -45,9 +45,20 @@ export default function Login() {
       setTimeout(() => rej(new Error('Sign-in timed out. Check your connection and try again.')), 15000)
     )
     try {
-      const { error } = await Promise.race([signIn(email, pw), timeout])
-      if (error) setErr(error.message)
-      else nav(location.state?.from?.pathname || '/', { replace: true })
+      const { data, error } = await Promise.race([signIn(email, pw), timeout])
+      if (error) {
+        setErr(error.message)
+      } else {
+        const userId = data?.user?.id
+        let role = 'public'
+        if (userId) {
+          const { data: p } = await supabase.from('profiles').select('role').eq('user_id', userId).maybeSingle()
+          role = p?.role || 'public'
+        }
+        const target = location.state?.from?.pathname
+          || (role === 'admin' ? '/auctions' : role === 'team_owner' ? '/team-bidding' : '/public-live')
+        nav(target, { replace: true })
+      }
     } catch (e) {
       setErr(e.message)
     } finally {

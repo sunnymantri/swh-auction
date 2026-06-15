@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useAuctionContext } from '../context/AuctionContext'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { createAuction, setAuctionStatus, updateAuction, uploadBranding, resetAuction, recalculateTeamBudgets,
-         listTeamSummaries, getQueue, listSoldPlayers, exportAuctionStatusCsv } from '../lib/api'
+         listTeamSummaries, getQueue, listSoldPlayers, exportAuctionStatusCsv, listTeams } from '../lib/api'
 import { fmtPoints, fmtStatus } from '../lib/format'
 
 const STATUSES = ['draft', 'live', 'paused', 'completed']
@@ -36,6 +36,10 @@ export default function Auctions() {
   const [uploadErr, setUploadErr] = useState('')
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadingSponsor, setUploadingSponsor] = useState(false)
+  const [newGround, setNewGround] = useState('')
+  const [schedBusy, setSchedBusy] = useState(false)
+  const [schedMsg, setSchedMsg] = useState('')
+  const groundInputRef = useRef(null)
   const STATUS_TRANSITIONS = {
     draft: ['draft', 'live'],
     live: ['live', 'paused', 'completed'],
@@ -95,7 +99,9 @@ export default function Auctions() {
         reauction_refund_enabled: !!cfgForm.reauction_refund_enabled,
         public_code: cfgForm.public_code || null,
         banner_logo_url: cfgForm.banner_logo_url || null,
-        sponsor_logos: cfgForm.sponsor_logos || []
+        sponsor_logos: cfgForm.sponsor_logos || [],
+        grounds: cfgForm.grounds || [],
+        season_schedule: cfgForm.season_schedule || []
       }
       await updateAuction(auction.id, payload)
       await reload()
@@ -132,6 +138,66 @@ export default function Auctions() {
   }
 
   const removeSponsor = (i) => cfgSet('sponsor_logos', cfgForm.sponsor_logos.filter((_, idx) => idx !== i))
+
+  const addGround = () => {
+    const name = newGround.trim()
+    if (!name) return
+    cfgSet('grounds', [...(cfgForm.grounds || []), name])
+    setNewGround('')
+    groundInputRef.current?.focus()
+  }
+
+  const removeGround = (i) => cfgSet('grounds', (cfgForm.grounds || []).filter((_, idx) => idx !== i))
+
+  const handleGenerateSchedule = async () => {
+    if (!auction) return
+    const startDate = cfgForm.season_start_date
+    const endDate = cfgForm.season_end_date
+    const grounds = cfgForm.grounds || []
+    if (!startDate || !endDate) { setSchedMsg('Set season start and end dates first.'); return }
+    if (grounds.length === 0) { setSchedMsg('Add at least one ground before generating.'); return }
+
+    setSchedBusy(true); setSchedMsg('')
+    try {
+      const teams = await listTeams(auction.id)
+      if (teams.length < 2) { setSchedMsg('Need at least 2 teams to generate a schedule.'); return }
+
+      const matchDay = cfgForm.match_day || 'Sunday'
+      const matchDates = getMatchDatesForSeason(startDate, endDate, matchDay)
+      const schedule = buildRoundRobin(teams.map(t => t.name), matchDates, grounds)
+      cfgSet('season_schedule', schedule)
+
+      // Save immediately
+      const payload = {
+        name: cfgForm.name, season: cfgForm.season, sport: cfgForm.sport,
+        auction_date: cfgForm.auction_date || null, auction_time: cfgForm.auction_time || null,
+        season_start_date: cfgForm.season_start_date || null,
+        season_end_date: cfgForm.season_end_date || null,
+        timezone: cfgForm.timezone || 'Australia/Sydney',
+        match_day: cfgForm.match_day || 'Sunday',
+        squad_size: Number(cfgForm.squad_size || 0),
+        default_team_budget: Number(cfgForm.default_team_budget || 0),
+        default_base_price: Number(cfgForm.default_base_price || 0),
+        min_player_price: Number(cfgForm.min_player_price || 0),
+        initial_bid_timer_seconds: Number(cfgForm.initial_bid_timer_seconds || 90),
+        bid_timer_seconds: Number(cfgForm.bid_timer_seconds || 15),
+        budget_multiplier: Number(cfgForm.budget_multiplier || 1.6),
+        reauction_refund_enabled: !!cfgForm.reauction_refund_enabled,
+        public_code: cfgForm.public_code || null,
+        banner_logo_url: cfgForm.banner_logo_url || null,
+        sponsor_logos: cfgForm.sponsor_logos || [],
+        grounds: cfgForm.grounds || [],
+        season_schedule: schedule
+      }
+      await updateAuction(auction.id, payload)
+      await reload()
+      setSchedMsg(`Schedule generated: ${schedule.length} rounds across ${matchDates.length} dates.`)
+    } catch (e) {
+      setSchedMsg(e.message || 'Schedule generation failed.')
+    } finally {
+      setSchedBusy(false)
+    }
+  }
 
   const handleResetAuction = async () => {
     if (!auction) return
@@ -248,7 +314,7 @@ export default function Auctions() {
                     <button onClick={() => { selectAuction(a.id); setTab('Configuration') }}
                       className="text-xs px-3 py-1.5 rounded-lg bg-ink-900 border border-teal-700/40 hover:border-teal-500 text-teal-200 transition">Configure</button>
                     <button onClick={() => { selectAuction(a.id); nav('/auction') }}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-ink-900 border border-teal-700/40 hover:border-gold/40 text-teal-200 transition">Auction Centre</button>
+                      className="text-xs px-3 py-1.5 rounded-lg bg-ink-900 border border-teal-700/40 hover:border-gold/40 text-teal-200 transition">Auction Console</button>
                   </div>
                 </div>
               ))}
@@ -451,6 +517,63 @@ export default function Auctions() {
                     <p className="text-[0.7rem] sm:text-xs text-teal-500 mt-1">Logo appears above — then click Save to persist.</p>
                   </div>
                 </div>
+
+                {/* Section: Schedule */}
+                <div className="sticky top-14 z-10 -mx-4 px-4 py-2.5 bg-[#0d1520]/95 backdrop-blur border-b border-teal-700/30 mb-4 mt-2">
+                  <h4 className="text-xs font-bold text-teal-200 uppercase tracking-widest">Schedule</h4>
+                </div>
+                <div className="space-y-4 pb-8 px-1">
+                  <p className="text-xs text-teal-500">
+                    Grounds rotate across all matches. Generates a round-robin schedule using the configured match day, skipping Australian public holidays.
+                  </p>
+
+                  {/* Grounds manager */}
+                  <div>
+                    <p className="text-xs text-teal-300 mb-2 font-medium">Grounds / Venues</p>
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        ref={groundInputRef}
+                        type="text"
+                        value={newGround}
+                        onChange={(e) => setNewGround(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGround() } }}
+                        placeholder="e.g. Raby Pitch 5"
+                        className="flex-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm placeholder:text-teal-600"
+                      />
+                      <button onClick={addGround}
+                        className="px-3 py-2 rounded-lg bg-teal-700/50 text-teal-100 text-sm hover:bg-teal-700/80 transition">
+                        Add
+                      </button>
+                    </div>
+                    {(cfgForm.grounds || []).length > 0 ? (
+                      <ul className="space-y-1">
+                        {(cfgForm.grounds || []).map((g, i) => (
+                          <li key={i} className="flex items-center gap-2 rounded-lg bg-ink-900/60 border border-teal-700/30 px-3 py-1.5">
+                            <span className="text-xs text-teal-400 w-5 shrink-0">{i + 1}.</span>
+                            <span className="text-sm text-white flex-1">{g}</span>
+                            <button onClick={() => removeGround(i)} className="text-xs text-teal-500 hover:text-red-400 transition">✕</button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-teal-600 italic">No grounds added yet.</p>
+                    )}
+                  </div>
+
+                  {/* Generate button */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <button onClick={handleGenerateSchedule} disabled={schedBusy}
+                      className="px-4 py-2 rounded-lg bg-teal-700/60 border border-teal-500/50 text-teal-100 font-semibold disabled:opacity-50 text-sm hover:bg-teal-700/90 transition">
+                      {schedBusy ? 'Generating…' : 'Generate Schedule'}
+                    </button>
+                    {(cfgForm.season_schedule || []).length > 0 && (
+                      <span className="text-xs text-teal-400">
+                        {(cfgForm.season_schedule || []).length} rounds · {(cfgForm.season_schedule || []).reduce((n, r) => n + r.matches.length, 0)} matches
+                      </span>
+                    )}
+                  </div>
+                  {schedMsg && <p className="text-sm text-teal-300">{schedMsg}</p>}
+                </div>
               </div>
             )}
           </>
@@ -468,4 +591,115 @@ function CfgField({ label, value, onChange, type = 'text' }) {
         className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
     </label>
   )
+}
+
+// ── Schedule generation helpers ──────────────────────────────────────────────
+
+const DAY_MAP = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 }
+
+function easterSunday(year) {
+  // Anonymous Gregorian algorithm
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25)
+  const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30
+  const i = Math.floor(c / 4), k = c % 4
+  const l = (32 + 2 * e + 2 * i - h - k) % 7
+  const m = Math.floor((a + 11 * h + 22 * l) / 451)
+  const month = Math.floor((h + l - 7 * m + 114) / 31)
+  const day = ((h + l - 7 * m + 114) % 31) + 1
+  return new Date(year, month - 1, day)
+}
+
+function nthWeekdayOfMonth(year, month, weekday, n) {
+  const d = new Date(year, month, 1)
+  const diff = (weekday - d.getDay() + 7) % 7
+  d.setDate(1 + diff + (n - 1) * 7)
+  return d
+}
+
+function auPublicHolidaySet(year) {
+  const holidays = new Set()
+  const add = (d) => holidays.add(d.toISOString().split('T')[0])
+
+  // Australia Day: Jan 26 (observed Mon if weekend)
+  const ausDay = new Date(year, 0, 26)
+  if (ausDay.getDay() === 0) ausDay.setDate(27)
+  else if (ausDay.getDay() === 6) ausDay.setDate(28)
+  add(ausDay)
+
+  // Easter: Good Friday, Easter Saturday, Easter Sunday, Easter Monday
+  const easter = easterSunday(year)
+  for (let offset = -2; offset <= 1; offset++) {
+    const d = new Date(easter); d.setDate(d.getDate() + offset); add(d)
+  }
+
+  // Anzac Day: Apr 25
+  const anzac = new Date(year, 3, 25)
+  if (anzac.getDay() === 0) anzac.setDate(26)
+  add(anzac)
+
+  // NSW King's Birthday: 2nd Monday of June
+  add(nthWeekdayOfMonth(year, 5, 1, 2))
+
+  // NSW Labour Day: 1st Monday of October
+  add(nthWeekdayOfMonth(year, 9, 1, 1))
+
+  return holidays
+}
+
+function getMatchDatesForSeason(startDate, endDate, matchDay = 'Sunday') {
+  const targetDay = DAY_MAP[matchDay] ?? 0
+  const start = new Date(startDate + 'T12:00:00')
+  const end = new Date(endDate + 'T12:00:00')
+  const current = new Date(start)
+  const diff = (targetDay - current.getDay() + 7) % 7
+  if (diff > 0) current.setDate(current.getDate() + diff)
+
+  // Collect holiday sets for all years spanning the season
+  const holidays = new Set()
+  for (let y = start.getFullYear(); y <= end.getFullYear(); y++) {
+    for (const d of auPublicHolidaySet(y)) holidays.add(d)
+  }
+
+  const dates = []
+  while (current <= end) {
+    const iso = current.toISOString().split('T')[0]
+    if (!holidays.has(iso)) dates.push(iso)
+    current.setDate(current.getDate() + 7)
+  }
+  return dates
+}
+
+function buildRoundRobin(teamNames, matchDates, grounds) {
+  // Circle method: fix first team, rotate the rest
+  const teams = teamNames.length % 2 === 0 ? [...teamNames] : [...teamNames, 'BYE']
+  const n = teams.length
+  const numRounds = n - 1
+  const schedule = []
+  let venueIdx = 0
+
+  for (let round = 0; round < numRounds; round++) {
+    const date = matchDates[round] || null
+    const matches = []
+
+    for (let i = 0; i < n / 2; i++) {
+      const home = teams[i]
+      const away = teams[n - 1 - i]
+      if (home === 'BYE' || away === 'BYE') continue
+      const venue = grounds[venueIdx % grounds.length]
+      venueIdx++
+      matches.push({ home, away, venue })
+    }
+
+    if (matches.length > 0) {
+      schedule.push({ round: round + 1, label: `Round ${round + 1}`, date, matches })
+    }
+
+    // Rotate: keep teams[0] fixed, rotate the rest
+    const last = teams[n - 1]
+    for (let i = n - 1; i > 1; i--) teams[i] = teams[i - 1]
+    teams[1] = last
+  }
+
+  return schedule
 }

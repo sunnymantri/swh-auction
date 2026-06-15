@@ -102,7 +102,7 @@ export default function Dashboard() {
             {[
               ['/players', '+ Add players'],
               ['/queue', '📋 Manage queue'],
-              ['/auction', '🎙 Auction Centre'],
+              ['/auction', '🎙 Auction Console'],
               ['/results', '📊 Results'],
             ].map(([to, label]) => (
               <Link key={to} to={to}

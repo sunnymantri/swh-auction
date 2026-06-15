@@ -9,7 +9,7 @@ import {
   parsePlayersCsvDetailed, playersCsvTemplate, updatePlayer, uploadPlayerPhoto,
   updatePlayerVacation,
   createCategory, deleteCategory, listCategories, updateCategory,
-  fetchCricHeroesStats
+  fetchCricHeroesStats, fetchPlayHQStats
 } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier, buildTierIndexByPlayerId, computeCohortBasePrices } from '../lib/points'
@@ -31,7 +31,7 @@ const STATUS_LABELS = {
 const blankFor = (auction) => ({
   name: '', role: '', category: '', base_price: auction?.default_base_price ?? 500,
   status: 'registered',
-  batting_style: '', bowling_style: '', profile_url: '',
+  batting_style: '', bowling_style: '', profile_url: '', playhq_url: '',
   matches: 0, runs: 0, bat_avg: 0, wickets: 0, catches: 0,
   strike_rate: 0, bowl_avg: 0, economy: 0, photo_url: '',
   fifties: 0, hundreds: 0, sixes: 0,
@@ -101,6 +101,16 @@ const mergeFetchedStats = (player, stats) => ({
   bowling_style: stats.bowling_style || player.bowling_style,
   role: stats.role || player.role,
   photo_url: stats.photo_url || player.photo_url,
+  // Extended fields returned by PlayHQ (no-op for CricHeroes which omits these)
+  ...(stats.fifties != null && { fifties: stats.fifties }),
+  ...(stats.hundreds != null && { hundreds: stats.hundreds }),
+  ...(stats.sixes != null && { sixes: stats.sixes }),
+  ...(stats.bowl_avg != null && { bowl_avg: stats.bowl_avg }),
+  ...(stats.dot_balls != null && { dot_balls: stats.dot_balls }),
+  ...(stats.three_wicket_hauls != null && { three_wicket_hauls: stats.three_wicket_hauls }),
+  ...(stats.five_wicket_hauls != null && { five_wicket_hauls: stats.five_wicket_hauls }),
+  ...(stats.run_outs != null && { run_outs: stats.run_outs }),
+  ...(stats.stumpings != null && { stumpings: stats.stumpings }),
 })
 
 const buildStatsUpdatePayload = (player) => ({
@@ -137,6 +147,7 @@ export default function PlayersManagement() {
   const [err, setErr] = useState('')
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [fetchingStats, setFetchingStats] = useState(false)
+  const [fetchingPlayHQ, setFetchingPlayHQ] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const [bulkBusy, setBulkBusy] = useState(false)
   const [addStep, setAddStep] = useState(1)
@@ -367,6 +378,19 @@ export default function PlayersManagement() {
     }
   }
 
+  const fetchFromPlayHQ = async () => {
+    if (!form.playhq_url) { setErr('Enter a PlayHQ profile URL first.'); return }
+    setErr(''); setFetchingPlayHQ(true)
+    try {
+      const stats = await fetchPlayHQStats(form.playhq_url)
+      setForm((s) => mergeFetchedStats(s, stats))
+    } catch (e) {
+      setErr(`PlayHQ fetch failed: ${e.message}`)
+    } finally {
+      setFetchingPlayHQ(false)
+    }
+  }
+
   const toggleApprove = async (p) => {
     const next = p.status === 'ready_for_auction' ? 'registered' : 'ready_for_auction'
     await updatePlayer(p.id, { status: next })
@@ -503,7 +527,7 @@ export default function PlayersManagement() {
 
   return (
     <AppShell title="Players">
-      <RoleGate allow={['admin']}>
+      <RoleGate allow={['admin', 'team_owner']}>
         {/* Tab bar */}
         <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5 overflow-x-auto scrollbar-none">
           {TABS.map(t => (
@@ -629,6 +653,20 @@ export default function PlayersManagement() {
                             disabled={fetchingStats || !form.profile_url}
                             className="px-3 py-2 rounded-lg bg-teal-600/70 text-white text-xs font-semibold whitespace-nowrap disabled:opacity-40">
                             {fetchingStats ? 'Fetching…' : 'Fetch'}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-teal-700/30 bg-ink-900/40 p-3 space-y-2">
+                        <p className="text-[0.65rem] text-teal-400 uppercase tracking-wider font-semibold">PlayHQ</p>
+                        <div className="flex gap-2">
+                          <input type="text" value={form.playhq_url ?? ''}
+                            onChange={(e) => set('playhq_url', e.target.value)}
+                            placeholder="https://www.playhq.com/.../profile/{uuid}/statistics"
+                            className="flex-1 min-w-0 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                          <button type="button" onClick={fetchFromPlayHQ}
+                            disabled={fetchingPlayHQ || !form.playhq_url}
+                            className="px-3 py-2 rounded-lg bg-teal-600/70 text-white text-xs font-semibold whitespace-nowrap disabled:opacity-40">
+                            {fetchingPlayHQ ? 'Fetching…' : 'Fetch'}
                           </button>
                         </div>
                       </div>
@@ -759,7 +797,7 @@ export default function PlayersManagement() {
                   {addStep > 1 && (
                     <button type="button" onClick={() => setAddStep(s => s - 1)}
                       className="px-4 py-2 rounded-lg border border-teal-700/40 text-teal-300 hover:text-white text-sm transition">
-                      ← Prev
+                      ← Previous
                     </button>
                   )}
                   {addStep < 3 && (

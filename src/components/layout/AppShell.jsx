@@ -15,9 +15,12 @@ const NAV_GROUPS = [
     label: 'Overview',
     roles: ['admin', 'team_owner', 'public'],
     links: [
-      { to: '/public-live', label: 'Live',     roles: ['public', 'admin'] },
-      { to: '/results',     label: 'Results',  roles: ['public', 'admin'] },
-      { to: '/vacation',    label: 'Vacation', roles: ['public', 'team_owner', 'admin'] },
+      { to: '/public-live', label: 'Live',     roles: ['public', 'team_owner'] },
+      { to: '/results',     label: 'Results',  roles: ['public', 'team_owner'] },
+      { to: '/vacation',    label: 'Vacation', roles: ['public', 'team_owner', 'admin'], dropdown: [
+        { label: 'Vacation', to: '/vacation' },
+        { label: 'Schedule', to: '/schedule' },
+      ]},
     ]
   },
   {
@@ -26,6 +29,7 @@ const NAV_GROUPS = [
     roles: ['admin'],
     links: [
       { to: '/auctions',           label: 'Auctions',  roles: ['admin'] },
+      { to: '/queue',              label: 'Queue',     roles: ['admin'] },
       { to: '/teams',              label: 'Teams',     roles: ['admin'] },
       { to: '/players', label: 'Players', roles: ['admin'], dropdown: [
         { label: 'Players list', tab: 'Players' },
@@ -41,23 +45,28 @@ const NAV_GROUPS = [
     label: 'Run Auction',
     roles: ['admin'],
     links: [
-      { to: '/queue',   label: 'Queue',          roles: ['admin'] },
-      { to: '/auction', label: 'Auction Centre', roles: ['admin'] },
       { to: '/squads',  label: 'Squads',         roles: ['admin', 'team_owner'] },
     ]
   },
   {
     id: 'bid',
     label: 'Bidding',
-    roles: ['team_owner', 'admin'],
+    roles: ['team_owner'],
     links: [
-      { to: '/team-bidding', label: 'Team Bidding', roles: ['team_owner', 'admin'] },
+      { to: '/players', label: 'Players', roles: ['team_owner'], dropdown: [
+        { label: 'Players list', tab: 'Players' },
+        { label: 'Add Player',   tab: 'Add Player' },
+        { label: 'Categories',   tab: 'Categories' },
+        { label: 'Vacation',     tab: 'Vacation' },
+      ]},
+      { to: '/team-bidding', label: "Bidder's Console", roles: ['team_owner'] },
     ]
   }
 ]
 
 function getOverviewPath(role) {
-  if (role === 'admin' || role === 'team_owner') return '/public-live'
+  if (role === 'admin') return '/auctions'
+  if (role === 'team_owner') return '/public-live'
   return '/public-live'
 }
 
@@ -344,7 +353,9 @@ export default function AppShell({ title, children }) {
                     <div className="hidden sm:block mx-2 h-4 w-px bg-teal-700/40 shrink-0" />
                   )}
                   {visibleLinks.map(l => {
-                    const active = loc.pathname === l.to
+                    const dropdownActive = Array.isArray(l.dropdown)
+                      && l.dropdown.some((item) => item.to && item.to !== '#' && loc.pathname === item.to)
+                    const active = loc.pathname === l.to || dropdownActive
                     if (l.dropdown) {
                       return (
                         <div key={l.to}
@@ -402,16 +413,31 @@ export default function AppShell({ title, children }) {
           onMouseEnter={handleDdPanelEnter}
           onMouseLeave={handleDdLeave}
         >
-          {NAV_GROUPS.flatMap(g => g.links).find(l => l.to === openDropdown)?.dropdown?.map(item => (
-            <Link
-              key={item.tab}
-              to={`/players?tab=${encodeURIComponent(item.tab)}`}
-              onClick={() => setOpenDropdown(null)}
-              className="flex items-center px-4 py-2.5 text-sm text-teal-200 hover:bg-ink-800/80 hover:text-white transition gap-2"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {NAV_GROUPS.flatMap(g => g.links).find(l => l.to === openDropdown)?.dropdown?.map(item => {
+            const to = item.to
+              ? item.to
+              : `/players?tab=${encodeURIComponent(item.tab)}`
+            if (item.disabled) {
+              return (
+                <span
+                  key={item.label}
+                  className="flex items-center px-4 py-2.5 text-sm text-teal-500/70 cursor-not-allowed"
+                >
+                  {item.label}
+                </span>
+              )
+            }
+            return (
+              <Link
+                key={item.label}
+                to={to}
+                onClick={() => setOpenDropdown(null)}
+                className="flex items-center px-4 py-2.5 text-sm text-teal-200 hover:bg-ink-800/80 hover:text-white transition gap-2"
+              >
+                {item.label}
+              </Link>
+            )
+          })}
         </div>,
         document.body
       )}

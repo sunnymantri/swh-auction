@@ -91,6 +91,22 @@ export async function resetUserPassword(profileId) {
   return data
 }
 
+export async function deleteUserAccount(profileId) {
+  const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+    body: { profile_id: profileId }
+  })
+  if (error) {
+    let detail = error.message
+    try {
+      const ctx = await error.context?.json?.()
+      if (ctx?.error) detail = ctx.error
+    } catch { /* ignore */ }
+    throw new Error(detail)
+  }
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
 export async function notifyOwnerCredentials({
   email,
   teamName,

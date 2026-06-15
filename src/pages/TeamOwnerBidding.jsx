@@ -104,7 +104,7 @@ export default function TeamOwnerBidding() {
   }
 
   return (
-    <AppShell title="Team Owner Bidding">
+    <AppShell title="Bidder's Console">
       {celebration && (
         <SoldCelebration
           player={celebration.player}

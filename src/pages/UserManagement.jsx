@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
-import { createUserAccount, listAuthUsers, listProfiles, resetUserPassword, setProfileRole, updateUserProfile, uploadUserPhoto } from '../lib/admin'
+import { createUserAccount, deleteUserAccount, listAuthUsers, listProfiles, resetUserPassword, setProfileRole, updateUserProfile, uploadUserPhoto } from '../lib/admin'
 import { listTeams, updateTeam } from '../lib/api'
 
 const ROLES = ['admin', 'team_owner', 'public']
@@ -23,6 +23,7 @@ export default function UserManagement() {
   const [uploadingEditPhoto, setUploadingEditPhoto] = useState(false)
   const [resetCreds, setResetCreds] = useState(null)
   const [resettingId, setResettingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   const reload = async () => {
     const [p, a] = await Promise.all([listProfiles(), listAuthUsers()])
@@ -101,6 +102,20 @@ export default function UserManagement() {
       setResetCreds({ profileId, email: res.email || email, password: res.password })
     } catch (e) { setError(e.message) }
     finally { setResettingId(null) }
+  }
+
+  const handleDeleteUser = async (profileId, nameOrEmail) => {
+    if (!window.confirm(`Delete user "${nameOrEmail}"? This removes auth access and profile.`)) return
+    setDeletingId(profileId); setError(''); setResetCreds(null)
+    try {
+      await deleteUserAccount(profileId)
+      if (editId === profileId) setEditId(null)
+      await reload()
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   return (
@@ -261,10 +276,19 @@ export default function UserManagement() {
                             {resettingId === p.id ? 'Resetting…' : 'Reset pwd'}
                           </button>
                         )}
-                        <select value={p.role} onChange={(e) => changeRole(p.id, e.target.value)}
-                          className="rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1 text-xs">
-                          {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
-                        </select>
+                        {editId !== p.id && (
+                          <select value={p.role} onChange={(e) => changeRole(p.id, e.target.value)}
+                            className="rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1 text-xs">
+                            {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
+                          </select>
+                        )}
+                        <button
+                          onClick={() => handleDeleteUser(p.id, authEmail || p.full_name || 'user')}
+                          disabled={deletingId === p.id}
+                          className="rounded-lg bg-live/40 border border-live/50 px-2 py-1 text-xs text-white disabled:opacity-50"
+                        >
+                          {deletingId === p.id ? 'Deleting…' : 'Delete'}
+                        </button>
                       </div>
                     </div>
                     {resetCreds?.profileId === p.id && (

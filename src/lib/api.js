@@ -409,3 +409,19 @@ export async function fetchCricHeroesStats(profileUrl) {
   if (data?.error) throw new Error(data.error)
   return data
 }
+
+export async function fetchPlayHQStats(profileUrl) {
+  const { data, error } = await supabase.functions.invoke('fetch-playhq', {
+    body: { profile_url: profileUrl }
+  })
+  if (error) {
+    let detail = error.message
+    try {
+      const ctx = await error.context?.json?.()
+      if (ctx?.error) detail = ctx.error
+    } catch { /* ignore */ }
+    throw new Error(detail)
+  }
+  if (data?.error) throw new Error(data.error)
+  return data
+}

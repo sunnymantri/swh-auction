@@ -15,6 +15,7 @@ import TeamOwnerBidding from './pages/TeamOwnerBidding'
 import PublicLiveView from './pages/PublicLiveView'
 import AuctionResults from './pages/AuctionResults'
 import VacationForm from './pages/VacationForm'
+import Schedule from './pages/Schedule'
 import VacationResponses from './pages/VacationResponses'
 import TeamSquadSummary from './pages/TeamSquadSummary'
 
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/public-live" element={<RequirePublicAuth><PublicLiveView /></RequirePublicAuth>} />
             <Route path="/results" element={<RequirePublicAuth><AuctionResults /></RequirePublicAuth>} />
             <Route path="/vacation" element={<VacationForm />} />
+            <Route path="/schedule" element={<Schedule />} />
 
             {/* Authenticated */}
             <Route path="/auctions" element={<RequireAuth><Auctions /></RequireAuth>} />

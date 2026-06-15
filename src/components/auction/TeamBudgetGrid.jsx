@@ -2,7 +2,7 @@ import { fmtPoints } from '../../lib/format'
 
 export default function TeamBudgetGrid({ teams, leaderTeamId, onTeamClick }) {
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-2">
       {teams.map(t => {
         const leading = t.id === leaderTeamId
         const totalBudget = Number(t.total_budget || 0)
@@ -16,28 +16,34 @@ export default function TeamBudgetGrid({ teams, leaderTeamId, onTeamClick }) {
         return (
           <button key={t.id} type="button"
             onClick={() => onTeamClick?.(t.id)}
-            className={`rounded-2xl p-4 border transition text-left w-full ${
+            className={`rounded-xl p-3 border transition text-left w-full ${
               onTeamClick ? 'cursor-pointer hover:border-teal-500/60' : ''} ${
               leading ? 'border-gold/70 bg-gold/10 shadow-glow'
                        : 'border-teal-700/40 bg-ink-800/70'}`}>
             <div className="flex items-center justify-between">
-              <span className="font-score text-2xl text-white truncate">{t.name}</span>
-              <span className="px-2 py-0.5 rounded-lg bg-ink-900/70 text-teal-200 text-xs tabular">
+              <span className="font-score text-xl text-white truncate">{t.name}</span>
+              <span className="px-2 py-0.5 rounded-lg bg-ink-900/70 text-teal-200 text-[0.7rem] tabular">
                 {playersCount}/{squadSize} Players
               </span>
             </div>
-            <div className="mt-2 text-center">
-              <div className="font-score text-5xl text-white tabular leading-tight">{fmtPoints(pointsRemaining)}</div>
-              <div className="text-teal-300/90 text-sm tracking-wide uppercase">Remaining budget</div>
+            <div className="mt-1.5 flex items-end justify-between gap-3">
+              <div>
+                <div className="text-[0.65rem] text-teal-400 uppercase tracking-wide">Remaining</div>
+                <div className="font-score text-3xl text-white tabular leading-tight">{fmtPoints(pointsRemaining)}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-[0.65rem] text-teal-400 uppercase tracking-wide">Max safe</div>
+                <div className="font-score text-xl text-gold tabular leading-tight">{fmtPoints(t.max_safe_bid)}</div>
+              </div>
             </div>
-            <div className="mt-3 h-1.5 rounded-full bg-ink-900 overflow-hidden">
+            <div className="mt-2 h-1.5 rounded-full bg-ink-900 overflow-hidden">
               <div className="h-full rounded-full bg-teal-500" style={{ width: `${pct}%` }} />
             </div>
-            <div className="mt-3 flex justify-between text-sm">
+            <div className="mt-2 flex justify-between text-xs">
               <span className="text-teal-300">Spent: <b className="text-white tabular">{fmtPoints(pointsSpent)}</b></span>
-              <span className="text-teal-300">Max safe bid: <b className="text-gold tabular">{fmtPoints(t.max_safe_bid)}</b></span>
+              <span className="text-teal-500">Budget: <b className="text-teal-300 tabular">{fmtPoints(totalBudget)}</b></span>
             </div>
-            {leading && <p className="mt-2 text-[0.7rem] text-gold uppercase tracking-wider">Highest bidder currently</p>}
+            {leading && <p className="mt-1 text-[0.62rem] text-gold uppercase tracking-wider">Highest bidder currently</p>}
           </button>
         )
       })}

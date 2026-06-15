@@ -169,7 +169,7 @@ export default function AuctionSetup() {
                 {[
                   ['/teams', 'Teams'], ['/players', 'Players'],
                   ['/categories', 'Categories'], ['/queue', 'Queue'],
-                  ['/users', 'Owners & Users'], ['/auction', 'Auction Centre']
+                  ['/users', 'Owners & Users'], ['/auction', 'Auction Console']
                 ].map(([to, label]) => (
                   <Link key={to} to={to} className="px-3 py-2 rounded-lg bg-ink-900 border border-teal-700/40 text-sm text-teal-200 hover:text-white text-center">
                     {label}

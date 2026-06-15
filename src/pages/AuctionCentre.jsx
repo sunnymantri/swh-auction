@@ -161,14 +161,14 @@ export default function AuctionCentre() {
 
   if (!auction) {
     return (
-      <AppShell title="Auction Centre">
+      <AppShell title="Auction Console">
         <p className="text-teal-400">No auction selected. Create or select one on the Auctions screen.</p>
       </AppShell>
     )
   }
 
   return (
-    <AppShell title="Auction Centre">
+    <AppShell title="Auction Console">
       {celebration && (
         <SoldCelebration
           player={celebration.player}
