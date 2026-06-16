@@ -108,10 +108,22 @@ Deno.serve(async (req: Request) => {
     const nextData = extractNextData(html)
 
     if (!nextData) {
+      const snippet = html.slice(0, 3000)
+      const scriptTags = [...html.matchAll(/<script[^>]*>/gi)].map(m => m[0]).slice(0, 10)
+      const debugInfo = {
+        html_length: html.length,
+        has_next_data: html.includes('__NEXT_DATA__'),
+        has_nuxt: html.includes('__NUXT__'),
+        has_apollo: html.includes('apollo'),
+        has_graphql: html.includes('graphql'),
+        script_tags: scriptTags,
+        html_snippet: snippet,
+      }
+      // Log to Supabase function logs so it's visible in the dashboard
+      console.log('PlayHQ debug:', JSON.stringify(debugInfo))
       return json({
-        error: 'Could not find __NEXT_DATA__ on the PlayHQ page. The page structure may have changed.',
-        debug_html_length: html.length,
-        debug_has_script: html.includes('__NEXT_DATA__'),
+        error: 'Could not find __NEXT_DATA__ on the PlayHQ page.',
+        ...debugInfo,
       }, 502)
     }
 
