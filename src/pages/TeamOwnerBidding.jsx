@@ -5,14 +5,27 @@ import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuth } from '../context/AuthContext'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
 import { getBidsForPlayer, getCurrentQueueItem, getRecentEvents, listTeamSummaries, placeBid } from '../lib/api'
-import { fmtPoints, fmtStatus } from '../lib/format'
+import { fmtPoints } from '../lib/format'
 import { useSoldCelebration } from '../hooks/useSoldCelebration'
 import AuctionTimer from '../components/auction/AuctionTimer'
 import SoldCelebration from '../components/auction/SoldCelebration'
 import PlayerCard from '../components/auction/PlayerCard'
 import { calcIncrement } from '../components/auction/AuctioneerControls'
+import ActivityFeed from '../components/auction/ActivityFeed'
 
 const initials = (name = '') => name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
+
+function HammerIcon({ className = 'h-6 w-6' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M13.5 4.5L18.75 9.75" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11.25 6.75L17.25 12.75" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 9L15 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6.25 12.25L11.75 17.75" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 19H13.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 function StatTile({ label, value, accent = false }) {
   return (
@@ -30,41 +43,6 @@ function TeamMetric({ label, value, accent = false }) {
     <div className="rounded-2xl border border-gold/10 bg-black/10 px-4 py-3 text-center">
       <div className="text-[0.68rem] uppercase tracking-[0.18em] text-[#8ca09b]">{label}</div>
       <div className={`mt-2 text-2xl font-semibold tabular ${accent ? 'text-gold-soft' : 'text-white'}`}>{value}</div>
-    </div>
-  )
-}
-
-function RecentActivityPanel({ events }) {
-  return (
-    <div className="victory-panel rounded-[1.5rem] p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <div className="text-sm font-semibold text-white">Live Activity</div>
-          <div className="text-xs uppercase tracking-[0.18em] text-[#839792]">Latest auction events</div>
-        </div>
-        <span className="rounded-full border border-gold/15 px-3 py-1 text-[0.68rem] uppercase tracking-[0.18em] text-gold-soft">
-          Real-time
-        </span>
-      </div>
-      <div className="space-y-3">
-        {events.slice(0, 5).map((event) => (
-          <div key={event.id} className="rounded-2xl border border-gold/10 bg-black/10 px-4 py-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="truncate text-sm font-medium text-white">{event.teams?.name || 'Auction Event'}</div>
-                <div className="mt-1 text-xs text-[#90a4a0]">
-                  {event.event_type.replace(/_/g, ' ')}
-                  {event.players?.name ? ` · ${event.players.name}` : ''}
-                </div>
-              </div>
-              {event.amount != null && (
-                <div className="shrink-0 text-sm font-semibold tabular text-gold-soft">{fmtPoints(event.amount)}</div>
-              )}
-            </div>
-          </div>
-        ))}
-        {events.length === 0 && <p className="text-sm text-[#9fb2ad]">No activity yet.</p>}
-      </div>
     </div>
   )
 }
@@ -155,6 +133,13 @@ export default function TeamOwnerBidding() {
       ? 'border-gold/25 bg-gold/10 text-gold-soft'
       : 'border-live/30 bg-live/10 text-[#ff9c9c]'
 
+  const bumpAmount = (delta) => {
+    const currentValue = Number(amount || 0)
+    const base = currentValue > 0 ? currentValue : minNext
+    setAmount(String(base + delta))
+    setMsg('')
+  }
+
   const doBid = async (manual) => {
     if (!myTeam || !current?.player_id) return
     const bidAmount = manual ? Number(amount || 0) : minNext
@@ -210,48 +195,66 @@ export default function TeamOwnerBidding() {
         )}
 
         {auction && current?.players && (
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem] xl:items-start">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_25rem] xl:items-start">
             <div className="space-y-4">
               <PlayerCard player={current.players} />
 
               <section className="victory-panel rounded-[1.75rem] p-5 sm:p-6">
-                <div className="mx-auto max-w-5xl text-center">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-gold/20 bg-gold/10 px-4 py-1.5 text-[0.72rem] uppercase tracking-[0.22em] text-gold-soft">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                    Live auction active
+                <div className="mx-auto max-w-6xl">
+                  <div className="flex justify-center">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-gold/20 bg-gold/10 px-4 py-1.5 text-[0.72rem] uppercase tracking-[0.22em] text-gold-soft">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                      Live auction active
+                    </div>
                   </div>
 
-                  <div className="mt-5 text-[0.72rem] uppercase tracking-[0.24em] text-[#8ca09b]">Current highest bid</div>
-                  <div className="mt-2 font-score text-[3.35rem] leading-none text-gold-soft sm:text-[4.25rem]">
-                    {fmtPoints(highestBid)}
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-sm">
-                    <span className="text-[#8ca09b]">Leading team</span>
-                    <span className="rounded-full border border-gold/20 bg-black/10 px-3 py-1 font-medium text-white">
-                      {leaderName || 'Awaiting first bid'}
-                    </span>
-                    {iAmLeader && (
-                      <span className="rounded-full border border-gold/25 bg-gold/10 px-3 py-1 text-xs font-medium text-gold-soft">
-                        You are leading
-                      </span>
-                    )}
-                  </div>
-
-                  {(player && (lastBidAt || current?.current_bid_deadline) && isLive) && (
-                    <div className="mt-6 flex justify-center">
-                      <div className="rounded-[1.5rem] border border-gold/12 bg-black/10 px-6 py-5">
-                        <div className="mb-3 text-center text-[0.72rem] uppercase tracking-[0.24em] text-[#8ca09b]">Bid clock</div>
-                        <AuctionTimer
-                          duration={timerDuration}
-                          lastBidAt={lastBidAt}
-                          deadlineTs={current?.current_bid_deadline ?? null}
-                          paused={!!celebration || !!current?.clock_paused}
-                          pausedRemainingSeconds={current?.paused_remaining_seconds ?? null}
-                        />
+                  <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem_minmax(0,1fr)] xl:items-center">
+                    <div className="text-center xl:text-left">
+                      <div className="text-[0.72rem] uppercase tracking-[0.24em] text-[#8ca09b]">Current highest bid</div>
+                      <div className="mt-3 font-score text-[3.35rem] leading-none text-gold-soft sm:text-[4.25rem]">
+                        {fmtPoints(highestBid)}
+                      </div>
+                      <div className="mt-5">
+                        <div className="text-[0.72rem] uppercase tracking-[0.24em] text-[#8ca09b]">Leading team</div>
+                        <div className="mt-3 flex flex-wrap items-center justify-center gap-3 xl:justify-start">
+                          <span className="text-3xl text-gold-soft">⌂</span>
+                          <span className="text-2xl font-semibold text-white">{leaderName || 'Awaiting first bid'}</span>
+                          {iAmLeader && (
+                            <span className="rounded-full border border-gold/25 bg-gold/10 px-3 py-1 text-xs font-medium text-gold-soft">
+                              Leading
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  )}
+
+                    {(player && (lastBidAt || current?.current_bid_deadline) && isLive) && (
+                      <div className="flex justify-center">
+                        <div className="rounded-[1.75rem] border border-gold/12 bg-black/10 px-6 py-5 shadow-[0_10px_35px_-26px_rgba(0,0,0,0.8)]">
+                          <div className="mb-3 text-center text-[0.72rem] uppercase tracking-[0.24em] text-[#8ca09b]">Bid clock</div>
+                          <AuctionTimer
+                            duration={timerDuration}
+                            lastBidAt={lastBidAt}
+                            deadlineTs={current?.current_bid_deadline ?? null}
+                            paused={!!celebration || !!current?.clock_paused}
+                            pausedRemainingSeconds={current?.paused_remaining_seconds ?? null}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-5 text-center xl:text-right">
+                      <div>
+                        <div className="text-[0.72rem] uppercase tracking-[0.24em] text-[#8ca09b]">Opening floor</div>
+                        <div className="mt-2 font-score text-4xl leading-none text-gold-soft">{fmtPoints(bidFloor)}</div>
+                      </div>
+                      <div className="mx-auto h-px w-40 bg-gold/10 xl:ml-auto" />
+                      <div>
+                        <div className="text-[0.72rem] uppercase tracking-[0.24em] text-[#8ca09b]">Next minimum bid</div>
+                        <div className="mt-2 font-score text-4xl leading-none text-gold-soft">{fmtPoints(minNext)}</div>
+                      </div>
+                    </div>
+                  </div>
 
                   <div className="mt-6 rounded-[1.5rem] border border-gold/12 bg-black/10 p-4 sm:p-5">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -282,62 +285,73 @@ export default function TeamOwnerBidding() {
                     </div>
                   </div>
 
-                  <div className="mt-6 mx-auto max-w-3xl rounded-[1.5rem] border border-gold/12 bg-black/10 p-4 sm:p-5">
-                    <div className="text-[0.68rem] uppercase tracking-[0.18em] text-[#8ca09b]">Quick action</div>
-                    <button
-                      disabled={!myTeam || !isLive || busy || !!actionBlockedReason}
-                      onClick={() => doBid(false)}
-                      title={actionBlockedReason || `Minimum next bid is ${fmtPoints(minNext)}`}
-                      className="mt-4 w-full rounded-2xl bg-gold px-4 py-4 text-2xl font-semibold text-[#11130e] shadow-[0_18px_35px_-24px_rgba(244,183,64,0.85)] transition hover:bg-gold-soft disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      Bid {fmtPoints(minNext)}
-                    </button>
-
-                    <div className="my-4 flex items-center gap-3 text-[#8ca09b]">
-                      <div className="h-px flex-1 bg-gold/10" />
-                      <span className="text-xs uppercase tracking-[0.18em]">or</span>
-                      <div className="h-px flex-1 bg-gold/10" />
-                    </div>
-
-                    <div className="grid gap-2 sm:grid-cols-[12rem_minmax(0,1fr)_auto]">
-                      <div className="rounded-2xl border border-gold/12 bg-black/20 px-4 py-3 text-left text-[#8ca09b]">
-                        Manual amount
-                      </div>
-                      <input
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value.replace(/[^\d]/g, ''))}
-                        placeholder={`${fmtPoints(minNext)}`}
-                        inputMode="numeric"
-                        className="rounded-2xl border border-gold/12 bg-black/20 px-4 py-3 text-white placeholder:text-[#6f817c] focus:border-gold/35 focus:outline-none"
-                      />
+                  <div className="mt-4 rounded-[1.5rem] border border-gold/12 bg-black/10 p-4 sm:p-5">
+                    <div className="mx-auto max-w-5xl">
+                      <div className="text-center text-[0.68rem] uppercase tracking-[0.18em] text-[#8ca09b]">Quick action</div>
                       <button
-                        disabled={!myTeam || !isLive || !amount || busy || !!actionBlockedReason}
-                        onClick={() => doBid(true)}
-                        className="rounded-2xl border border-gold/20 bg-transparent px-6 py-3 font-medium uppercase tracking-[0.14em] text-gold-soft transition hover:bg-gold/10 disabled:cursor-not-allowed disabled:opacity-40"
+                        disabled={!myTeam || !isLive || busy || !!actionBlockedReason}
+                        onClick={() => doBid(false)}
+                        title={actionBlockedReason || `Minimum next bid is ${fmtPoints(minNext)}`}
+                        className="mt-4 flex w-full items-center justify-center gap-3 rounded-2xl bg-gold px-4 py-4 text-2xl font-semibold text-[#11130e] shadow-[0_18px_35px_-24px_rgba(244,183,64,0.85)] transition hover:bg-gold-soft disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        Place
+                        <HammerIcon className="h-7 w-7" />
+                        Bid {fmtPoints(minNext)}
                       </button>
+
+                      <div className="my-4 flex items-center gap-3 text-[#8ca09b]">
+                        <div className="h-px flex-1 bg-gold/10" />
+                        <span className="text-xs uppercase tracking-[0.18em]">or</span>
+                        <div className="h-px flex-1 bg-gold/10" />
+                      </div>
+
+                      <div className="mb-3 flex flex-wrap justify-center gap-2">
+                        {[100, 500, 1000].map((delta) => (
+                          <button
+                            key={delta}
+                            type="button"
+                            onClick={() => bumpAmount(delta)}
+                            disabled={!myTeam || !isLive || busy || !!actionBlockedReason}
+                            className="rounded-full border border-gold/20 bg-gold/10 px-3 py-1.5 text-sm font-medium text-gold-soft transition hover:bg-gold/15 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            +{fmtPoints(delta)}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="grid gap-2 lg:grid-cols-[16rem_minmax(0,1fr)_auto]">
+                        <div className="rounded-2xl border border-gold/12 bg-black/20 px-4 py-3 text-left text-[#8ca09b]">
+                          Manual amount
+                        </div>
+                        <input
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value.replace(/[^\d]/g, ''))}
+                          placeholder={`${fmtPoints(minNext)}`}
+                          inputMode="numeric"
+                          className="rounded-2xl border border-gold/12 bg-black/20 px-4 py-3 text-white placeholder:text-[#6f817c] focus:border-gold/35 focus:outline-none"
+                        />
+                        <button
+                          disabled={!myTeam || !isLive || !amount || busy || !!actionBlockedReason}
+                          onClick={() => doBid(true)}
+                          className="rounded-2xl border border-gold/20 bg-transparent px-8 py-3 font-medium uppercase tracking-[0.14em] text-gold-soft transition hover:bg-gold/10 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Place
+                        </button>
+                      </div>
+
+                      <p className="mt-3 text-center text-sm text-[#9db0ac]">
+                        {actionBlockedReason
+                          ? actionBlockedReason
+                          : `Next valid bid starts at ${fmtPoints(minNext)}.`}
+                      </p>
+                      {msg && <p className="mt-2 text-center text-sm text-gold-soft">{msg}</p>}
                     </div>
-
-                    <p className="mt-3 text-sm text-[#9db0ac]">
-                      {actionBlockedReason
-                        ? actionBlockedReason
-                        : `Next valid bid starts at ${fmtPoints(minNext)}.`}
-                    </p>
-                    {msg && <p className="mt-2 text-sm text-gold-soft">{msg}</p>}
-                  </div>
-
-                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                    <StatTile label="Opening floor" value={fmtPoints(bidFloor)} />
-                    <StatTile label="Next minimum bid" value={fmtPoints(minNext)} accent />
-                    <StatTile label="Auction status" value={fmtStatus(auction.status)} />
                   </div>
                 </div>
               </section>
             </div>
 
             <aside>
-              <RecentActivityPanel events={events} />
+              <ActivityFeed events={events} scrollable={false} />
             </aside>
           </div>
         )}

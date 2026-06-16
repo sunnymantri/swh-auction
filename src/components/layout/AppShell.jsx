@@ -9,6 +9,80 @@ import packageMeta from '../../../package.json'
 
 const ROLE_LABELS = { admin: 'Administrator', team_owner: 'Team Owner', public: 'Player' }
 
+const NAV_ICONS = {
+  Live: (
+    <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+      <path d="M8 3.25V12.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M3.75 12.75H12.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Results: (
+    <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+      <path d="M3.5 12.5V7.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M8 12.5V4.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M12.5 12.5V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Vacation: (
+    <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+      <path d="M5 2.75V4.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M11 2.75V4.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="3" y="4" width="10" height="8.5" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3 6.5H13" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  ),
+  Players: (
+    <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+      <circle cx="8" cy="5.25" r="2.25" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M4.25 12.5C4.75 10.65 6.15 9.75 8 9.75C9.85 9.75 11.25 10.65 11.75 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  "Bidder's Console": (
+    <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+      <path d="M9.25 3.25L12.75 6.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M7.75 4.75L11.25 8.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M6 6.5L9.5 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M4.75 9.25L8 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M4 12.5H9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Auctions: (
+    <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+      <rect x="3" y="3.5" width="10" height="9" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5.5 6.5H10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M5.5 9.5H8.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Queue: (
+    <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+      <path d="M4 4.5H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M4 8H10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M4 11.5H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Teams: (
+    <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+      <circle cx="5.25" cy="5.5" r="1.75" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="10.75" cy="5.5" r="1.75" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M2.75 11.75C3.15 10.35 4.2 9.65 5.45 9.65C6.7 9.65 7.75 10.35 8.15 11.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M7.85 11.75C8.25 10.35 9.3 9.65 10.55 9.65C11.8 9.65 12.85 10.35 13.25 11.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Users: (
+    <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+      <circle cx="8" cy="5.25" r="2.25" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M4.25 12.5C4.75 10.65 6.15 9.75 8 9.75C9.85 9.75 11.25 10.65 11.75 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
+  Squads: (
+    <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+      <path d="M4 4.5H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M4 8H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M4 11.5H9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 const NAV_GROUPS = [
   {
     id: 'overview',
@@ -263,6 +337,7 @@ export default function AppShell({ title, children }) {
 
   const headingPrimary = auction?.name || title
   const headingCaption = auction?.name ? title : null
+  const renderNavIcon = (label) => NAV_ICONS[label] ?? null
 
   return (
     <div className="min-h-screen">
@@ -273,7 +348,7 @@ export default function AppShell({ title, children }) {
               <img
                 src="/club-logo.png"
                 alt="Club logo"
-                className="h-10 w-10 rounded-lg object-cover ring-1 ring-gold/25"
+                className="h-10 w-10 rounded-xl object-cover ring-1 ring-gold/25"
               />
               {auction?.banner_logo_url && (
                 <>
@@ -281,16 +356,16 @@ export default function AppShell({ title, children }) {
                   <img
                     src={auction.banner_logo_url}
                     alt=""
-                    className="h-9 w-9 rounded-lg object-cover ring-1 ring-gold/20"
+                    className="h-9 w-9 rounded-xl object-cover ring-1 ring-gold/20"
                   />
                 </>
               )}
             </a>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-score text-xl sm:text-2xl text-white leading-none truncate tracking-tight">{headingPrimary}</h1>
+                <h1 className="font-score text-[1.35rem] sm:text-[1.7rem] text-white leading-none truncate tracking-tight">{headingPrimary}</h1>
                 {auction && (
-                  <span className={`text-[0.65rem] sm:text-[0.7rem] px-2 py-0.5 rounded-full font-semibold tracking-wider ${
+                  <span className={`text-[0.64rem] sm:text-[0.68rem] px-2.5 py-1 rounded-full font-semibold tracking-[0.18em] ${
                     auction.status === 'live'
                       ? 'bg-gold/20 text-gold animate-pulsegold'
                       : 'bg-gold/10 text-gold-soft'
@@ -300,24 +375,24 @@ export default function AppShell({ title, children }) {
                 )}
               </div>
               {headingCaption && (
-                <p className="text-xs text-[#9fb2ad] mt-1 truncate">{headingCaption}</p>
+                <p className="mt-1 truncate text-[0.8rem] text-[#97aba6]">{headingCaption}</p>
               )}
             </div>
           </div>
 
           <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-3">
             {role !== 'public' && auctions.length > 0 && (
-              <div className="relative w-full sm:w-auto max-w-[16rem]">
+              <div className="relative w-full sm:w-auto max-w-[17rem]">
                 <select
                   value={auctionId ?? ''}
                   onChange={(e) => selectAuction(e.target.value)}
-                  className="appearance-none w-full rounded-lg bg-black/15 hover:bg-black/25 border border-gold/15 hover:border-gold/35 pl-3 pr-8 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-gold/45 transition cursor-pointer"
+                  className="appearance-none w-full rounded-xl bg-black/15 hover:bg-black/25 border border-gold/15 hover:border-gold/35 pl-3.5 pr-9 py-2 text-[0.82rem] text-white focus:outline-none focus:ring-1 focus:ring-gold/45 transition cursor-pointer"
                 >
                   {auctions.map((a) => (
                     <option key={a.id} value={a.id}>{a.name} ({fmtStatus(a.status)})</option>
                   ))}
                 </select>
-                <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gold/70" viewBox="0 0 12 12" fill="none">
+                <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gold/70" viewBox="0 0 12 12" fill="none">
                   <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
@@ -341,33 +416,40 @@ export default function AppShell({ title, children }) {
           </div>
         </div>
 
-        <nav className="max-w-7xl mx-auto px-4 pb-2 flex items-center gap-1 overflow-x-auto scrollbar-none">
+        <nav className="max-w-7xl mx-auto px-4 pb-3 flex items-center gap-2 overflow-x-auto scrollbar-none">
           {NAV_GROUPS
             .filter(g => g.roles.includes(role))
             .map((group, gi) => {
               const visibleLinks = group.links.filter(l => l.roles.includes(role))
               if (visibleLinks.length === 0) return null
               return (
-                <div key={group.id} className="flex items-center gap-0.5">
+                <div key={group.id} className="flex items-center gap-1">
                   {gi > 0 && (
-                    <div className="hidden sm:block mx-2 h-4 w-px bg-gold/10 shrink-0" />
+                    <div className="hidden sm:block mx-2 h-6 w-px bg-gold/10 shrink-0" />
                   )}
                   {visibleLinks.map(l => {
                     const dropdownActive = Array.isArray(l.dropdown)
                       && l.dropdown.some((item) => item.to && item.to !== '#' && loc.pathname === item.to)
                     const active = loc.pathname === l.to || dropdownActive
+                    const navClasses = `group inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-[0.84rem] font-medium whitespace-nowrap transition-all ${
+                      active
+                        ? 'border-gold/28 bg-gold/12 text-gold-soft shadow-[0_12px_25px_-18px_rgba(244,183,64,0.7)]'
+                        : 'border-transparent bg-white/[0.02] text-white/78 hover:border-gold/14 hover:bg-white/[0.05] hover:text-white'
+                    }`
                     if (l.dropdown) {
                       return (
                         <div key={l.to}
                           onMouseEnter={(e) => handleDdEnter(l.to, e.currentTarget)}
                           onMouseLeave={handleDdLeave}>
                           <Link to={l.to}
-                            className={`relative px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors inline-flex items-center gap-1 ${active ? 'text-gold' : 'text-white/72 hover:text-white'}`}>
-                            {l.label}
+                            className={navClasses}>
+                            <span className={`transition-colors ${active ? 'text-gold' : 'text-gold/70 group-hover:text-gold-soft'}`}>
+                              {renderNavIcon(l.label)}
+                            </span>
+                            <span>{l.label}</span>
                             <svg className="w-2.5 h-2.5 opacity-60" viewBox="0 0 10 10" fill="none">
                               <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
-                            {active && <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-gold" />}
                           </Link>
                         </div>
                       )
@@ -376,15 +458,12 @@ export default function AppShell({ title, children }) {
                       <Link
                         key={l.to}
                         to={l.to}
-                        className={`
-                          relative px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors
-                          ${active ? 'text-gold' : 'text-white/72 hover:text-white'}
-                        `}
+                        className={navClasses}
                       >
-                        {l.label}
-                        {active && (
-                          <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-gold" />
-                        )}
+                        <span className={`transition-colors ${active ? 'text-gold' : 'text-gold/70 group-hover:text-gold-soft'}`}>
+                          {renderNavIcon(l.label)}
+                        </span>
+                        <span>{l.label}</span>
                       </Link>
                     )
                   })}
