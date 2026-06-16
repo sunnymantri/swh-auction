@@ -2,7 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; }
+:root {
+  color-scheme: dark;
+  --va-bg: #071210;
+  --va-bg-alt: #0b1614;
+  --va-panel: rgba(16, 37, 32, 0.9);
+  --va-panel-alt: rgba(21, 48, 41, 0.86);
+  --va-border: rgba(244, 183, 64, 0.18);
+  --va-text: #f5f2e8;
+  --va-muted: #93ada6;
+  --va-gold-glow: rgba(244, 183, 64, 0.18);
+}
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -11,8 +21,10 @@ body {
   margin: 0;
   font-family: 'Hanken Grotesk', system-ui, sans-serif;
   background:
-    radial-gradient(1200px 600px at 50% -10%, #0e2c28 0%, #061614 60%, #04100e 100%);
-  color: #e9f3f1;
+    radial-gradient(850px 420px at 12% 0%, rgba(244, 183, 64, 0.1) 0%, transparent 55%),
+    radial-gradient(900px 520px at 100% 10%, rgba(42, 161, 152, 0.08) 0%, transparent 58%),
+    linear-gradient(180deg, var(--va-bg-alt) 0%, var(--va-bg) 38%, #050d0c 100%);
+  color: var(--va-text);
   min-height: 100vh;
   padding-left: env(safe-area-inset-left, 0);
   padding-right: env(safe-area-inset-right, 0);
@@ -20,7 +32,18 @@ body {
 }
 .tabular { font-variant-numeric: tabular-nums; }
 .stat-grid dt { letter-spacing: .04em; text-transform: uppercase; font-size: .62rem; }
-.app-card { @apply rounded-xl border border-teal-700/40 bg-ink-800/60; }
+.app-card { @apply rounded-xl border bg-ink-800/60; border-color: var(--va-border); }
+.victory-panel {
+  background: linear-gradient(180deg, var(--va-panel-alt), var(--va-panel));
+  border: 1px solid var(--va-border);
+  box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.72);
+}
+.victory-divider {
+  border-color: rgba(244, 183, 64, 0.12);
+}
+.victory-glow {
+  box-shadow: 0 0 0 1px rgba(244, 183, 64, 0.22), 0 0 28px -10px var(--va-gold-glow);
+}
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;

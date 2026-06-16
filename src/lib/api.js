@@ -362,14 +362,11 @@ export async function searchPlayersByName(auctionId, name) {
 }
 
 export async function updatePlayerVacation(playerId, vacationDates) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('players')
     .update({ vacation_dates: vacationDates, weeks_away: vacationDates.length })
     .eq('id', playerId)
-    .select('id, name, weeks_away, vacation_dates')
-    .single()
   if (error) throw error
-  return data
 }
 
 // ---- Realtime ----
