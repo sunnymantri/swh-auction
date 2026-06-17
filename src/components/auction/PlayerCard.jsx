@@ -7,7 +7,7 @@ function Stat({ label, value }) {
   return (
     <div className="text-center">
       <div className="font-score text-2xl leading-none tabular text-white">{value}</div>
-      <div className="text-teal-400/80 text-[0.62rem] uppercase tracking-wider mt-1">{label}</div>
+      <div className="mt-1 text-[0.62rem] uppercase tracking-[0.18em] text-[#93ada6]">{label}</div>
     </div>
   )
 }
@@ -33,9 +33,9 @@ function PointsBreakdown({
   const tier = tierOverride || getTier(ppm)
 
   return (
-      <div className="px-4 sm:px-6 py-4 border-t border-teal-700/30 bg-ink-900/30">
+      <div className="bg-black/10 px-4 py-4 sm:px-6 border-t victory-divider">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h4 className="text-xs font-semibold text-teal-200 uppercase tracking-wider">Performance Points</h4>
+        <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#f5f2e8]">Performance Points</h4>
         <div className="flex items-center gap-2">
           {onFetchAndRecalculate && (
             <button
@@ -50,7 +50,7 @@ function PointsBreakdown({
             <button
               onClick={onRecalculate}
               disabled={recalculating || fetchingAndRecalculating}
-              className="px-3 py-1 text-xs rounded-lg bg-teal-600/60 text-white font-medium hover:bg-teal-600/80 disabled:opacity-50 transition"
+              className="px-3 py-1 text-xs rounded-lg bg-[#1a5c54]/80 text-white font-medium hover:bg-[#227369]/80 disabled:opacity-50 transition"
             >
               {recalculating ? 'Calculating…' : 'Recalculate'}
             </button>
@@ -58,25 +58,25 @@ function PointsBreakdown({
         </div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="rounded-lg bg-ink-800/60 border border-teal-700/30 p-2.5 text-center">
+        <div className="rounded-xl border border-gold/10 bg-black/10 p-2.5 text-center">
           <div className="font-score text-lg text-white tabular">{batting.toFixed(0)}</div>
-          <div className="text-[0.7rem] sm:text-xs text-teal-400 uppercase tracking-wider mt-0.5">Batting</div>
+          <div className="mt-0.5 text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">Batting</div>
         </div>
-        <div className="rounded-lg bg-ink-800/60 border border-teal-700/30 p-2.5 text-center">
+        <div className="rounded-xl border border-gold/10 bg-black/10 p-2.5 text-center">
           <div className="font-score text-lg text-white tabular">{bowling.toFixed(0)}</div>
-          <div className="text-[0.7rem] sm:text-xs text-teal-400 uppercase tracking-wider mt-0.5">Bowling</div>
+          <div className="mt-0.5 text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">Bowling</div>
         </div>
-        <div className="rounded-lg bg-ink-800/60 border border-teal-700/30 p-2.5 text-center">
+        <div className="rounded-xl border border-gold/10 bg-black/10 p-2.5 text-center">
           <div className="font-score text-lg text-white tabular">{fielding.toFixed(0)}</div>
-          <div className="text-[0.7rem] sm:text-xs text-teal-400 uppercase tracking-wider mt-0.5">Fielding</div>
+          <div className="mt-0.5 text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">Fielding</div>
         </div>
-        <div className="rounded-lg bg-ink-800/60 border border-teal-700/30 p-2.5 text-center">
+        <div className="rounded-xl border border-gold/10 bg-black/10 p-2.5 text-center">
           <div className="font-score text-lg text-white tabular">{total.toFixed(0)}</div>
-          <div className="text-[0.7rem] sm:text-xs text-teal-400 uppercase tracking-wider mt-0.5">Total</div>
+          <div className="mt-0.5 text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">Total</div>
         </div>
-        <div className={`rounded-lg border p-2.5 text-center ${tier.label === 'Platinum' ? 'bg-purple-900/30 border-purple-600/40' : tier.label === 'Gold' ? 'bg-yellow-900/30 border-yellow-600/40' : tier.label === 'Silver' ? 'bg-gray-800/50 border-gray-500/40' : 'bg-amber-900/20 border-amber-700/40'}`}>
+        <div className={`rounded-xl border p-2.5 text-center ${tier.label === 'Platinum' ? 'bg-white/5 border-white/10' : tier.label === 'Gold' ? 'bg-gold/12 border-gold/20' : tier.label === 'Silver' ? 'bg-white/5 border-white/10' : 'bg-amber-900/20 border-amber-700/30'}`}>
           <div className={`font-score text-lg tabular ${tier.color}`}>{ppm.toFixed(1)}</div>
-          <div className="text-[0.7rem] sm:text-xs text-teal-400 uppercase tracking-wider mt-0.5">PPM · {tier.label}</div>
+          <div className="mt-0.5 text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">PPM · {tier.label}</div>
         </div>
       </div>
     </div>
@@ -95,35 +95,35 @@ export default function PlayerCard({
   const profileId = extractCricHeroesProfileId(player?.profile_url)
   if (!player) {
     return (
-      <div className="rounded-2xl bg-ink-800/70 border border-teal-700/40 p-10 text-center text-teal-400">
+      <div className="victory-panel rounded-2xl p-10 text-center text-[#93ada6]">
         No player on the block. Press <span className="text-gold font-semibold">Start</span> to begin.
       </div>
     )
   }
   return (
-    <div className="rounded-2xl bg-ink-800/80 border border-teal-700/50 shadow-card overflow-hidden animate-rise">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 p-4 sm:p-6 bg-gradient-to-r from-teal-900 to-ink-800">
-        <div className="h-20 w-20 sm:h-24 sm:w-24 shrink-0 rounded-xl overflow-hidden bg-teal-700/50 grid place-items-center">
+    <div className="victory-panel animate-rise overflow-hidden rounded-2xl">
+      <div className="flex flex-col gap-4 bg-[linear-gradient(135deg,rgba(21,48,41,0.92),rgba(16,37,32,0.98))] p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-6">
+        <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-gold/15 bg-black/20 sm:h-24 sm:w-24">
           {player.photo_url
             ? <img src={player.photo_url} alt={player.name} className="h-full w-full object-cover" />
-            : <span className="font-score text-3xl text-teal-300">{initials(player.name)}</span>}
+            : <span className="font-score text-3xl text-[#c0dad3]">{initials(player.name)}</span>}
         </div>
         <div className="min-w-0">
           <h2 className="font-score text-3xl sm:text-4xl leading-none text-white break-words">{player.name}</h2>
           <div className="flex flex-wrap gap-2 mt-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-gold/15 text-gold text-xs font-semibold">{player.role}</span>
-            <span className="px-2.5 py-0.5 rounded-full bg-teal-600/30 text-teal-200 text-xs">{player.category}</span>
-            {player.batting_style && <span className="px-2.5 py-0.5 rounded-full bg-white/5 text-teal-200 text-xs">{player.batting_style}</span>}
-            {player.bowling_style && <span className="px-2.5 py-0.5 rounded-full bg-white/5 text-teal-200 text-xs">{player.bowling_style}</span>}
+            <span className="rounded-full bg-gold/15 px-2.5 py-0.5 text-xs font-semibold text-gold">{player.role}</span>
+            <span className="rounded-full bg-[#1a5c54]/30 px-2.5 py-0.5 text-xs text-[#c0dad3]">{player.category}</span>
+            {player.batting_style && <span className="rounded-full bg-white/5 px-2.5 py-0.5 text-xs text-[#c0dad3]">{player.batting_style}</span>}
+            {player.bowling_style && <span className="rounded-full bg-white/5 px-2.5 py-0.5 text-xs text-[#c0dad3]">{player.bowling_style}</span>}
             {player.weeks_away > 0 && (
-              <span className="px-2.5 py-0.5 rounded-full bg-yellow-900/40 border border-yellow-600/40 text-yellow-400 text-xs font-semibold">
+              <span className="rounded-full border border-gold/25 bg-gold/10 px-2.5 py-0.5 text-xs font-semibold text-gold-soft">
                 Away {player.weeks_away}w
               </span>
             )}
           </div>
         </div>
         <div className="sm:ml-auto sm:text-right">
-          <div className="text-teal-400 text-[0.7rem] sm:text-xs uppercase tracking-wider">Base</div>
+          <div className="text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">Base</div>
           <div className="font-score text-2xl text-gold tabular">{fmtPoints(player.base_price)}</div>
         </div>
       </div>
@@ -147,11 +147,11 @@ export default function PlayerCard({
         />
       )}
       {Array.isArray(player.vacation_dates) && player.vacation_dates.length > 0 && (
-        <div className="px-4 sm:px-6 py-4 border-t border-teal-700/30">
-          <h4 className="text-xs font-semibold text-yellow-400 uppercase tracking-wider mb-2">Unavailable Sundays</h4>
+        <div className="px-4 sm:px-6 py-4 border-t victory-divider">
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-gold">Unavailable Sundays</h4>
           <div className="flex flex-wrap gap-1.5">
             {player.vacation_dates.map((date) => (
-              <span key={date} className="px-2.5 py-1 rounded-full bg-yellow-900/30 border border-yellow-600/30 text-yellow-300 text-xs">
+              <span key={date} className="rounded-full border border-gold/20 bg-gold/10 px-2.5 py-1 text-xs text-gold-soft">
                 {new Date(date + 'T00:00:00').toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
               </span>
             ))}
@@ -159,13 +159,13 @@ export default function PlayerCard({
         </div>
       )}
       <div className="px-6 pb-4 flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs text-teal-300">CricHeroes ID: <b className="text-white">{profileId || '—'}</b></span>
+        <span className="text-xs text-[#c0dad3]">CricHeroes ID: <b className="text-white">{profileId || '—'}</b></span>
         {player.profile_url && (
           <a
             href={player.profile_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-teal-400 hover:text-teal-200 text-xs underline underline-offset-2"
+            className="text-xs text-[#93ada6] underline underline-offset-2 hover:text-[#c0dad3]"
           >
             View CricHeroes profile ↗
           </a>
