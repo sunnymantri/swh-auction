@@ -21,29 +21,29 @@ export default function TeamBudgetGrid({ teams, leaderTeamId, onTeamClick }) {
               leading ? 'border-gold/70 bg-gold/10 shadow-glow'
                        : 'border-teal-700/40 bg-ink-800/70'}`}>
             <div className="flex items-center justify-between">
-              <span className="font-score text-xl text-white truncate">{t.name}</span>
-              <span className="px-2 py-0.5 rounded-lg bg-ink-900/70 text-teal-200 text-[0.7rem] tabular">
+              <span className="va-card-title text-white truncate">{t.name}</span>
+              <span className="va-micro rounded-lg bg-ink-900/70 px-2 py-0.5 text-teal-200 tabular">
                 {playersCount}/{squadSize} Players
               </span>
             </div>
             <div className="mt-1.5 flex items-end justify-between gap-3">
               <div>
-                <div className="text-[0.65rem] text-teal-400 uppercase tracking-wide">Remaining</div>
-                <div className="font-score text-3xl text-white tabular leading-tight">{fmtPoints(pointsRemaining)}</div>
+                <div className="va-label text-teal-400">Remaining</div>
+                <div className="text-3xl font-semibold text-white tabular leading-tight">{fmtPoints(pointsRemaining)}</div>
               </div>
               <div className="text-right">
-                <div className="text-[0.65rem] text-teal-400 uppercase tracking-wide">Max safe</div>
-                <div className="font-score text-xl text-gold tabular leading-tight">{fmtPoints(t.max_safe_bid)}</div>
+                <div className="va-label text-teal-400">Max safe</div>
+                <div className="va-card-title text-gold tabular leading-tight">{fmtPoints(t.max_safe_bid)}</div>
               </div>
             </div>
             <div className="mt-2 h-1.5 rounded-full bg-ink-900 overflow-hidden">
               <div className="h-full rounded-full bg-teal-500" style={{ width: `${pct}%` }} />
             </div>
-            <div className="mt-2 flex justify-between text-xs">
+            <div className="va-micro mt-2 flex justify-between">
               <span className="text-teal-300">Spent: <b className="text-white tabular">{fmtPoints(pointsSpent)}</b></span>
               <span className="text-teal-500">Budget: <b className="text-teal-300 tabular">{fmtPoints(totalBudget)}</b></span>
             </div>
-            {leading && <p className="mt-1 text-[0.62rem] text-gold uppercase tracking-wider">Highest bidder currently</p>}
+            {leading && <p className="va-micro mt-1 uppercase tracking-[0.16em] text-gold">Highest bidder currently</p>}
           </button>
         )
       })}

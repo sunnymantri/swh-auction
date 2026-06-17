@@ -30,8 +30,8 @@ function HammerIcon({ className = 'h-6 w-6' }) {
 function StatTile({ label, value, accent = false }) {
   return (
     <div className="rounded-2xl border border-gold/10 bg-black/10 px-4 py-3 text-center">
-      <div className="text-xs uppercase tracking-[0.16em] text-[#8ca09b]">{label}</div>
-      <div className={`mt-2 font-score text-2xl font-semibold leading-none tabular ${accent ? 'text-gold-soft' : 'text-white'}`}>
+      <div className="va-label text-[#8ca09b]">{label}</div>
+      <div className={`mt-2 text-2xl font-semibold leading-none tabular ${accent ? 'text-gold-soft' : 'text-white'}`}>
         {value}
       </div>
     </div>
@@ -41,7 +41,7 @@ function StatTile({ label, value, accent = false }) {
 function TeamMetric({ label, value, accent = false }) {
   return (
     <div className="rounded-2xl border border-gold/10 bg-black/10 px-4 py-3 text-center">
-      <div className="text-xs uppercase tracking-[0.16em] text-[#8ca09b]">{label}</div>
+      <div className="va-label text-[#8ca09b]">{label}</div>
       <div className={`mt-2 text-2xl font-semibold tabular ${accent ? 'text-gold-soft' : 'text-white'}`}>{value}</div>
     </div>
   )
@@ -188,9 +188,9 @@ export default function TeamOwnerBidding() {
 
         {auction && !current?.players && (
           <div className="victory-panel rounded-[1.75rem] p-8 text-center">
-            <div className="text-xs uppercase tracking-[0.18em] text-[#8ca09b]">Bidder console</div>
-            <h2 className="mt-3 font-score text-3xl font-semibold text-white">No player is currently on the block</h2>
-            <p className="mt-2 text-sm text-[#9fb2ad]">When the auctioneer starts the next player, your live bidding view will appear here automatically.</p>
+            <div className="va-label text-[#8ca09b]">Bidder console</div>
+            <h2 className="va-page-title mt-3 text-white">No player is currently on the block</h2>
+            <p className="va-support mt-2 text-[#9fb2ad]">When the auctioneer starts the next player, your live bidding view will appear here automatically.</p>
           </div>
         )}
 
@@ -202,7 +202,7 @@ export default function TeamOwnerBidding() {
               <section className="victory-panel rounded-[1.75rem] p-5 sm:p-6">
                 <div className="mx-auto max-w-6xl">
                   <div className="flex justify-center">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-gold/20 bg-gold/10 px-4 py-1.5 text-xs uppercase tracking-[0.16em] text-gold-soft">
+                    <div className="va-label inline-flex items-center gap-2 rounded-full border border-gold/20 bg-gold/10 px-4 py-1.5 text-gold-soft">
                       <span className="h-2 w-2 rounded-full bg-emerald-400" />
                       Live auction active
                     </div>
@@ -210,15 +210,15 @@ export default function TeamOwnerBidding() {
 
                   <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem_minmax(0,1fr)] xl:items-center">
                     <div className="text-center xl:text-left">
-                      <div className="text-xs uppercase tracking-[0.16em] text-[#8ca09b]">Current highest bid</div>
-                      <div className="mt-3 font-score text-[3.35rem] font-semibold leading-none text-gold-soft sm:text-[4.25rem]">
+                      <div className="va-label text-[#8ca09b]">Current highest bid</div>
+                      <div className="va-display mt-3 text-gold-soft tabular">
                         {fmtPoints(highestBid)}
                       </div>
                       <div className="mt-5">
-                        <div className="text-xs uppercase tracking-[0.16em] text-[#8ca09b]">Leading team</div>
+                        <div className="va-label text-[#8ca09b]">Leading team</div>
                         <div className="mt-3 flex flex-wrap items-center justify-center gap-3 xl:justify-start">
                           <span className="text-3xl text-gold-soft">⌂</span>
-                          <span className="text-2xl font-semibold text-white">{leaderName || 'Awaiting first bid'}</span>
+                          <span className="va-page-title text-white">{leaderName || 'Awaiting first bid'}</span>
                           {iAmLeader && (
                             <span className="rounded-full border border-gold/25 bg-gold/10 px-3 py-1 text-xs font-medium text-gold-soft">
                               Leading
@@ -231,7 +231,7 @@ export default function TeamOwnerBidding() {
                     {(player && (lastBidAt || current?.current_bid_deadline) && isLive) && (
                       <div className="flex justify-center">
                         <div className="rounded-[1.75rem] border border-gold/12 bg-black/10 px-6 py-5 shadow-[0_10px_35px_-26px_rgba(0,0,0,0.8)]">
-                          <div className="mb-3 text-center text-xs uppercase tracking-[0.16em] text-[#8ca09b]">Bid clock</div>
+                          <div className="va-label mb-3 text-center text-[#8ca09b]">Bid clock</div>
                           <AuctionTimer
                             duration={timerDuration}
                             lastBidAt={lastBidAt}
@@ -245,13 +245,13 @@ export default function TeamOwnerBidding() {
 
                     <div className="space-y-5 text-center xl:text-right">
                       <div>
-                        <div className="text-xs uppercase tracking-[0.16em] text-[#8ca09b]">Opening floor</div>
-                        <div className="mt-2 font-score text-4xl font-semibold leading-none text-gold-soft">{fmtPoints(bidFloor)}</div>
+                        <div className="va-label text-[#8ca09b]">Opening floor</div>
+                        <div className="mt-2 text-4xl font-semibold leading-none text-gold-soft tabular">{fmtPoints(bidFloor)}</div>
                       </div>
                       <div className="mx-auto h-px w-40 bg-gold/10 xl:ml-auto" />
                       <div>
-                        <div className="text-xs uppercase tracking-[0.16em] text-[#8ca09b]">Next minimum bid</div>
-                        <div className="mt-2 font-score text-4xl font-semibold leading-none text-gold-soft">{fmtPoints(minNext)}</div>
+                        <div className="va-label text-[#8ca09b]">Next minimum bid</div>
+                        <div className="mt-2 text-4xl font-semibold leading-none text-gold-soft tabular">{fmtPoints(minNext)}</div>
                       </div>
                     </div>
                   </div>
@@ -269,8 +269,8 @@ export default function TeamOwnerBidding() {
                           )}
                         </div>
                         <div className="text-left">
-                          <div className="text-xs uppercase tracking-[0.16em] text-[#8ca09b]">Your team</div>
-                          <div className="mt-1 text-2xl font-semibold text-white">{myTeam?.name ?? '—'}</div>
+                          <div className="va-label text-[#8ca09b]">Your team</div>
+                          <div className="va-page-title mt-1 text-white">{myTeam?.name ?? '—'}</div>
                         </div>
                       </div>
                       <span className={`mx-auto rounded-full border px-3 py-1 text-xs font-medium sm:mx-0 ${bidderStatusClass}`}>
@@ -287,7 +287,7 @@ export default function TeamOwnerBidding() {
 
                   <div className="mt-4 rounded-[1.5rem] border border-gold/12 bg-black/10 p-4 sm:p-5">
                     <div className="mx-auto max-w-5xl">
-                      <div className="text-center text-xs uppercase tracking-[0.16em] text-[#8ca09b]">Quick action</div>
+                      <div className="va-label text-center text-[#8ca09b]">Quick action</div>
                       <button
                         disabled={!myTeam || !isLive || busy || !!actionBlockedReason}
                         onClick={() => doBid(false)}

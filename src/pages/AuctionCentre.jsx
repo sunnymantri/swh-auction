@@ -184,7 +184,7 @@ export default function AuctionCentre() {
             This auction is <b>{fmtStatus(auction.status)}</b>. Set it to <b>Live</b> on the <a href="/auctions" className="underline">Auctions</a> page to accept bids.
           </div>
         )}
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-5">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_25rem] xl:gap-5">
           <div className="space-y-5">
             {player ? (
               <PlayerCard player={player} />
@@ -192,11 +192,11 @@ export default function AuctionCentre() {
               <div className="relative">
                 <div className="absolute top-3 right-3 z-10">
                   {lastDecided.outcome === 'sold' ? (
-                    <span className="px-3 py-1 rounded-full bg-gold text-ink-900 font-score text-sm tracking-wider shadow">
+                    <span className="px-3 py-1 rounded-full bg-gold text-ink-900 text-sm font-semibold tracking-[0.12em] shadow">
                       ✓ SOLD{lastDecided.teamName ? ` → ${lastDecided.teamName}` : ''}{lastDecided.price != null ? ` · ${fmtPoints(lastDecided.price)}` : ''}
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-full bg-live/80 text-white font-score text-sm tracking-wider shadow">
+                    <span className="px-3 py-1 rounded-full bg-live/80 text-white text-sm font-semibold tracking-[0.12em] shadow">
                       ✕ UNSOLD
                     </span>
                   )}
@@ -204,7 +204,7 @@ export default function AuctionCentre() {
                 <div className="opacity-80">
                   <PlayerCard player={lastDecided.player} />
                 </div>
-                <p className="text-center text-teal-400 text-xs mt-2">
+                <p className="va-micro mt-2 text-center text-teal-400">
                   Press <span className="text-gold font-semibold">Next player →</span> to call the next player.
                 </p>
               </div>
@@ -214,7 +214,7 @@ export default function AuctionCentre() {
 
             {/* Up next + start/next control (always visible to admin) */}
             <div className="rounded-2xl bg-ink-800/70 border border-teal-700/40 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="text-sm min-w-0">
+              <div className="va-body min-w-0">
                 <span className="text-teal-400">Up next: </span>
                 <span className="text-white font-semibold break-words">{nextUp?.players?.name || 'Queue empty'}</span>
               </div>
@@ -241,8 +241,8 @@ export default function AuctionCentre() {
             {/* Scoreboard + Timer */}
             <div key={highestBid} className="rounded-2xl bg-gradient-to-br from-teal-900 to-ink-900 border border-gold/30 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 animate-bidflash">
               <div className="min-w-0">
-                <div className="text-teal-400 text-xs uppercase tracking-widest">Current bid</div>
-                <div className="font-score text-4xl sm:text-5xl lg:text-6xl text-gold tabular leading-none">{fmtPoints(highestBid)}</div>
+                <div className="va-label text-teal-400">Current bid</div>
+                <div className="va-display text-gold tabular">{fmtPoints(highestBid)}</div>
               </div>
               {player && (lastBidAt || current?.current_bid_deadline) && isLive && (
                 <AuctionTimer
@@ -255,8 +255,8 @@ export default function AuctionCentre() {
                 />
               )}
               <div className="sm:text-right min-w-0">
-                <div className="text-teal-400 text-xs uppercase tracking-widest">Highest bidder</div>
-                <div className="font-score text-2xl sm:text-3xl text-white truncate">{leaderName || '—'}</div>
+                <div className="va-label text-teal-400">Highest bidder</div>
+                <div className="va-page-title text-white truncate">{leaderName || '—'}</div>
               </div>
             </div>
 

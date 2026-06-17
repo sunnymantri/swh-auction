@@ -83,13 +83,13 @@ export default function PublicLiveView() {
           onDone={dismissCelebration}
         />
       )}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_25rem]">
         <div className="space-y-4">
           <PlayerCard player={current?.players} />
           <div key={top?.bid_amount ?? 0} className="rounded-xl border border-gold/30 bg-gradient-to-r from-teal-900 to-ink-900 p-4 sm:p-5 animate-bidflash">
-            <p className="text-xs text-teal-300 uppercase">Current Bid</p>
-            <p className="font-score text-4xl sm:text-5xl lg:text-6xl text-gold tabular">{fmtPoints(top?.bid_amount ?? 0)}</p>
-            <p className="text-sm text-teal-100">Highest bidder: {top?.teams?.name || '—'}</p>
+            <p className="va-label text-teal-300">Current Bid</p>
+            <p className="va-display text-gold tabular">{fmtPoints(top?.bid_amount ?? 0)}</p>
+            <p className="va-support text-teal-100">Highest bidder: {top?.teams?.name || '—'}</p>
             {current?.current_bid_deadline && (
               <div className="mt-3">
                 <AuctionTimer
@@ -107,8 +107,8 @@ export default function PublicLiveView() {
               <div key={t.id} className="rounded-lg border border-teal-700/40 bg-ink-800/60 p-3 flex items-center gap-2 min-w-0">
                 {t.logo_url && <img src={t.logo_url} alt="" className="h-8 w-8 rounded object-cover" />}
                 <div className="min-w-0">
-                  <p className="text-white truncate">{t.name}</p>
-                  <p className="text-xs text-teal-300">Remaining {fmtPoints(t.points_remaining)} · Players {t.players_count}/{t.squad_size}</p>
+                  <p className="va-card-title text-white truncate">{t.name}</p>
+                  <p className="va-micro text-teal-300">Remaining {fmtPoints(t.points_remaining)} · Players {t.players_count}/{t.squad_size}</p>
                 </div>
               </div>
             ))}

@@ -81,7 +81,7 @@ export default function AuctionTimer({
           {showHammer ? (
             <div className="flex flex-col items-center animate-hammerBounce">
               <span className="text-3xl sm:text-4xl">🔨</span>
-              <span className={`font-score text-2xl sm:text-3xl tabular leading-none mt-1 ${
+              <span className={`font-score text-2xl sm:text-3xl font-semibold tabular leading-none mt-1 ${
                 seconds === 1 ? 'text-red-400' : seconds === 2 ? 'text-orange-400' : 'text-yellow-400'
               }`}>
                 {seconds}
@@ -96,7 +96,7 @@ export default function AuctionTimer({
           )}
         </div>
       </div>
-      <span className="text-xs uppercase tracking-[0.16em] text-[#93ada6]">
+      <span className="va-label text-[#93ada6]">
         {remaining <= 0 ? 'Time!' : isUrgent ? 'Going…' : 'Bid clock'}
       </span>
 

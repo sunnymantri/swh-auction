@@ -25,13 +25,13 @@ export default function ActivityFeed({ events, className = '', scrollable = true
     : 'overflow-visible'
   return (
     <div className={`rounded-2xl bg-ink-800/60 border border-teal-700/35 p-4 ${panelClasses} ${className}`}>
-      <h3 className="mb-3 text-xl font-semibold tracking-tight text-white">Live Activity</h3>
+      <h3 className="va-section-title mb-3 tracking-tight text-white">Live Activity</h3>
       <ul className="space-y-2">
         {events.map(e => {
           const m = META[e.event_type] || { dot: 'bg-gray-500', label: 'Update' }
           const teamLogo = e.teams?.logo_url
           return (
-            <li key={e.id} className="flex items-start gap-2.5 text-sm animate-rise">
+            <li key={e.id} className="va-body flex items-start gap-2.5 animate-rise">
               {teamLogo ? (
                 <img
                   src={teamLogo}
@@ -47,11 +47,11 @@ export default function ActivityFeed({ events, className = '', scrollable = true
                 {e.teams?.name && <span className="text-[#c0dad3]"> — {e.teams.name}</span>}
                 {e.amount != null && <span className="text-gold tabular font-semibold"> {fmtPoints(e.amount)}</span>}
               </div>
-              <span className="shrink-0 pt-0.5 text-xs text-[#93ada6]">{since(e.created_at)}</span>
+              <span className="va-micro shrink-0 pt-0.5 text-[#93ada6]">{since(e.created_at)}</span>
             </li>
           )
         })}
-        {events.length === 0 && <li className="text-teal-500 text-sm">No activity yet.</li>}
+        {events.length === 0 && <li className="va-support">No activity yet.</li>}
       </ul>
     </div>
   )
