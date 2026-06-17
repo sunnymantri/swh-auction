@@ -60,7 +60,7 @@ function ArrowIcon({ className = 'h-4 w-4' }) {
 export default function AuctioneerControls({
   player, teams, highestBid, leaderTeamId, basePrice,
   minPlayerPrice = 0,
-  hasBids, activeSale, busy, warning, onBid, onSold, onUnsold, onReauction, onNext, onStart
+  hasBids, activeSale, busy, warning, clockPaused = false, onBid, onSold, onUnsold, onReauction, onNext, onStart
 }) {
   const [teamId, setTeamId] = useState('')
   const [manual, setManual] = useState('')
@@ -75,6 +75,13 @@ export default function AuctioneerControls({
     () => teams.find((t) => t.id === teamId) ?? null,
     [teamId, teams]
   )
+  const manualAmount = Number(manual || 0)
+  const hasManualAmount = manual.trim().length > 0 && manualAmount > 0
+  const activeBidAmount = hasManualAmount ? manualAmount : nextBid
+  const manualTooLow = hasManualAmount && manualAmount < nextBid
+  const manualBelowReauctionFloor = isReauction && hasManualAmount && manualAmount < minPlayerPrice
+  const biddingDisabled = busy || clockPaused || !selectedTeam
+  const canSubmitBid = !biddingDisabled && !manualTooLow && !manualBelowReauctionFloor
 
   const bumpAmount = (delta) => {
     setManual((current) => {
@@ -113,7 +120,7 @@ export default function AuctioneerControls({
         </div>
       </div>
 
-      <div className="mt-4 rounded-[1.5rem] border border-gold/12 bg-black/10 p-4">
+      <div className="mt-4 rounded-[1.5rem] bg-black/10 p-4">
         <div className="va-label mb-3 text-[#8ca09b]">Bidding team</div>
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {teams.map((t) => {
@@ -124,7 +131,7 @@ export default function AuctioneerControls({
               <button
                 key={t.id}
                 type="button"
-                disabled={isFull || busy}
+                disabled={isFull || busy || clockPaused}
                 onClick={() => setTeamId(t.id)}
                 title={isFull ? `${t.name} squad is full` : `${t.name} (${fmtPoints(t.points_remaining)} left)`}
                 className={`rounded-2xl border px-3 py-3 text-left transition ${
@@ -159,17 +166,23 @@ export default function AuctioneerControls({
         </div>
       </div>
 
-      <div className="mt-4 rounded-[1.5rem] border border-gold/12 bg-black/10 p-4 sm:p-5">
+      <div className="mt-4 rounded-[1.5rem] bg-black/10 p-4 sm:p-5">
         <div className="mx-auto max-w-5xl">
           <div className="va-label text-center text-[#8ca09b]">Quick action</div>
           <button
-            disabled={busy || !selectedTeam}
-            onClick={() => onBid(teamId, nextBid, 'team_bid', isReauction)}
-            title={selectedTeam ? `Next bid ${fmtPoints(nextBid)}` : 'Select a bidding team'}
+            disabled={!canSubmitBid}
+            onClick={() => onBid(teamId, activeBidAmount, hasManualAmount ? 'auctioneer_manual_bid' : 'team_bid', hasManualAmount || isReauction)}
+            title={
+              clockPaused
+                ? 'Clock is paused'
+                : selectedTeam
+                  ? `Place bid ${fmtPoints(activeBidAmount)}`
+                  : 'Select a bidding team'
+            }
             className="mt-4 flex w-full items-center justify-center gap-3 rounded-2xl bg-gold px-4 py-4 text-2xl font-semibold text-[#11130e] shadow-[0_18px_35px_-24px_rgba(244,183,64,0.85)] transition hover:bg-gold-soft disabled:cursor-not-allowed disabled:opacity-40"
           >
             <HammerIcon className="h-7 w-7" />
-            Bid {fmtPoints(nextBid)}
+            Bid {fmtPoints(activeBidAmount)}
           </button>
 
           <button
@@ -193,7 +206,7 @@ export default function AuctioneerControls({
                 key={delta}
                 type="button"
                 onClick={() => bumpAmount(delta)}
-                disabled={busy || !selectedTeam}
+                disabled={biddingDisabled}
                 className="rounded-full border border-gold/20 bg-gold/10 px-3 py-1.5 text-sm font-medium text-gold-soft transition hover:bg-gold/15 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 +{fmtPoints(delta)}
@@ -213,7 +226,7 @@ export default function AuctioneerControls({
               className="rounded-2xl border border-gold/12 bg-black/20 px-4 py-3 text-white placeholder:text-[#6f817c] focus:border-gold/35 focus:outline-none"
             />
             <button
-              disabled={busy || !selectedTeam || !manual}
+              disabled={!canSubmitBid || !manual}
               title="Manual bid (overrides increment rule)"
               onClick={() => onBid(teamId, Number(manual), 'auctioneer_manual_bid', true)}
               className="rounded-2xl border border-gold/20 bg-transparent px-8 py-3 font-medium uppercase tracking-[0.14em] text-gold-soft transition hover:bg-gold/10 disabled:cursor-not-allowed disabled:opacity-40"
@@ -223,9 +236,15 @@ export default function AuctioneerControls({
           </div>
 
           <p className="mt-3 text-center text-sm text-[#9db0ac]">
-            {selectedTeam
-              ? `Next valid bid starts at ${fmtPoints(nextBid)}.`
-              : 'Select a bidding team to activate quick bid and manual amount actions.'}
+            {clockPaused
+              ? 'Clock is paused. Bidding is locked until the auctioneer resumes it.'
+              : !selectedTeam
+                ? 'Select a bidding team to activate quick bid and manual amount actions.'
+                : manualTooLow
+                  ? `Enter at least ${fmtPoints(nextBid)} to beat the current bid.`
+                  : manualBelowReauctionFloor
+                    ? `Minimum bid for re-auction player is ${fmtPoints(minPlayerPrice)}.`
+                    : `Next valid bid starts at ${fmtPoints(nextBid)}.`}
           </p>
 
           {warning && <p className="va-support mt-3 rounded-2xl bg-live/10 px-4 py-3 text-center text-live">{warning}</p>}

@@ -10,7 +10,7 @@ import { fmtPoints, fmtStatus } from '../lib/format'
 
 const STATUSES = ['draft', 'live', 'paused', 'completed']
 const NUMERIC = ['squad_size', 'default_team_budget', 'default_base_price', 'min_player_price', 'initial_bid_timer_seconds', 'bid_timer_seconds']
-const TABS = ['Auctions', 'Configuration']
+const TABS = ['Auctions', 'Configuration', 'Queue']
 
 const blankAuction = {
   name: '', season: '', sport: 'Cricket', squad_size: 11,
@@ -265,7 +265,15 @@ export default function Auctions() {
         {/* Tab bar */}
         <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5 overflow-x-auto scrollbar-none">
           {TABS.map(t => (
-            <button key={t} onClick={() => setTab(t)}
+            <button
+              key={t}
+              onClick={() => {
+                if (t === 'Queue') {
+                  nav('/queue')
+                  return
+                }
+                setTab(t)
+              }}
               className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${tab === t ? 'bg-ink-800/60 text-gold border border-teal-700/40 border-b-transparent -mb-px' : 'text-teal-300 hover:text-white'}`}>
               {t}
             </button>
@@ -277,11 +285,21 @@ export default function Auctions() {
             <div className="space-y-2">
               {auctions.map((a) => (
                 <div key={a.id}
+                  onClick={() => { selectAuction(a.id); nav('/auction') }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      selectAuction(a.id)
+                      nav('/auction')
+                    }
+                  }}
                   className={`rounded-xl border p-4 transition ${
                     a.id === auctionId
                       ? 'border-gold/50 bg-gold/5 shadow-glow'
                       : 'border-teal-700/40 bg-ink-800/60 hover:border-teal-600/60'
-                  }`}>
+                  } cursor-pointer`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -301,19 +319,19 @@ export default function Auctions() {
                         {a.season} · squad {a.squad_size} · budget {fmtPoints(a.default_team_budget)}
                       </p>
                     </div>
-                    <select value={a.status} onChange={(e) => changeStatus(a.id, e.target.value)}
+                    <select value={a.status} onClick={(e) => e.stopPropagation()} onChange={(e) => changeStatus(a.id, e.target.value)}
                       className="va-body rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1.5 text-white shrink-0">
                       {STATUSES.map((s) => <option key={s} value={s}>{fmtStatus(s)}</option>)}
                     </select>
                   </div>
                   <div className="mt-3 flex gap-2 flex-wrap">
                     {a.id !== auctionId && (
-                      <button onClick={() => selectAuction(a.id)}
+                      <button onClick={(e) => { e.stopPropagation(); selectAuction(a.id) }}
                         className="va-micro px-3 py-1.5 rounded-lg bg-teal-700/40 hover:bg-teal-700/70 text-teal-200 transition">Select</button>
                     )}
-                    <button onClick={() => { selectAuction(a.id); setTab('Configuration') }}
+                    <button onClick={(e) => { e.stopPropagation(); selectAuction(a.id); setTab('Configuration') }}
                       className="va-micro px-3 py-1.5 rounded-lg bg-ink-900 border border-teal-700/40 hover:border-teal-500 text-teal-200 transition">Configure</button>
-                    <button onClick={() => { selectAuction(a.id); nav('/auction') }}
+                    <button onClick={(e) => { e.stopPropagation(); selectAuction(a.id); nav('/auction') }}
                       className="va-micro px-3 py-1.5 rounded-lg bg-ink-900 border border-teal-700/40 hover:border-gold/40 text-teal-200 transition">Auction Console</button>
                   </div>
                 </div>

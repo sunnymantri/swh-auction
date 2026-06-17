@@ -112,8 +112,13 @@ export default function AuctionCentre() {
   }
 
   const handlers = {
-    onBid: (teamId, amount, type, override) =>
-      act(() => placeBid(player.id, teamId, amount, type, override)),
+    onBid: (teamId, amount, type, override) => {
+      if (current?.clock_paused) {
+        setWarning('Bid clock is paused. Resume the clock before placing another bid.')
+        return
+      }
+      return act(() => placeBid(player.id, teamId, amount, type, override))
+    },
     onSold: (teamId, price) => {
       if (!teamId) { setWarning('No bids yet — cannot mark sold.'); return }
       const winningTeam = teams.find(t => t.id === teamId)
@@ -266,7 +271,9 @@ export default function AuctionCentre() {
                 leaderTeamId={leaderTeamId} basePrice={player?.base_price ?? 0}
                 minPlayerPrice={auction?.min_player_price ?? 0}
                 hasBids={bids.length > 0}
-                activeSale={activeSale} busy={busy || !isLive} warning={warning} {...handlers} />
+                activeSale={activeSale} busy={busy || !isLive} warning={warning}
+                clockPaused={!!current?.clock_paused}
+                {...handlers} />
             )}
 
             <div className="rounded-2xl bg-ink-800/70 border border-teal-700/40 p-4">

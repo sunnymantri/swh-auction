@@ -114,6 +114,8 @@ export default function TeamOwnerBidding() {
     ? 'No team linked'
     : !isLive
       ? `Auction is ${auction?.status}`
+      : current?.clock_paused
+        ? 'Clock is paused'
       : (myTeam.players_count >= myTeam.squad_size)
         ? 'Squad is full'
         : ((myTeam.max_safe_bid ?? 0) <= 0)
@@ -142,6 +144,10 @@ export default function TeamOwnerBidding() {
 
   const doBid = async (manual) => {
     if (!myTeam || !current?.player_id) return
+    if (current?.clock_paused) {
+      setMsg('Clock is paused. Wait for the auctioneer to resume bidding.')
+      return
+    }
     const bidAmount = manual ? Number(amount || 0) : minNext
     if (manual && bidAmount < minNext) {
       setMsg(`Enter at least ${fmtPoints(minNext)} to beat the current bid.`)
@@ -300,7 +306,7 @@ export default function TeamOwnerBidding() {
 
                       <div className="my-4 flex items-center gap-3 text-[#8ca09b]">
                         <div className="h-px flex-1 bg-gold/10" />
-                        <span className="text-xs uppercase tracking-[0.18em]">or</span>
+                        <span className="va-micro uppercase tracking-[0.18em]">or</span>
                         <div className="h-px flex-1 bg-gold/10" />
                       </div>
 
