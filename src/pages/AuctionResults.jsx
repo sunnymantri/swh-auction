@@ -131,7 +131,7 @@ export default function AuctionResults() {
         <div className="flex gap-1 border-b border-teal-700/40 pb-px">
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${tab === t ? 'bg-ink-800/60 text-gold border border-teal-700/40 border-b-transparent -mb-px' : 'text-teal-300 hover:text-white'}`}>
+              className={`px-4 py-2 va-body font-medium rounded-t-lg transition ${tab === t ? 'bg-ink-800/60 text-gold border border-teal-700/40 border-b-transparent -mb-px' : 'text-teal-300 hover:text-white'}`}>
               {t}
             </button>
           ))}
@@ -157,29 +157,29 @@ export default function AuctionResults() {
                     <div className="flex items-center gap-2 mb-3">
                       {t.logo_url && <img src={t.logo_url} alt="" className="h-8 w-8 rounded object-cover" />}
                       <div>
-                        <p className="font-score text-lg text-white leading-none">{t.name}</p>
-                        <p className="text-xs text-teal-400">{t.players_count} players · spent {fmtPoints(t.points_spent)}</p>
+                        <p className="va-card-title text-white leading-none">{t.name}</p>
+                        <p className="va-micro text-teal-400">{t.players_count} players · spent {fmtPoints(t.points_spent)}</p>
                       </div>
                     </div>
                     <ul className="space-y-1.5">
                       {squad.map(s => (
                         <li key={s.id} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="va-body flex items-center gap-2 min-w-0">
                             {s.players?.photo_url
                               ? <img src={s.players.photo_url} alt="" className="h-6 w-6 rounded object-cover shrink-0" />
                               : <div className="h-6 w-6 rounded bg-teal-800/50 shrink-0" />}
                             <span className="text-teal-100 truncate">{s.players?.name}</span>
-                            <span className="text-teal-500 text-xs shrink-0">{s.players?.role}</span>
+                            <span className="va-micro text-teal-500 shrink-0">{s.players?.role}</span>
                             {selected.includes(s.player_id) && (
-                              <span className="text-[0.65rem] px-1.5 py-0.5 rounded bg-gold/20 text-gold shrink-0">
+                              <span className="va-micro px-1.5 py-0.5 rounded bg-gold/20 text-gold shrink-0">
                                 Non-regular
                               </span>
                             )}
                           </div>
-                          <span className="text-gold tabular text-xs shrink-0 ml-2">{fmtPoints(s.sold_price)}</span>
+                          <span className="va-micro text-gold tabular shrink-0 ml-2">{fmtPoints(s.sold_price)}</span>
                         </li>
                       ))}
-                      {squad.length === 0 && <li className="text-teal-500 text-xs">No players yet.</li>}
+                      {squad.length === 0 && <li className="va-micro text-teal-500">No players yet.</li>}
                     </ul>
                   </div>
                 )
@@ -189,10 +189,10 @@ export default function AuctionResults() {
             {/* Unsold players */}
             {unsoldList.length > 0 && (
               <div className="rounded-xl border border-live/30 bg-live/5 p-4">
-                <h3 className="font-score text-lg text-live mb-2">Unsold players ({unsoldList.length})</h3>
+                <h3 className="va-section-title text-live mb-2">Unsold players ({unsoldList.length})</h3>
                 <div className="flex flex-wrap gap-2">
                   {unsoldList.map(p => (
-                    <span key={p.id} className="px-2 py-1 text-xs rounded-full bg-ink-900 border border-teal-700/40 text-teal-300">
+                    <span key={p.id} className="va-micro px-2 py-1 rounded-full bg-ink-900 border border-teal-700/40 text-teal-300">
                       {p.name} · {p.role}
                     </span>
                   ))}
@@ -214,23 +214,23 @@ export default function AuctionResults() {
                     <div className="flex items-center gap-3 min-w-0">
                       {t.logo_url && <img src={t.logo_url} alt="" className="h-9 w-9 rounded-lg object-cover" />}
                       <div className="min-w-0">
-                        <h3 className="font-score text-lg text-white truncate">{t.name}</h3>
-                        <p className="text-xs text-teal-400">{t.players_count}/{t.squad_size} players · spent {fmtPoints(t.points_spent)} · left {fmtPoints(t.points_remaining)}</p>
+                        <h3 className="va-card-title text-white truncate">{t.name}</h3>
+                        <p className="va-micro text-teal-400">{t.players_count}/{t.squad_size} players · spent {fmtPoints(t.points_spent)} · left {fmtPoints(t.points_remaining)}</p>
                       </div>
                     </div>
                     <span className="text-teal-400 text-sm">{open ? '▲' : '▼'}</span>
                   </button>
                   {open && (
                     <div className="mt-3 border-t border-teal-700/30 pt-3">
-                      {squad.length === 0 && <p className="text-teal-500 text-sm">No players bought yet.</p>}
+                      {squad.length === 0 && <p className="va-support text-teal-500">No players bought yet.</p>}
                       <ul className="space-y-1.5">
                         {squad.map((s) => (
                           <li key={s.id} className="flex items-center justify-between gap-2 text-sm">
-                            <span className="text-teal-100 min-w-0">
+                            <span className="va-body text-teal-100 min-w-0">
                               {s.players?.name}
                               {s.players?.role && <span className="text-teal-500"> · {s.players.role}</span>}
                               {selected.includes(s.player_id) && (
-                                <span className="text-[0.65rem] ml-2 px-1.5 py-0.5 rounded bg-gold/20 text-gold">
+                                <span className="va-micro ml-2 px-1.5 py-0.5 rounded bg-gold/20 text-gold">
                                   Non-regular
                                 </span>
                               )}
@@ -241,7 +241,7 @@ export default function AuctionResults() {
                                   onClick={() => handleReauction(s)}
                                   disabled={reauctioningId === s.id}
                                   title="Reverse this sale and return the player to the auction queue"
-                                  className="text-[0.65rem] px-1.5 py-0.5 rounded border border-teal-700/50 text-teal-300 hover:text-white hover:border-teal-500 transition disabled:opacity-50"
+                                  className="va-micro px-1.5 py-0.5 rounded border border-teal-700/50 text-teal-300 hover:text-white hover:border-teal-500 transition disabled:opacity-50"
                                 >
                                   {reauctioningId === s.id ? '…' : '↻ Re-auction'}
                                 </button>
@@ -252,7 +252,7 @@ export default function AuctionResults() {
                         ))}
                       </ul>
                       {squad.length > 0 && (
-                        <div className="mt-2 flex justify-between text-xs text-teal-400 border-t border-teal-700/30 pt-2">
+                        <div className="va-micro mt-2 flex justify-between text-teal-400 border-t border-teal-700/30 pt-2">
                           <span>Max safe bid now</span>
                           <span className="text-gold tabular">{fmtPoints(t.max_safe_bid)}</span>
                         </div>
@@ -272,8 +272,8 @@ export default function AuctionResults() {
 function SCard({ label, value, accent }) {
   return (
     <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
-      <p className="text-xs text-teal-400 uppercase tracking-wide mb-1">{label}</p>
-      <p className={`font-score text-2xl ${accent ? 'text-gold' : 'text-white'}`}>{value}</p>
+      <p className="va-label mb-1 text-teal-400">{label}</p>
+      <p className={`text-2xl font-semibold ${accent ? 'text-gold' : 'text-white'}`}>{value}</p>
     </div>
   )
 }

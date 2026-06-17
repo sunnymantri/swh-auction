@@ -25,8 +25,8 @@ export default function Schedule() {
     return (
       <AppShell title="Schedule">
         <div className="max-w-2xl mx-auto rounded-xl border border-yellow-600/40 bg-yellow-900/20 p-6 text-center">
-          <p className="text-yellow-400 font-medium text-lg">Season schedule not yet generated.</p>
-          <p className="text-sm text-teal-300 mt-2">
+          <p className="va-card-title text-yellow-400 font-medium">Season schedule not yet generated.</p>
+          <p className="va-support text-teal-300 mt-2">
             The admin can generate it in Auctions → Configuration → Schedule.
           </p>
         </div>
@@ -41,8 +41,8 @@ export default function Schedule() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-5">
-          <h2 className="font-score text-2xl text-white">{auction.name} — Season Schedule</h2>
-          <p className="text-sm text-teal-400 mt-1">
+          <h2 className="va-page-title text-white">{auction.name} — Season Schedule</h2>
+          <p className="va-body text-teal-400 mt-1">
             {auction.season} · {schedule.length} rounds · {totalMatches} matches · Games on {auction.match_day || 'Sunday'}s
           </p>
         </div>
@@ -53,11 +53,11 @@ export default function Schedule() {
             <div key={round.round} className="rounded-xl border border-teal-700/40 bg-ink-800/60 overflow-hidden">
               {/* Round header */}
               <div className="px-4 py-3 bg-teal-900/40 border-b border-teal-700/30 flex items-center justify-between">
-                <span className="font-score text-teal-200 text-sm font-bold uppercase tracking-wider">
+                <span className="va-label font-bold text-teal-200">
                   {round.label || `Round ${round.round}`}
                 </span>
                 {round.date && (
-                  <span className="text-xs text-teal-400">
+                  <span className="va-micro text-teal-400">
                     {formatDate(round.date, timezone)}
                   </span>
                 )}
@@ -65,22 +65,22 @@ export default function Schedule() {
 
               {/* Matches table */}
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="va-body w-full">
                   <thead>
                     <tr className="border-b border-teal-700/20">
-                      <th className="text-left px-4 py-2 text-xs text-teal-500 font-medium w-[38%]">Home</th>
-                      <th className="text-center px-2 py-2 text-xs text-teal-500 font-medium w-[8%]">vs</th>
-                      <th className="text-left px-4 py-2 text-xs text-teal-500 font-medium w-[38%]">Away</th>
-                      <th className="text-left px-4 py-2 text-xs text-teal-500 font-medium w-[16%]">Venue</th>
+                      <th className="va-label text-left px-4 py-2 text-teal-500 font-medium w-[38%]">Home</th>
+                      <th className="va-label text-center px-2 py-2 text-teal-500 font-medium w-[8%]">vs</th>
+                      <th className="va-label text-left px-4 py-2 text-teal-500 font-medium w-[38%]">Away</th>
+                      <th className="va-label text-left px-4 py-2 text-teal-500 font-medium w-[16%]">Venue</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-teal-700/20">
                     {round.matches.map((match, i) => (
                       <tr key={i} className="hover:bg-teal-900/20 transition">
                         <td className="px-4 py-2.5 text-white font-medium">{match.home}</td>
-                        <td className="px-2 py-2.5 text-center text-teal-500 text-xs">vs</td>
+                        <td className="va-micro px-2 py-2.5 text-center text-teal-500">vs</td>
                         <td className="px-4 py-2.5 text-teal-200">{match.away}</td>
-                        <td className="px-4 py-2.5 text-teal-400 text-xs">{match.venue || '—'}</td>
+                        <td className="va-micro px-4 py-2.5 text-teal-400">{match.venue || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

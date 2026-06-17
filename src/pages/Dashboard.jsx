@@ -31,7 +31,7 @@ export default function Dashboard() {
       {loading && <p className="text-teal-400 animate-pulse">Loading…</p>}
       {!auction && !loading && (
         <div className="rounded-xl border border-gold/30 bg-gold/5 p-6 text-center">
-          <p className="text-teal-200 mb-3">No auction selected.</p>
+          <p className="va-support mb-3 text-teal-200">No auction selected.</p>
           <Link to="/auctions" className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold text-sm">
             Create or select an auction →
           </Link>
@@ -42,8 +42,8 @@ export default function Dashboard() {
           {/* Auction status banner */}
           <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <p className="font-score text-2xl text-white">{auction.name}</p>
-              <p className="text-sm text-teal-400">{auction.season} · {auction.sport}</p>
+              <p className="va-page-title text-white">{auction.name}</p>
+              <p className="va-support text-teal-400">{auction.season} · {auction.sport}</p>
             </div>
             <div className="flex items-center gap-3">
               <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
@@ -52,7 +52,7 @@ export default function Dashboard() {
                   : 'bg-teal-700/40 text-teal-200'
               }`}>{fmtStatus(auction.status)}</span>
               {auction.status !== 'live' && (
-                <Link to="/auctions" className="text-xs text-teal-300 hover:text-white">
+                <Link to="/auctions" className="va-micro text-teal-300 hover:text-white">
                   Change status →
                 </Link>
               )}
@@ -70,26 +70,26 @@ export default function Dashboard() {
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
             {/* Team budget table */}
             <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
-              <h3 className="font-score text-lg text-teal-200 mb-3">Team budget</h3>
+              <h3 className="va-section-title mb-3 text-teal-200">Team budget</h3>
               <div className="space-y-2 overflow-x-auto">
                 {teams.map(t => {
                   const pct = Math.max(0, Math.min(100, (t.points_remaining / t.total_budget) * 100))
                   return (
                     <div key={t.id} className="flex items-center gap-3 min-w-[30rem]">
-                      <span className="text-sm text-white w-40 truncate">{t.name}</span>
+                      <span className="va-body text-white w-40 truncate">{t.name}</span>
                       <div className="flex-1 h-2 rounded-full bg-ink-900 overflow-hidden">
                         <div className="h-full rounded-full bg-teal-500" style={{ width: `${pct}%` }} />
                       </div>
-                      <span className="text-xs tabular text-gold min-w-[4rem] text-right">
+                      <span className="va-micro tabular text-gold min-w-[4rem] text-right">
                         {fmtPoints(t.points_remaining)}
                       </span>
-                      <span className="text-xs text-teal-400 min-w-[3rem] text-right">
+                      <span className="va-micro text-teal-400 min-w-[3rem] text-right">
                         {t.players_count}/{t.squad_size}
                       </span>
                     </div>
                   )
                 })}
-                {teams.length === 0 && <p className="text-teal-500 text-sm">No teams yet.</p>}
+                {teams.length === 0 && <p className="va-support text-teal-500">No teams yet.</p>}
               </div>
             </div>
 
@@ -121,8 +121,8 @@ function StatCard({ label, value, accent }) {
   const color = accent === 'gold' ? 'text-gold' : accent === 'live' ? 'text-live' : 'text-white'
   return (
     <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
-      <p className="text-xs text-teal-400 uppercase tracking-wide mb-1">{label}</p>
-      <p className={`font-score text-3xl ${color}`}>{value}</p>
+      <p className="va-label mb-1 text-teal-400">{label}</p>
+      <p className={`text-3xl font-semibold ${color}`}>{value}</p>
     </div>
   )
 }

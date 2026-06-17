@@ -41,16 +41,16 @@ export default function VacationResponses() {
         <div className="space-y-4">
           <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="font-score text-lg text-teal-200">Player Availability</h3>
-              <span className="text-xs text-teal-400">{onVacation.length} of {players.length} players reported time away</span>
+              <h3 className="va-section-title text-teal-200">Player Availability</h3>
+              <span className="va-micro text-teal-400">{onVacation.length} of {players.length} players reported time away</span>
             </div>
-            <p className="text-xs text-teal-500">
+            <p className="va-micro text-teal-500">
               {matchDay}s between {auction.season_start_date || '—'} and {auction.season_end_date || '—'} ({timezone})
             </p>
           </div>
 
           {onVacation.length === 0 ? (
-            <p className="text-teal-500 text-sm">No players have submitted vacation dates yet.</p>
+            <p className="va-support text-teal-500">No players have submitted vacation dates yet.</p>
           ) : (
             <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
               <div className="space-y-3">
@@ -59,17 +59,17 @@ export default function VacationResponses() {
                     <div className="h-10 w-10 rounded-lg bg-ink-900 border border-teal-700/40 overflow-hidden grid place-items-center shrink-0">
                       {p.photo_url
                         ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" />
-                        : <span className="text-[0.55rem] text-teal-500">no img</span>}
+                        : <span className="va-micro text-teal-500">no img</span>}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-white font-medium">
+                      <p className="va-body text-white font-medium">
                         {p.name}
-                        <span className="text-teal-400 text-xs ml-2">{p.role}{p.category ? ` / ${p.category}` : ''}</span>
-                        <span className="text-yellow-400 text-xs ml-2">{p.vacation_dates.length} {matchDay}{p.vacation_dates.length === 1 ? '' : 's'} away</span>
+                        <span className="va-micro text-teal-400 ml-2">{p.role}{p.category ? ` / ${p.category}` : ''}</span>
+                        <span className="va-micro text-yellow-400 ml-2">{p.vacation_dates.length} {matchDay}{p.vacation_dates.length === 1 ? '' : 's'} away</span>
                       </p>
                       <div className="flex flex-wrap gap-1.5 mt-1">
                         {(p.vacation_dates ?? []).map((d) => (
-                          <span key={d} className="px-2 py-0.5 rounded-full bg-yellow-900/40 border border-yellow-700/40 text-yellow-300 text-xs">
+                          <span key={d} className="va-micro px-2 py-0.5 rounded-full bg-yellow-900/40 border border-yellow-700/40 text-yellow-300">
                             {new Date(d + 'T12:00:00').toLocaleDateString('en-AU', { weekday: 'short', month: 'short', day: 'numeric', timeZone: timezone })}
                           </span>
                         ))}

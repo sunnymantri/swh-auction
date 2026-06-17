@@ -363,9 +363,9 @@ export default function AppShell({ title, children }) {
             </a>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-score text-2xl sm:text-[1.85rem] font-semibold text-white leading-none truncate tracking-tight">{headingPrimary}</h1>
+                <h1 className="va-page-title text-white leading-none truncate tracking-tight">{headingPrimary}</h1>
                 {auction && (
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-semibold tracking-[0.16em] ${
+                  <span className={`va-micro px-2.5 py-1 rounded-full font-semibold tracking-[0.16em] ${
                     auction.status === 'live'
                       ? 'bg-gold/20 text-gold animate-pulsegold'
                       : 'bg-gold/10 text-gold-soft'
@@ -375,7 +375,7 @@ export default function AppShell({ title, children }) {
                 )}
               </div>
               {headingCaption && (
-                <p className="mt-1 truncate text-sm text-[#97aba6]">{headingCaption}</p>
+                <p className="va-support mt-1 truncate text-[#97aba6]">{headingCaption}</p>
               )}
             </div>
           </div>
@@ -409,7 +409,7 @@ export default function AppShell({ title, children }) {
                 savingProfile={savingProfile}
               />
             ) : (
-              <Link to="/login" className="text-xs px-2.5 py-1.5 rounded-lg border border-gold/15 text-gold-soft hover:text-white transition">
+              <Link to="/login" className="va-micro px-2.5 py-1.5 rounded-lg border border-gold/15 text-gold-soft hover:text-white transition">
                 Sign in
               </Link>
             )}
@@ -431,7 +431,7 @@ export default function AppShell({ title, children }) {
                     const dropdownActive = Array.isArray(l.dropdown)
                       && l.dropdown.some((item) => item.to && item.to !== '#' && loc.pathname === item.to)
                     const active = loc.pathname === l.to || dropdownActive
-                    const navClasses = `group inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-all ${
+                    const navClasses = `group va-body inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 font-medium whitespace-nowrap transition-all ${
                       active
                         ? 'border-gold/28 bg-gold/12 text-gold-soft shadow-[0_12px_25px_-18px_rgba(244,183,64,0.7)]'
                         : 'border-transparent bg-white/[0.02] text-white/78 hover:border-gold/14 hover:bg-white/[0.05] hover:text-white'
@@ -500,7 +500,7 @@ export default function AppShell({ title, children }) {
               return (
                 <span
                   key={item.label}
-                  className="flex items-center px-4 py-2.5 text-sm text-white/35 cursor-not-allowed"
+                  className="va-body flex items-center px-4 py-2.5 text-white/35 cursor-not-allowed"
                 >
                   {item.label}
                 </span>
@@ -511,7 +511,7 @@ export default function AppShell({ title, children }) {
                 key={item.label}
                 to={to}
                 onClick={() => setOpenDropdown(null)}
-                className="flex items-center px-4 py-2.5 text-sm text-[#d8e2df] hover:bg-black/20 hover:text-white transition gap-2"
+                className="va-body flex items-center px-4 py-2.5 text-[#d8e2df] hover:bg-black/20 hover:text-white transition gap-2"
               >
                 {item.label}
               </Link>
@@ -523,10 +523,10 @@ export default function AppShell({ title, children }) {
       <main className="max-w-7xl mx-auto p-3 sm:p-4">{children}</main>
       <footer className="border-t border-gold/10 mt-12 py-6">
         <div className="max-w-7xl mx-auto px-4 text-center space-y-1">
-          <p className="text-xs text-gold/55">
+          <p className="va-micro text-gold/55">
             {footerVersion} · Developed by Sunny Mantri for South West Hitters Cricket Club
           </p>
-          <p className="text-[0.7rem] sm:text-xs text-white/35">
+          <p className="va-micro text-white/35">
             ABN 56 495 977 829
           </p>
         </div>

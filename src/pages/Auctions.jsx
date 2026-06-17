@@ -285,8 +285,8 @@ export default function Auctions() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-score text-xl text-white">{a.name}</p>
-                        <span className={`text-[0.7rem] sm:text-xs px-2 py-0.5 rounded-full font-semibold uppercase ${
+                        <p className="va-card-title text-white">{a.name}</p>
+                        <span className={`va-micro px-2 py-0.5 rounded-full font-semibold uppercase ${
                           a.status === 'live'
                             ? 'bg-gold/20 text-gold'
                             : a.status === 'completed'
@@ -294,45 +294,45 @@ export default function Auctions() {
                             : 'bg-ink-900 text-teal-300 border border-teal-700/40'
                         }`}>{fmtStatus(a.status)}</span>
                         {a.id === auctionId && (
-                          <span className="text-[0.7rem] sm:text-xs px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30 font-semibold">SELECTED</span>
+                          <span className="va-micro px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30 font-semibold">SELECTED</span>
                         )}
                       </div>
-                      <p className="text-xs text-teal-400 mt-1">
+                      <p className="va-micro text-teal-400 mt-1">
                         {a.season} · squad {a.squad_size} · budget {fmtPoints(a.default_team_budget)}
                       </p>
                     </div>
                     <select value={a.status} onChange={(e) => changeStatus(a.id, e.target.value)}
-                      className="rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1.5 text-xs text-white shrink-0">
+                      className="va-body rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1.5 text-white shrink-0">
                       {STATUSES.map((s) => <option key={s} value={s}>{fmtStatus(s)}</option>)}
                     </select>
                   </div>
                   <div className="mt-3 flex gap-2 flex-wrap">
                     {a.id !== auctionId && (
                       <button onClick={() => selectAuction(a.id)}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-teal-700/40 hover:bg-teal-700/70 text-teal-200 transition">Select</button>
+                        className="va-micro px-3 py-1.5 rounded-lg bg-teal-700/40 hover:bg-teal-700/70 text-teal-200 transition">Select</button>
                     )}
                     <button onClick={() => { selectAuction(a.id); setTab('Configuration') }}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-ink-900 border border-teal-700/40 hover:border-teal-500 text-teal-200 transition">Configure</button>
+                      className="va-micro px-3 py-1.5 rounded-lg bg-ink-900 border border-teal-700/40 hover:border-teal-500 text-teal-200 transition">Configure</button>
                     <button onClick={() => { selectAuction(a.id); nav('/auction') }}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-ink-900 border border-teal-700/40 hover:border-gold/40 text-teal-200 transition">Auction Console</button>
+                      className="va-micro px-3 py-1.5 rounded-lg bg-ink-900 border border-teal-700/40 hover:border-gold/40 text-teal-200 transition">Auction Console</button>
                   </div>
                 </div>
               ))}
-              {auctions.length === 0 && <p className="text-teal-500 text-sm">No auctions yet — create one.</p>}
+              {auctions.length === 0 && <p className="va-support text-teal-500">No auctions yet — create one.</p>}
             </div>
 
             <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-2 h-fit">
-              <h3 className="font-score text-lg text-teal-200">New auction</h3>
+              <h3 className="va-section-title text-teal-200">New auction</h3>
               <input placeholder="Name" value={form.name}
                 onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
-                className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
+                className="va-body w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
               <input placeholder="Season" value={form.season}
                 onChange={(e) => setForm((s) => ({ ...s, season: e.target.value }))}
-                className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
-              <label className="block text-xs text-teal-300">
+                className="va-body w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
+              <label className="va-micro block text-teal-300">
                 Sport
                 <select value={form.sport} onChange={(e) => setForm((s) => ({ ...s, sport: e.target.value }))}
-                  className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
+                  className="va-body w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
                   <option value="Cricket">Cricket</option>
                   <option value="Football">Football</option>
                   <option value="Basketball">Basketball</option>
@@ -344,14 +344,14 @@ export default function Auctions() {
                 ['default_base_price', 'Base price'],
                 ['min_player_price', 'Min player price']
               ].map(([k, label]) => (
-                <label key={k} className="block text-xs text-teal-300">
+                <label key={k} className="va-micro block text-teal-300">
                   {label}
                   <input value={form[k]} inputMode="numeric"
                     onChange={(e) => setForm((s) => ({ ...s, [k]: Number(e.target.value.replace(/[^\d]/g, '') || 0) }))}
-                    className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
+                    className="va-body w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
                 </label>
               ))}
-              <label className="flex items-center gap-2 text-sm text-teal-200">
+              <label className="va-body flex items-center gap-2 text-teal-200">
                 <input type="checkbox" checked={form.reauction_refund_enabled}
                   onChange={(e) => setForm((s) => ({ ...s, reauction_refund_enabled: e.target.checked }))} />
                 Re-auction refund enabled
@@ -360,7 +360,7 @@ export default function Auctions() {
                 className="w-full px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
                 {busy ? 'Creating…' : 'Create auction'}
               </button>
-              {error && <p className="text-live text-sm">{error}</p>}
+              {error && <p className="va-support text-live">{error}</p>}
             </div>
           </div>
         )}
@@ -373,7 +373,7 @@ export default function Auctions() {
               <div className="max-w-3xl">
                 {/* Action bar */}
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
-                  <p className="text-sm text-teal-400">Editing: <span className="text-white font-medium">{cfgForm.name}</span></p>
+                  <p className="va-body text-teal-400">Editing: <span className="text-white font-medium">{cfgForm.name}</span></p>
                   <div className="flex gap-2 flex-wrap">
                     <button onClick={saveCfg} disabled={cfgBusy}
                       className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50 text-sm">
@@ -394,19 +394,19 @@ export default function Auctions() {
                     </button>
                   </div>
                 </div>
-                {cfgMsg && <p className="mb-4 text-sm text-teal-300">{cfgMsg}</p>}
+                {cfgMsg && <p className="va-support mb-4 text-teal-300">{cfgMsg}</p>}
 
                 {/* Section: General */}
                 <div className="sticky top-14 z-10 -mx-4 px-4 py-2.5 bg-[#0d1520]/95 backdrop-blur border-b border-teal-700/30 mb-4">
-                  <h4 className="text-xs font-bold text-teal-200 uppercase tracking-widest">General</h4>
+                  <h4 className="va-label font-bold text-teal-200">General</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8 px-1">
                   <CfgField label="Name" value={cfgForm.name} onChange={(v) => cfgSet('name', v)} />
                   <CfgField label="Season" value={cfgForm.season} onChange={(v) => cfgSet('season', v)} />
-                  <label className="block text-xs text-teal-300 capitalize">
+                  <label className="va-micro block text-teal-300 capitalize">
                     Sport
                     <select value={cfgForm.sport} onChange={(e) => cfgSet('sport', e.target.value)}
-                      className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
+                      className="va-body w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
                       {['Cricket','Football','Basketball','Rugby'].map(s => (
                         <option key={s} value={s}>{s}</option>
                       ))}
@@ -416,19 +416,19 @@ export default function Auctions() {
                   <CfgField label="Auction time" type="time" value={cfgForm.auction_time ?? ''} onChange={(v) => cfgSet('auction_time', v)} />
                   <CfgField label="Season start date" type="date" value={cfgForm.season_start_date ?? ''} onChange={(v) => cfgSet('season_start_date', v)} />
                   <CfgField label="Season end date" type="date" value={cfgForm.season_end_date ?? ''} onChange={(v) => cfgSet('season_end_date', v)} />
-                  <label className="block text-xs text-teal-300 capitalize">
+                  <label className="va-micro block text-teal-300 capitalize">
                     Match day
                     <select value={cfgForm.match_day ?? 'Sunday'} onChange={(e) => cfgSet('match_day', e.target.value)}
-                      className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
+                      className="va-body w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
                       {['Sunday','Saturday','Monday','Tuesday','Wednesday','Thursday','Friday'].map(d => (
                         <option key={d} value={d}>{d}</option>
                       ))}
                     </select>
                   </label>
-                  <label className="block text-xs text-teal-300 capitalize">
+                  <label className="va-micro block text-teal-300 capitalize">
                     Timezone
                     <select value={cfgForm.timezone ?? 'Australia/Sydney'} onChange={(e) => cfgSet('timezone', e.target.value)}
-                      className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
+                      className="va-body w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
                       {['Australia/Sydney','Australia/Melbourne','Australia/Brisbane','Australia/Adelaide','Australia/Perth','Australia/Hobart','Pacific/Auckland','Asia/Kolkata','Asia/Singapore','Europe/London','America/New_York','America/Los_Angeles','UTC'].map(tz => (
                         <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>
                       ))}
@@ -438,7 +438,7 @@ export default function Auctions() {
 
                 {/* Section: Rules */}
                 <div className="sticky top-14 z-10 -mx-4 px-4 py-2.5 bg-[#0d1520]/95 backdrop-blur border-b border-teal-700/30 mb-4">
-                  <h4 className="text-xs font-bold text-teal-200 uppercase tracking-widest">Rules</h4>
+                  <h4 className="va-label font-bold text-teal-200">Rules</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8 px-1">
                   <CfgField label="Squad size" value={cfgForm.squad_size ?? ''} onChange={(v) => cfgSet('squad_size', Number(v.replace(/[^\d]/g, '') || 0))} />
@@ -446,17 +446,17 @@ export default function Auctions() {
                   <CfgField label="Min player price" value={cfgForm.min_player_price ?? ''} onChange={(v) => cfgSet('min_player_price', Number(v.replace(/[^\d]/g, '') || 0))} />
                   <CfgField label="Initial bid timer (s)" value={cfgForm.initial_bid_timer_seconds ?? ''} onChange={(v) => cfgSet('initial_bid_timer_seconds', Number(v.replace(/[^\d]/g, '') || 0))} />
                   <CfgField label="Bid timer (s)" value={cfgForm.bid_timer_seconds ?? ''} onChange={(v) => cfgSet('bid_timer_seconds', Number(v.replace(/[^\d]/g, '') || 0))} />
-                  <label className="block text-xs text-teal-300 capitalize md:col-span-2">
+                  <label className="va-micro block text-teal-300 capitalize md:col-span-2">
                     Public viewer access code
                     <input type="text" value={cfgForm.public_code ?? ''}
                       onChange={(e) => cfgSet('public_code', e.target.value)}
                       placeholder="Leave blank for open access"
-                      className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white font-mono tracking-widest" />
-                    <span className="text-[0.7rem] text-teal-500 mt-0.5 block">
+                      className="va-body w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white tracking-[0.14em]" />
+                    <span className="va-micro text-teal-500 mt-0.5 block">
                       When set, public viewers must enter this code on the login page.
                     </span>
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-teal-200 md:col-span-2">
+                  <label className="va-body flex items-center gap-2 text-teal-200 md:col-span-2">
                     <input type="checkbox" checked={!!cfgForm.reauction_refund_enabled}
                       onChange={(e) => cfgSet('reauction_refund_enabled', e.target.checked)} />
                     Re-auction refund enabled
@@ -465,16 +465,16 @@ export default function Auctions() {
 
                 {/* Section: Budget */}
                 <div className="sticky top-14 z-10 -mx-4 px-4 py-2.5 bg-[#0d1520]/95 backdrop-blur border-b border-teal-700/30 mb-4">
-                  <h4 className="text-xs font-bold text-teal-200 uppercase tracking-widest">Budget</h4>
+                  <h4 className="va-label font-bold text-teal-200">Budget</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8 px-1">
                   <CfgField label="Default team budget" value={cfgForm.default_team_budget ?? ''} onChange={(v) => cfgSet('default_team_budget', Number(v.replace(/[^\d]/g, '') || 0))} />
-                  <label className="block text-xs text-teal-300 capitalize">
+                  <label className="va-micro block text-teal-300 capitalize">
                     Budget multiplier
                     <input type="text" inputMode="decimal" value={cfgForm.budget_multiplier ?? 1.6}
                       onChange={(e) => cfgSet('budget_multiplier', e.target.value.replace(/[^\d.]/g, ''))}
-                      className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
-                    <span className="text-[0.7rem] sm:text-xs text-teal-500 mt-0.5 block">
+                      className="va-body w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
+                    <span className="va-micro text-teal-500 mt-0.5 block">
                       Budget = (ready-for-auction player base prices sum) × multiplier ÷ teams
                     </span>
                   </label>
@@ -482,54 +482,54 @@ export default function Auctions() {
 
                 {/* Section: Branding */}
                 <div className="sticky top-14 z-10 -mx-4 px-4 py-2.5 bg-[#0d1520]/95 backdrop-blur border-b border-teal-700/30 mb-4">
-                  <h4 className="text-xs font-bold text-teal-200 uppercase tracking-widest">Branding</h4>
+                  <h4 className="va-label font-bold text-teal-200">Branding</h4>
                 </div>
                 <div className="space-y-4 pb-4 px-1">
                   <div className="flex items-center gap-3">
                     <div className="h-16 w-16 rounded-lg bg-ink-900 border border-teal-700/40 grid place-items-center overflow-hidden">
                       {cfgForm.banner_logo_url
                         ? <img src={cfgForm.banner_logo_url} alt="" className="h-full w-full object-cover" />
-                        : <span className="text-xs text-teal-500">logo</span>}
+                        : <span className="va-micro text-teal-500">logo</span>}
                     </div>
-                    <label className={`text-xs px-3 py-2 rounded cursor-pointer ${uploadingBanner ? 'bg-teal-900 text-teal-400' : 'bg-teal-700/50'}`}>
+                    <label className={`va-micro px-3 py-2 rounded cursor-pointer ${uploadingBanner ? 'bg-teal-900 text-teal-400' : 'bg-teal-700/50'}`}>
                       {uploadingBanner ? 'Uploading…' : 'Upload banner logo'}
                       <input type="file" accept="image/*" className="hidden" disabled={uploadingBanner}
                         onChange={(e) => { const f = e.target.files?.[0]; if (f) onBanner(f) }} />
                     </label>
                   </div>
-                  {uploadErr && <p className="text-red-400 text-xs">{uploadErr}</p>}
+                  {uploadErr && <p className="va-micro text-red-400">{uploadErr}</p>}
                   <div>
-                    <p className="text-xs text-teal-300 mb-1">Sponsor logos</p>
+                    <p className="va-micro text-teal-300 mb-1">Sponsor logos</p>
                     <div className="flex flex-wrap gap-2 mb-2">
                       {(cfgForm.sponsor_logos || []).map((s, i) => (
                         <div key={i} className="relative">
                           <img src={s.url} alt={s.name} className="h-10 object-contain rounded bg-ink-900 border border-teal-700/40 px-1" />
                           <button onClick={() => removeSponsor(i)}
-                            className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-live text-white text-xs">×</button>
+                            className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-live text-white va-micro">×</button>
                         </div>
                       ))}
                     </div>
-                    <label className={`text-xs px-3 py-2 rounded cursor-pointer ${uploadingSponsor ? 'bg-teal-900 text-teal-400' : 'bg-teal-700/50'}`}>
+                    <label className={`va-micro px-3 py-2 rounded cursor-pointer ${uploadingSponsor ? 'bg-teal-900 text-teal-400' : 'bg-teal-700/50'}`}>
                       {uploadingSponsor ? 'Uploading…' : 'Add sponsor logo'}
                       <input type="file" accept="image/*" className="hidden" disabled={uploadingSponsor}
                         onChange={(e) => { const f = e.target.files?.[0]; if (f) addSponsor(f) }} />
                     </label>
-                    <p className="text-[0.7rem] sm:text-xs text-teal-500 mt-1">Logo appears above — then click Save to persist.</p>
+                    <p className="va-micro text-teal-500 mt-1">Logo appears above — then click Save to persist.</p>
                   </div>
                 </div>
 
                 {/* Section: Schedule */}
                 <div className="sticky top-14 z-10 -mx-4 px-4 py-2.5 bg-[#0d1520]/95 backdrop-blur border-b border-teal-700/30 mb-4 mt-2">
-                  <h4 className="text-xs font-bold text-teal-200 uppercase tracking-widest">Schedule</h4>
+                  <h4 className="va-label font-bold text-teal-200">Schedule</h4>
                 </div>
                 <div className="space-y-4 pb-8 px-1">
-                  <p className="text-xs text-teal-500">
+                  <p className="va-micro text-teal-500">
                     Grounds rotate across all matches. Generates a round-robin schedule using the configured match day, skipping Australian public holidays.
                   </p>
 
                   {/* Grounds manager */}
                   <div>
-                    <p className="text-xs text-teal-300 mb-2 font-medium">Grounds / Venues</p>
+                    <p className="va-micro text-teal-300 mb-2 font-medium">Grounds / Venues</p>
                     <div className="flex gap-2 mb-2">
                       <input
                         ref={groundInputRef}
@@ -538,10 +538,10 @@ export default function Auctions() {
                         onChange={(e) => setNewGround(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGround() } }}
                         placeholder="e.g. Raby Pitch 5"
-                        className="flex-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm placeholder:text-teal-600"
+                        className="va-body flex-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white placeholder:text-teal-600"
                       />
                       <button onClick={addGround}
-                        className="px-3 py-2 rounded-lg bg-teal-700/50 text-teal-100 text-sm hover:bg-teal-700/80 transition">
+                        className="va-body px-3 py-2 rounded-lg bg-teal-700/50 text-teal-100 hover:bg-teal-700/80 transition">
                         Add
                       </button>
                     </div>
@@ -549,14 +549,14 @@ export default function Auctions() {
                       <ul className="space-y-1">
                         {(cfgForm.grounds || []).map((g, i) => (
                           <li key={i} className="flex items-center gap-2 rounded-lg bg-ink-900/60 border border-teal-700/30 px-3 py-1.5">
-                            <span className="text-xs text-teal-400 w-5 shrink-0">{i + 1}.</span>
-                            <span className="text-sm text-white flex-1">{g}</span>
-                            <button onClick={() => removeGround(i)} className="text-xs text-teal-500 hover:text-red-400 transition">✕</button>
+                            <span className="va-micro text-teal-400 w-5 shrink-0">{i + 1}.</span>
+                            <span className="va-body text-white flex-1">{g}</span>
+                            <button onClick={() => removeGround(i)} className="va-micro text-teal-500 hover:text-red-400 transition">✕</button>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-xs text-teal-600 italic">No grounds added yet.</p>
+                      <p className="va-micro text-teal-600 italic">No grounds added yet.</p>
                     )}
                   </div>
 
@@ -567,12 +567,12 @@ export default function Auctions() {
                       {schedBusy ? 'Generating…' : 'Generate Schedule'}
                     </button>
                     {(cfgForm.season_schedule || []).length > 0 && (
-                      <span className="text-xs text-teal-400">
+                      <span className="va-micro text-teal-400">
                         {(cfgForm.season_schedule || []).length} rounds · {(cfgForm.season_schedule || []).reduce((n, r) => n + r.matches.length, 0)} matches
                       </span>
                     )}
                   </div>
-                  {schedMsg && <p className="text-sm text-teal-300">{schedMsg}</p>}
+                  {schedMsg && <p className="va-support text-teal-300">{schedMsg}</p>}
                 </div>
               </div>
             )}
@@ -585,10 +585,10 @@ export default function Auctions() {
 
 function CfgField({ label, value, onChange, type = 'text' }) {
   return (
-    <label className="block text-xs text-teal-300 capitalize">
+    <label className="va-micro block text-teal-300 capitalize">
       {label}
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
+        className="va-body w-full mt-1 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
     </label>
   )
 }

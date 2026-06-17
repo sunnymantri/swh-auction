@@ -532,7 +532,7 @@ export default function PlayersManagement() {
         <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5 overflow-x-auto scrollbar-none">
           {TABS.map(t => (
             <button key={t} onClick={() => { setTab(t); navigate(`/players?tab=${encodeURIComponent(t)}`, { replace: true }) }}
-              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${tab === t ? 'bg-ink-800/60 text-gold border border-teal-700/40 border-b-transparent -mb-px' : 'text-teal-300 hover:text-white'}`}>
+              className={`px-4 py-2 va-body font-medium rounded-t-lg transition ${tab === t ? 'bg-ink-800/60 text-gold border border-teal-700/40 border-b-transparent -mb-px' : 'text-teal-300 hover:text-white'}`}>
               {t}
             </button>
           ))}
@@ -553,7 +553,7 @@ export default function PlayersManagement() {
                 tierOverride={viewPlayer ? (tierByPlayerId[viewPlayer.id] || getTier(calcPPM(viewPlayer))) : null}
               />
               <button onClick={() => setViewPlayer(null)}
-                className="mt-3 w-full py-2 text-sm text-teal-300 hover:text-white bg-ink-800/80 border border-teal-700/40 rounded-xl">
+                className="va-body mt-3 w-full py-2 text-teal-300 hover:text-white bg-ink-800/80 border border-teal-700/40 rounded-xl">
                 Close
               </button>
             </div>
@@ -566,30 +566,30 @@ export default function PlayersManagement() {
             {tab === 'Add Player' && (
               <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-5">
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="font-score text-xl text-teal-200">{editId ? 'Edit player' : 'Add player'}</h3>
+                  <h3 className="va-section-title text-teal-200">{editId ? 'Edit player' : 'Add player'}</h3>
                   {editId && (
                     <button onClick={() => { setEditId(null); setForm(blankFor(auction)); setErr('') }}
-                      className="text-xs text-teal-400 hover:text-white transition">✕ Cancel edit</button>
+                      className="va-micro text-teal-400 hover:text-white transition">✕ Cancel edit</button>
                   )}
                 </div>
 
                 {/* Step indicator */}
                 <div className="flex items-center mb-6">
                   <button onClick={() => setAddStep(1)}
-                    className={`flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${addStep === 1 ? 'text-gold' : addStep > 1 ? 'text-teal-400' : 'text-teal-600'}`}>
-                    <span className={`h-6 w-6 rounded-full grid place-items-center text-xs font-bold shrink-0 ${addStep === 1 ? 'bg-gold text-ink-900' : addStep > 1 ? 'bg-teal-700/60 text-teal-200' : 'bg-ink-900 border border-teal-700/40 text-teal-600'}`}>1</span>
+                    className={`va-micro flex items-center gap-1.5 font-medium whitespace-nowrap ${addStep === 1 ? 'text-gold' : addStep > 1 ? 'text-teal-400' : 'text-teal-600'}`}>
+                    <span className={`va-micro h-6 w-6 rounded-full grid place-items-center font-bold shrink-0 ${addStep === 1 ? 'bg-gold text-ink-900' : addStep > 1 ? 'bg-teal-700/60 text-teal-200' : 'bg-ink-900 border border-teal-700/40 text-teal-600'}`}>1</span>
                     <span className="hidden sm:inline">Identity</span>
                   </button>
                   <div className={`flex-1 h-px mx-2 ${addStep > 1 ? 'bg-teal-500' : 'bg-teal-700/30'}`} />
                   <button onClick={() => setAddStep(2)}
-                    className={`flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${addStep === 2 ? 'text-gold' : addStep > 2 ? 'text-teal-400' : 'text-teal-600'}`}>
-                    <span className={`h-6 w-6 rounded-full grid place-items-center text-xs font-bold shrink-0 ${addStep === 2 ? 'bg-gold text-ink-900' : addStep > 2 ? 'bg-teal-700/60 text-teal-200' : 'bg-ink-900 border border-teal-700/40 text-teal-600'}`}>2</span>
+                    className={`va-micro flex items-center gap-1.5 font-medium whitespace-nowrap ${addStep === 2 ? 'text-gold' : addStep > 2 ? 'text-teal-400' : 'text-teal-600'}`}>
+                    <span className={`va-micro h-6 w-6 rounded-full grid place-items-center font-bold shrink-0 ${addStep === 2 ? 'bg-gold text-ink-900' : addStep > 2 ? 'bg-teal-700/60 text-teal-200' : 'bg-ink-900 border border-teal-700/40 text-teal-600'}`}>2</span>
                     <span className="hidden sm:inline">Batting</span>
                   </button>
                   <div className={`flex-1 h-px mx-2 ${addStep > 2 ? 'bg-teal-500' : 'bg-teal-700/30'}`} />
                   <button onClick={() => setAddStep(3)}
-                    className={`flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${addStep === 3 ? 'text-gold' : 'text-teal-600'}`}>
-                    <span className={`h-6 w-6 rounded-full grid place-items-center text-xs font-bold shrink-0 ${addStep === 3 ? 'bg-gold text-ink-900' : 'bg-ink-900 border border-teal-700/40 text-teal-600'}`}>3</span>
+                    className={`va-micro flex items-center gap-1.5 font-medium whitespace-nowrap ${addStep === 3 ? 'text-gold' : 'text-teal-600'}`}>
+                    <span className={`va-micro h-6 w-6 rounded-full grid place-items-center font-bold shrink-0 ${addStep === 3 ? 'bg-gold text-ink-900' : 'bg-ink-900 border border-teal-700/40 text-teal-600'}`}>3</span>
                     <span className="hidden sm:inline">Bowling &amp; Fielding</span>
                   </button>
                 </div>
@@ -598,80 +598,80 @@ export default function PlayersManagement() {
                 {addStep === 1 && (
                   <div className="grid md:grid-cols-2 gap-5">
                     <div className="space-y-3">
-                      <label className="block text-xs text-teal-300">
+                      <label className="va-micro block text-teal-300">
                         Full name *
                         <input type="text" value={form.name ?? ''} onChange={(e) => set('name', e.target.value)}
-                          className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                          className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                       </label>
                       <div className="grid grid-cols-2 gap-3">
-                        <label className="block text-xs text-teal-300">
+                        <label className="va-micro block text-teal-300">
                           Role
                           <input type="text" value={form.role ?? ''} onChange={(e) => set('role', e.target.value)}
-                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                            className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                         </label>
-                        <label className="block text-xs text-teal-300">
+                        <label className="va-micro block text-teal-300">
                           Category
                           <input type="text" value={form.category ?? ''} onChange={(e) => set('category', e.target.value)}
-                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                            className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                         </label>
-                        <label className="block text-xs text-teal-300">
+                        <label className="va-micro block text-teal-300">
                           Status
                           <select value={form.status} onChange={(e) => set('status', e.target.value)}
-                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm">
+                            className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white">
                             {['not_registered','registered','ready_for_auction','in_auction','sold','unsold','reauction','retired'].map((s) => (
                               <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
                             ))}
                           </select>
                         </label>
-                        <label className="block text-xs text-teal-300">
+                        <label className="va-micro block text-teal-300">
                           Base price
                           <input type="text" inputMode="numeric" value={form.base_price ?? ''}
                             onChange={(e) => set('base_price', Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
-                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                            className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                         </label>
-                        <label className="block text-xs text-teal-300">
+                        <label className="va-micro block text-teal-300">
                           Batting style
                           <input type="text" value={form.batting_style ?? ''} onChange={(e) => set('batting_style', e.target.value)}
-                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                            className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                         </label>
-                        <label className="block text-xs text-teal-300">
+                        <label className="va-micro block text-teal-300">
                           Bowling style
                           <input type="text" value={form.bowling_style ?? ''} onChange={(e) => set('bowling_style', e.target.value)}
-                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                            className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                         </label>
                       </div>
                     </div>
                     <div className="space-y-4">
                       <div className="rounded-lg border border-teal-700/30 bg-ink-900/40 p-3 space-y-2">
-                        <p className="text-[0.65rem] text-teal-400 uppercase tracking-wider font-semibold">CricHeroes</p>
+                        <p className="va-label font-semibold text-teal-400">CricHeroes</p>
                         <div className="flex gap-2">
                           <input type="text" value={form.profile_url ?? ''}
                             onChange={(e) => set('profile_url', e.target.value)}
                             placeholder="https://cricheroes.com/player-profile/..."
-                            className="flex-1 min-w-0 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                            className="va-body flex-1 min-w-0 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                           <button type="button" onClick={fetchFromCricHeroes}
                             disabled={fetchingStats || !form.profile_url}
-                            className="px-3 py-2 rounded-lg bg-teal-600/70 text-white text-xs font-semibold whitespace-nowrap disabled:opacity-40">
+                            className="va-micro px-3 py-2 rounded-lg bg-teal-600/70 text-white font-semibold whitespace-nowrap disabled:opacity-40">
                             {fetchingStats ? 'Fetching…' : 'Fetch'}
                           </button>
                         </div>
                       </div>
                       <div className="rounded-lg border border-teal-700/30 bg-ink-900/40 p-3 space-y-2">
-                        <p className="text-[0.65rem] text-teal-400 uppercase tracking-wider font-semibold">PlayHQ</p>
+                        <p className="va-label font-semibold text-teal-400">PlayHQ</p>
                         <div className="flex gap-2">
                           <input type="text" value={form.playhq_url ?? ''}
                             onChange={(e) => set('playhq_url', e.target.value)}
                             placeholder="https://www.playhq.com/.../profile/{uuid}/statistics"
-                            className="flex-1 min-w-0 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                            className="va-body flex-1 min-w-0 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                           <button type="button" onClick={fetchFromPlayHQ}
                             disabled={fetchingPlayHQ || !form.playhq_url}
-                            className="px-3 py-2 rounded-lg bg-teal-600/70 text-white text-xs font-semibold whitespace-nowrap disabled:opacity-40">
+                            className="va-micro px-3 py-2 rounded-lg bg-teal-600/70 text-white font-semibold whitespace-nowrap disabled:opacity-40">
                             {fetchingPlayHQ ? 'Fetching…' : 'Fetch'}
                           </button>
                         </div>
                       </div>
                       <div className="rounded-lg border border-teal-700/30 bg-ink-900/40 p-3 space-y-2">
-                        <p className="text-[0.65rem] text-teal-400 uppercase tracking-wider font-semibold">Photo</p>
+                        <p className="va-label font-semibold text-teal-400">Photo</p>
                         <div className="flex items-center gap-3">
                           {form.photo_url ? (
                             <img src={form.photo_url} alt="" className="h-20 w-20 rounded-lg object-cover border border-teal-700/40 shrink-0" />
@@ -680,7 +680,7 @@ export default function PlayersManagement() {
                               <span className="text-teal-600 text-2xl">?</span>
                             </div>
                           )}
-                          <label className={`text-xs px-3 py-2 rounded-lg cursor-pointer font-medium transition ${uploadingPhoto ? 'bg-teal-900/60 text-teal-400' : 'bg-teal-700/50 text-white hover:bg-teal-700/70'}`}>
+                          <label className={`va-micro px-3 py-2 rounded-lg cursor-pointer font-medium transition ${uploadingPhoto ? 'bg-teal-900/60 text-teal-400' : 'bg-teal-700/50 text-white hover:bg-teal-700/70'}`}>
                             {uploadingPhoto ? 'Uploading…' : 'Upload photo'}
                             <input type="file" accept="image/*" className="hidden" disabled={uploadingPhoto}
                               onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f) }} />
@@ -689,8 +689,8 @@ export default function PlayersManagement() {
                       </div>
                       {duplicates.length > 0 && (
                         <div className="rounded-lg border border-yellow-600/50 bg-yellow-900/20 p-3">
-                          <p className="text-yellow-400 text-xs font-semibold">Possible duplicate{duplicates.length > 1 ? 's' : ''} found:</p>
-                          <ul className="text-xs text-yellow-300 mt-1 space-y-0.5">
+                          <p className="va-micro text-yellow-400 font-semibold">Possible duplicate{duplicates.length > 1 ? 's' : ''} found:</p>
+                          <ul className="va-micro text-yellow-300 mt-1 space-y-0.5">
                             {duplicates.map((d) => <li key={d.id}>{d.name} — {d.role} ({d.status})</li>)}
                           </ul>
                         </div>
@@ -712,18 +712,18 @@ export default function PlayersManagement() {
                         { key: 'hundreds', label: '100s' },
                         { key: 'sixes', label: 'Sixes' },
                       ].map(({ key, label }) => (
-                        <label key={key} className="block text-xs text-teal-300">
+                        <label key={key} className="va-micro block text-teal-300">
                           {label}
                           <input type="text" inputMode="numeric" value={form[key] ?? ''}
                             onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
-                            className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                            className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                         </label>
                       ))}
                     </div>
                     {form.matches > 0 && (
                       <div className="rounded-lg border border-teal-700/40 bg-ink-900/50 p-3">
-                        <p className="text-xs font-semibold text-teal-200 uppercase tracking-wide mb-2">Calculated Points (PPM)</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-xs">
+                        <p className="va-label font-semibold text-teal-200 mb-2">Calculated Points (PPM)</p>
+                        <div className="va-micro grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1">
                           <span className="text-teal-400">Batting:</span><span className="text-white">{calcBattingPoints(form).toFixed(1)}</span>
                           <span className="text-teal-400">Bowling:</span><span className="text-white">{calcBowlingPoints(form).toFixed(1)}</span>
                           <span className="text-teal-400">Fielding:</span><span className="text-white">{calcFieldingPoints(form).toFixed(1)}</span>
@@ -740,7 +740,7 @@ export default function PlayersManagement() {
                 {addStep === 3 && (
                   <div className="space-y-5">
                     <div>
-                      <p className="text-[0.65rem] text-teal-400 uppercase tracking-wider font-semibold mb-3">Bowling</p>
+                      <p className="va-label font-semibold text-teal-400 mb-3">Bowling</p>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {[
                           { key: 'wickets', label: 'Wickets' },
@@ -750,36 +750,36 @@ export default function PlayersManagement() {
                           { key: 'three_wicket_hauls', label: '3-wkt hauls' },
                           { key: 'five_wicket_hauls', label: '5-wkt hauls' },
                         ].map(({ key, label }) => (
-                          <label key={key} className="block text-xs text-teal-300">
+                          <label key={key} className="va-micro block text-teal-300">
                             {label}
                             <input type="text" inputMode="numeric" value={form[key] ?? ''}
                               onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
-                              className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                              className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                           </label>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <p className="text-[0.65rem] text-teal-400 uppercase tracking-wider font-semibold mb-3">Fielding</p>
+                      <p className="va-label font-semibold text-teal-400 mb-3">Fielding</p>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {[
                           { key: 'catches', label: 'Catches' },
                           { key: 'run_outs', label: 'Run outs' },
                           { key: 'stumpings', label: 'Stumpings' },
                         ].map(({ key, label }) => (
-                          <label key={key} className="block text-xs text-teal-300">
+                          <label key={key} className="va-micro block text-teal-300">
                             {label}
                             <input type="text" inputMode="numeric" value={form[key] ?? ''}
                               onChange={(e) => set(key, Number(e.target.value.replace(/[^\d.]/g, '') || 0))}
-                              className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white text-sm" />
+                              className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                           </label>
                         ))}
                       </div>
                     </div>
                     {form.matches > 0 && (
                       <div className="rounded-lg border border-teal-700/40 bg-ink-900/50 p-3">
-                        <p className="text-xs font-semibold text-teal-200 uppercase tracking-wide mb-2">Calculated Points (PPM)</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-xs">
+                        <p className="va-label font-semibold text-teal-200 mb-2">Calculated Points (PPM)</p>
+                        <div className="va-micro grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1">
                           <span className="text-teal-400">Batting:</span><span className="text-white">{calcBattingPoints(form).toFixed(1)}</span>
                           <span className="text-teal-400">Bowling:</span><span className="text-white">{calcBowlingPoints(form).toFixed(1)}</span>
                           <span className="text-teal-400">Fielding:</span><span className="text-white">{calcFieldingPoints(form).toFixed(1)}</span>
@@ -792,22 +792,22 @@ export default function PlayersManagement() {
                   </div>
                 )}
 
-                {err && <p className="text-red-400 text-xs mt-3">{err}</p>}
+                {err && <p className="va-support text-red-400 mt-3">{err}</p>}
                 <div className="flex items-center gap-3 mt-5">
                   {addStep > 1 && (
                     <button type="button" onClick={() => setAddStep(s => s - 1)}
-                      className="px-4 py-2 rounded-lg border border-teal-700/40 text-teal-300 hover:text-white text-sm transition">
+                      className="va-body px-4 py-2 rounded-lg border border-teal-700/40 text-teal-300 hover:text-white transition">
                       ← Previous
                     </button>
                   )}
                   {addStep < 3 && (
                     <button type="button" onClick={() => setAddStep(s => s + 1)}
-                      className="px-4 py-2 rounded-lg border border-teal-500/50 text-teal-200 hover:text-white hover:border-teal-400 text-sm transition">
+                      className="va-body px-4 py-2 rounded-lg border border-teal-500/50 text-teal-200 hover:text-white hover:border-teal-400 transition">
                       Next →
                     </button>
                   )}
                   <button onClick={save} disabled={!form.name || saving || uploadingPhoto}
-                    className="ml-auto px-5 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50 text-sm">
+                    className="va-body ml-auto px-5 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
                     {saving ? 'Saving…' : 'Save player'}
                   </button>
                 </div>
@@ -818,10 +818,10 @@ export default function PlayersManagement() {
             <div className={`${tab === 'Players' ? 'xl:col-span-3' : 'hidden'} rounded-xl border border-teal-700/40 bg-ink-800/60 p-4`}>
               <div className="flex flex-wrap gap-2 mb-3">
                 <button onClick={() => download('players-template.csv', playersCsvTemplate())}
-                  className="px-3 py-1 rounded bg-teal-700/50 text-sm">Download template</button>
+                  className="va-body px-3 py-1 rounded bg-teal-700/50">Download template</button>
                 <button onClick={() => download('players-export.csv', exportPlayersCsv(players))}
-                  className="px-3 py-1 rounded bg-teal-700/50 text-sm">Export CSV</button>
-                <label className="px-3 py-1 rounded bg-gold/80 text-ink-900 font-semibold text-sm cursor-pointer">
+                  className="va-body px-3 py-1 rounded bg-teal-700/50">Export CSV</button>
+                <label className="va-body px-3 py-1 rounded bg-gold/80 text-ink-900 font-semibold cursor-pointer">
                   Bulk import CSV
                   <input type="file" accept=".csv,text/csv" className="hidden"
                     onChange={(e) => e.target.files?.[0] && importCsv(e.target.files[0])} />
@@ -830,7 +830,7 @@ export default function PlayersManagement() {
                   onClick={recalcAllBasePrices}
                   disabled={recalculating || players.length === 0}
                   title="Re-price every player relative to the full cohort (percentile → ₹500–₹10,000)"
-                  className="px-3 py-1 rounded bg-teal-600/70 text-white font-semibold text-sm disabled:opacity-50"
+                  className="va-body px-3 py-1 rounded bg-teal-600/70 text-white font-semibold disabled:opacity-50"
                 >
                   {recalculating ? 'Recalculating…' : 'Recalculate base prices'}
                 </button>
@@ -838,7 +838,7 @@ export default function PlayersManagement() {
                   <button
                     onClick={bulkFetchAndRecalculateSelected}
                     disabled={bulkBusy}
-                    className="px-3 py-1 rounded bg-gold text-ink-900 font-semibold text-sm disabled:opacity-50"
+                    className="va-body px-3 py-1 rounded bg-gold text-ink-900 font-semibold disabled:opacity-50"
                   >
                     {bulkBusy ? 'Processing…' : 'Fetch + Recalculate selected'}
                   </button>
@@ -846,24 +846,24 @@ export default function PlayersManagement() {
               </div>
 
               {report && (
-                <div className="mb-3 rounded-lg border border-teal-600/40 bg-teal-900/20 p-3 text-sm">
+                <div className="va-body mb-3 rounded-lg border border-teal-600/40 bg-teal-900/20 p-3">
                   <p className="text-teal-200">Imported <b>{report.inserted}</b> of {report.total} rows. Skipped {report.skipped}.</p>
                   {report.failures.length > 0 && (
-                    <ul className="mt-1 text-red-400 text-xs list-disc pl-4 max-h-28 overflow-y-auto">
+                    <ul className="va-micro mt-1 text-red-400 list-disc pl-4 max-h-28 overflow-y-auto">
                       {report.failures.map((f, i) => <li key={i}>{f}</li>)}
                     </ul>
                   )}
                 </div>
               )}
               {bulkSyncReport && (
-                <div className="mb-3 rounded-lg border border-teal-600/40 bg-teal-900/20 p-3 text-sm">
+                <div className="va-body mb-3 rounded-lg border border-teal-600/40 bg-teal-900/20 p-3">
                   <p className="text-teal-200">
                     Bulk fetch/recalculate completed. Success: <b>{bulkSyncReport.success}</b> ·
                     Skipped: <b>{bulkSyncReport.skipped.length}</b> ·
                     Failed: <b>{bulkSyncReport.failed.length}</b>
                   </p>
                   {[...bulkSyncReport.skipped, ...bulkSyncReport.failed].length > 0 && (
-                    <ul className="mt-1 text-red-400 text-xs list-disc pl-4 max-h-28 overflow-y-auto">
+                    <ul className="va-micro mt-1 text-red-400 list-disc pl-4 max-h-28 overflow-y-auto">
                       {[...bulkSyncReport.skipped, ...bulkSyncReport.failed].map((msg, i) => <li key={i}>{msg}</li>)}
                     </ul>
                   )}
@@ -877,14 +877,14 @@ export default function PlayersManagement() {
                   placeholder="Search players…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full max-w-xs rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-1.5 text-white text-sm placeholder:text-teal-600"
+                  className="va-body w-full max-w-xs rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-1.5 text-white placeholder:text-teal-600"
                 />
               </div>
 
               {/* Status filter tags */}
               <div className="flex flex-wrap gap-2 mb-3">
                 <button onClick={() => setStatusFilter(null)}
-                  className={`px-2.5 py-1 text-xs rounded-full font-medium transition ${!statusFilter ? 'bg-teal-600 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300 hover:text-white'}`}>
+                  className={`va-micro px-2.5 py-1 rounded-full font-medium transition ${!statusFilter ? 'bg-teal-600 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300 hover:text-white'}`}>
                   All ({players.length})
                 </button>
                 {['not_registered', 'registered', 'ready_for_auction', 'in_auction', 'sold', 'unsold', 'retired'].map((s) => {
@@ -902,7 +902,7 @@ export default function PlayersManagement() {
                   const tooltip = s === 'registered' ? 'Club member — not playing this season' : undefined
                   return (
                     <button key={s} title={tooltip} onClick={() => setStatusFilter(statusFilter === s ? null : s)}
-                      className={`px-2.5 py-1 text-xs rounded-full font-medium border transition ${statusFilter === s ? colors[s] : 'bg-ink-900 border-teal-700/50 text-teal-300 hover:text-white'}`}>
+                      className={`va-micro px-2.5 py-1 rounded-full font-medium border transition ${statusFilter === s ? colors[s] : 'bg-ink-900 border-teal-700/50 text-teal-300 hover:text-white'}`}>
                       {STATUS_LABELS[s]} ({count})
                     </button>
                   )
@@ -911,7 +911,7 @@ export default function PlayersManagement() {
 
               {filteredPlayers.length > 0 && (
                 <div className="flex items-center gap-3 mb-2 flex-wrap">
-                  <label className="flex items-center gap-1.5 text-xs text-teal-300 cursor-pointer">
+                  <label className="va-micro flex items-center gap-1.5 text-teal-300 cursor-pointer">
                     <input type="checkbox"
                       checked={selected.size === filteredPlayers.length && filteredPlayers.length > 0}
                       onChange={selectAll} />
@@ -920,15 +920,15 @@ export default function PlayersManagement() {
                   {selected.size > 0 && (
                     <>
                       <button onClick={() => bulkSetStatus('ready_for_auction')} disabled={bulkBusy}
-                        className="px-2 py-1 text-xs rounded bg-green-700/60 text-white disabled:opacity-50">
+                        className="va-micro px-2 py-1 rounded bg-green-700/60 text-white disabled:opacity-50">
                         {bulkBusy ? '…' : '✓ Ready for auction'}
                       </button>
                       <button onClick={() => bulkSetStatus('registered')} disabled={bulkBusy}
-                        className="px-2 py-1 text-xs rounded bg-ink-900 border border-teal-700/50 disabled:opacity-50">
+                        className="va-micro px-2 py-1 rounded bg-ink-900 border border-teal-700/50 disabled:opacity-50">
                         {bulkBusy ? '…' : 'Move to registered'}
                       </button>
                       <button onClick={() => bulkSetStatus('retired')} disabled={bulkBusy}
-                        className="px-2 py-1 text-xs rounded bg-slate-800/60 border border-slate-600/50 text-slate-400 disabled:opacity-50">
+                        className="va-micro px-2 py-1 rounded bg-slate-800/60 border border-slate-600/50 text-slate-400 disabled:opacity-50">
                         {bulkBusy ? '…' : 'Retire selected'}
                       </button>
                     </>
@@ -950,16 +950,16 @@ export default function PlayersManagement() {
                           <div className="h-9 w-9 rounded-lg bg-ink-900 border border-teal-700/40 overflow-hidden grid place-items-center shrink-0">
                             {p.photo_url
                               ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" />
-                              : <span className="text-[0.55rem] text-teal-500">no img</span>}
+                              : <span className="va-micro text-teal-500">no img</span>}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-white truncate">
+                            <p className="va-body font-medium text-white truncate">
                               <button onClick={() => setViewPlayer(p)} className="hover:text-gold transition text-left">
                                 {p.name}
                               </button>
-                              <span className="text-teal-500 text-xs"> · {p.role}{p.category ? ` / ${p.category}` : ''}</span>
+                              <span className="va-micro text-teal-500"> · {p.role}{p.category ? ` / ${p.category}` : ''}</span>
                             </p>
-                            <p className="text-xs text-teal-300">
+                            <p className="va-micro text-teal-300">
                               Base {p.base_price} ·{' '}
                               <span className={
                                 p.status === 'sold' ? 'text-gold' :
@@ -976,7 +976,7 @@ export default function PlayersManagement() {
                         <div className="flex flex-wrap gap-2 shrink-0">
                           {p.status !== 'retired' && (
                             <button onClick={() => toggleApprove(p)}
-                              className={`px-2 py-1 text-xs rounded ${p.status === 'ready_for_auction' ? 'bg-green-700/50 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300'}`}>
+                              className={`va-micro px-2 py-1 rounded ${p.status === 'ready_for_auction' ? 'bg-green-700/50 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300'}`}>
                               {p.status === 'ready_for_auction' ? '✓ Ready — Remove' : 'Set Ready for Auction'}
                             </button>
                           )}
@@ -985,21 +985,21 @@ export default function PlayersManagement() {
                               await updatePlayer(p.id, { status: p.status === 'retired' ? 'registered' : 'retired' })
                               await reloadPlayers()
                             }}
-                            className={`px-2 py-1 text-xs rounded ${p.status === 'retired' ? 'bg-teal-700/50 text-teal-200' : 'bg-slate-800/60 border border-slate-600/50 text-slate-400'}`}>
+                            className={`va-micro px-2 py-1 rounded ${p.status === 'retired' ? 'bg-teal-700/50 text-teal-200' : 'bg-slate-800/60 border border-slate-600/50 text-slate-400'}`}>
                             {p.status === 'retired' ? 'Unretire' : 'Retire'}
                           </button>
                           <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr(''); setTab('Add Player') }}
-                            className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
+                            className="va-micro px-2 py-1 rounded bg-teal-700/50">Edit</button>
                           <button onClick={async () => {
                             if (!window.confirm(`Delete player "${p.name}"? This cannot be undone.`)) return
                             await deletePlayer(p.id); reloadPlayers()
                           }}
-                            className="px-2 py-1 text-xs rounded bg-red-900/50">Delete</button>
+                            className="va-micro px-2 py-1 rounded bg-red-900/50">Delete</button>
                         </div>
                       </div>
                       {/* Points breakdown row */}
                       {p.matches > 0 && (
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs sm:text-[0.7rem] text-teal-400 sm:ml-[3.25rem]">
+                        <div className="va-micro flex flex-wrap gap-x-4 gap-y-1 text-teal-400 sm:ml-[3.25rem]">
                           <span>Bat: <b className="text-white">{calcBattingPoints(p).toFixed(0)}</b></span>
                           <span>Bowl: <b className="text-white">{calcBowlingPoints(p).toFixed(0)}</b></span>
                           <span>Field: <b className="text-white">{calcFieldingPoints(p).toFixed(0)}</b></span>
@@ -1011,7 +1011,7 @@ export default function PlayersManagement() {
                     </div>
                   )
                 })}
-                {filteredPlayers.length === 0 && <p className="text-teal-500 text-sm">{players.length === 0 ? 'No players yet — add one or bulk import.' : 'No players match this filter.'}</p>}
+                {filteredPlayers.length === 0 && <p className="va-support text-teal-500">{players.length === 0 ? 'No players yet — add one or bulk import.' : 'No players match this filter.'}</p>}
               </div>
             </div>
           </div>
@@ -1019,11 +1019,11 @@ export default function PlayersManagement() {
 
         {tab === 'Vacation' && (
           <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
-            <h3 className="font-score text-lg text-teal-200 mb-4">Player Vacation Dates</h3>
+            <h3 className="va-section-title text-teal-200 mb-4">Player Vacation Dates</h3>
             {(() => {
               const onVacation = players.filter(p => (p.vacation_dates ?? []).length > 0)
               if (onVacation.length === 0) {
-                return <p className="text-teal-500 text-sm">No players have submitted vacation dates.</p>
+                return <p className="va-support text-teal-500">No players have submitted vacation dates.</p>
               }
               return (
                 <div className="space-y-3">
@@ -1032,23 +1032,23 @@ export default function PlayersManagement() {
                       <div className="h-10 w-10 rounded-lg bg-ink-900 border border-teal-700/40 overflow-hidden grid place-items-center shrink-0">
                         {p.photo_url
                           ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" />
-                          : <span className="text-[0.55rem] text-teal-500">no img</span>}
+                          : <span className="va-micro text-teal-500">no img</span>}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-white font-medium">{p.name}
-                            <span className="text-teal-400 text-xs ml-2">{p.role}{p.category ? ` / ${p.category}` : ''}</span>
+                          <p className="va-body font-medium text-white">{p.name}
+                            <span className="va-micro text-teal-400 ml-2">{p.role}{p.category ? ` / ${p.category}` : ''}</span>
                           </p>
                           <button
                             onClick={async () => { await updatePlayerVacation(p.id, []); await reloadPlayers() }}
-                            className="shrink-0 text-xs px-2 py-1 rounded border border-red-700/40 text-red-400 hover:bg-red-900/30 transition"
+                            className="va-micro shrink-0 px-2 py-1 rounded border border-red-700/40 text-red-400 hover:bg-red-900/30 transition"
                           >
                             Reset dates
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {(p.vacation_dates ?? []).map(d => (
-                            <span key={d} className="px-2 py-0.5 rounded-full bg-yellow-900/40 border border-yellow-700/40 text-yellow-300 text-xs">
+                            <span key={d} className="va-micro px-2 py-0.5 rounded-full bg-yellow-900/40 border border-yellow-700/40 text-yellow-300">
                               {new Date(d).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })}
                             </span>
                           ))}
@@ -1066,8 +1066,8 @@ export default function PlayersManagement() {
           <div className="grid gap-4 md:grid-cols-3">
             {/* Description card */}
             <div className="md:col-span-3 rounded-xl border border-teal-600/30 bg-teal-900/20 p-4">
-              <p className="text-sm font-semibold text-teal-200 mb-1">📂 What are Categories?</p>
-              <p className="text-xs text-teal-300 leading-relaxed">
+              <p className="va-body font-semibold text-teal-200 mb-1">📂 What are Categories?</p>
+              <p className="va-support text-teal-300 leading-relaxed">
                 Categories group players by role (e.g. <span className="text-white">Wicketkeeper</span>, <span className="text-white">Batter</span>, <span className="text-white">Bowler</span>) so each team must pick the right mix.
                 Set a <span className="text-white">Minimum required</span> to enforce squad balance — every team must buy at least that many from this group.
                 Set a <span className="text-white">Maximum allowed</span> to cap how many a team can buy (leave 0 for no cap).
@@ -1075,39 +1075,39 @@ export default function PlayersManagement() {
               </p>
             </div>
             <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-2">
-              <label className="block text-xs text-teal-300 uppercase tracking-wide">
+              <label className="va-label block text-teal-300">
                 Category name
                 <input placeholder="e.g. Wicketkeeper" value={catForm.name}
                   onChange={(e) => setCatForm((s) => ({ ...s, name: e.target.value }))}
-                  className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
+                  className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
               </label>
               {['sequence_order', 'minimum_required', 'maximum_allowed'].map((f) => (
-                <label key={f} className="block text-xs text-teal-300 uppercase tracking-wide">
+                <label key={f} className="va-label block text-teal-300">
                   {CAT_FIELD_LABELS[f]}
                   <input placeholder={CAT_FIELD_LABELS[f]} value={catForm[f]}
                     onChange={(e) => setCatForm((s) => ({ ...s, [f]: Number(e.target.value || 0) }))}
-                    className="mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
+                    className="va-body mt-1 w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
                 </label>
               ))}
-              <button onClick={saveCat} className="px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold">Save</button>
+              <button onClick={saveCat} className="va-body px-4 py-2 rounded-lg bg-gold text-ink-900 font-semibold">Save</button>
             </div>
             <div className="md:col-span-2 rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-2">
               {categories.map((c) => (
                 <div key={c.id} className="border border-teal-700/40 rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between gap-2">
                   <div>
-                    <p>{c.sequence_order}. {c.name}</p>
-                    <p className="text-xs text-teal-300">Min {c.minimum_required} · Max {c.maximum_allowed ?? '-'}</p>
+                    <p className="va-body font-medium">{c.sequence_order}. {c.name}</p>
+                    <p className="va-micro text-teal-300">Min {c.minimum_required} · Max {c.maximum_allowed ?? '-'}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => { setCatEditId(c.id); setCatForm(c) }} className="px-2 py-1 text-xs rounded bg-teal-700/50">Edit</button>
+                    <button onClick={() => { setCatEditId(c.id); setCatForm(c) }} className="va-micro px-2 py-1 rounded bg-teal-700/50">Edit</button>
                     <button onClick={async () => {
                       if (!window.confirm(`Delete category "${c.name}"? This cannot be undone.`)) return
                       await deleteCategory(c.id); reloadCategories()
-                    }} className="px-2 py-1 text-xs rounded bg-live/40">Delete</button>
+                    }} className="va-micro px-2 py-1 rounded bg-live/40">Delete</button>
                   </div>
                 </div>
               ))}
-              {categories.length === 0 && <p className="text-teal-500 text-sm">No categories yet.</p>}
+              {categories.length === 0 && <p className="va-support text-teal-500">No categories yet.</p>}
             </div>
           </div>
         )}

@@ -123,27 +123,27 @@ export default function UserManagement() {
       <RoleGate allow={['admin']}>
         <div className="grid gap-4 xl:grid-cols-2">
           <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4 space-y-3">
-            <h3 className="font-score text-lg text-teal-200">Create login</h3>
-            <p className="text-xs text-teal-400">
+            <h3 className="va-section-title text-teal-200">Create login</h3>
+            <p className="va-support text-teal-400">
               Creates a Supabase account (email + generated password) and a profile.
               For team owners you can link them to a team so they can only bid for that team.
             </p>
             <input placeholder="Email" value={form.email}
               onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
-              className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
+              className="va-body w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
             <input placeholder="Full name" value={form.fullName}
               onChange={(e) => setForm((s) => ({ ...s, fullName: e.target.value }))}
-              className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
+              className="va-body w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2" />
             <select value={form.role}
               onChange={(e) => setForm((s) => ({ ...s, role: e.target.value }))}
-              className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2">
+              className="va-body w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2">
               <option value="team_owner">Team Owner</option>
               <option value="admin">Administrator</option>
             </select>
             {form.role === 'team_owner' && (
               <select value={form.teamId}
                 onChange={(e) => setForm((s) => ({ ...s, teamId: e.target.value }))}
-                className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2">
+                className="va-body w-full rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2">
                 <option value="">Link to team (optional)…</option>
                 {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
@@ -155,17 +155,17 @@ export default function UserManagement() {
             {error && <p className="text-live text-sm">{error}</p>}
             {created && (
               <div className="rounded-lg border border-teal-600/50 bg-teal-900/30 p-3 text-sm">
-                <p className="text-teal-200 font-semibold mb-1">Account created — share these credentials:</p>
+                <p className="va-body mb-1 font-semibold text-teal-200">Account created — share these credentials:</p>
                 <p className="text-white">Email: <span className="tabular">{created.email}</span></p>
                 <p className="text-white">Password: <span className="tabular">{created.password}</span></p>
-                <p className="text-teal-400 text-xs mt-1">Role: {ROLE_LABELS[created.role] ?? created.role}</p>
-                <p className="text-teal-400 text-xs mt-1">Ask the user to change this password right after first login.</p>
+                <p className="va-micro mt-1 text-teal-400">Role: {ROLE_LABELS[created.role] ?? created.role}</p>
+                <p className="va-micro mt-1 text-teal-400">Ask the user to change this password right after first login.</p>
               </div>
             )}
           </div>
 
           <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-4">
-            <h3 className="font-score text-lg text-teal-200 mb-2">Existing users</h3>
+            <h3 className="va-section-title mb-2 text-teal-200">Existing users</h3>
             <div className="space-y-2 max-h-[60vh] overflow-y-auto">
               {profiles.map((p) => {
                 const linkedTeam = teams.find(t => t.owner_user_id === p.id)
@@ -180,18 +180,18 @@ export default function UserManagement() {
                               ? <img src={p.photo_url} alt="" className="h-full w-full object-cover" />
                               : null}
                           </div>
-                          <p className="text-white truncate">{p.full_name || '—'}</p>
+                          <p className="va-body font-medium text-white truncate">{p.full_name || '—'}</p>
                         </div>
-                        <p className="text-xs text-teal-400">{ROLE_LABELS[p.role] ?? p.role}</p>
-                        <p className="text-[0.65rem] text-teal-500 truncate">{authEmail || 'Auth email unavailable'}</p>
+                        <p className="va-micro text-teal-400">{ROLE_LABELS[p.role] ?? p.role}</p>
+                        <p className="va-micro text-teal-500 truncate">{authEmail || 'Auth email unavailable'}</p>
                         {p.role === 'team_owner' && (
                           linkedTeam ? (
                             <div className="flex items-center gap-1.5 mt-0.5">
                               {linkedTeam.logo_url && <img src={linkedTeam.logo_url} alt="" className="h-4 w-4 rounded object-cover shrink-0" />}
-                              <span className="text-[0.65rem] text-teal-300">{linkedTeam.name}</span>
+                              <span className="va-micro text-teal-300">{linkedTeam.name}</span>
                             </div>
                           ) : (
-                            <p className="text-[0.65rem] text-teal-600 mt-0.5">No team linked</p>
+                            <p className="va-micro mt-0.5 text-teal-600">No team linked</p>
                           )
                         )}
                         {editId === p.id && (
@@ -200,15 +200,15 @@ export default function UserManagement() {
                               value={editForm.full_name}
                               onChange={(e) => setEditForm((s) => ({ ...s, full_name: e.target.value }))}
                               placeholder="Full name"
-                              className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1 text-xs"
+                              className="va-body w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1"
                             />
                             <input
                               value={editForm.photo_url}
                               onChange={(e) => setEditForm((s) => ({ ...s, photo_url: e.target.value }))}
                               placeholder="Photo URL"
-                              className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1 text-xs"
+                              className="va-body w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1"
                             />
-                            <label className="inline-flex items-center text-xs px-2 py-1 rounded bg-teal-700/40 cursor-pointer">
+                            <label className="va-micro inline-flex items-center px-2 py-1 rounded bg-teal-700/40 cursor-pointer">
                               {uploadingEditPhoto ? 'Uploading…' : 'Upload photo'}
                               <input
                                 type="file"
@@ -234,7 +234,7 @@ export default function UserManagement() {
                             <select
                               value={editForm.role}
                               onChange={(e) => setEditForm((s) => ({ ...s, role: e.target.value, teamId: e.target.value === 'team_owner' ? s.teamId : '' }))}
-                              className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1 text-xs"
+                              className="va-body w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1"
                             >
                               {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
                             </select>
@@ -271,21 +271,21 @@ export default function UserManagement() {
                           <button
                             onClick={() => handleResetPassword(p.id, authEmail || p.full_name || '—')}
                             disabled={resettingId === p.id}
-                            className="rounded-lg bg-teal-700/40 border border-teal-700/50 px-2 py-1 text-xs text-teal-100 disabled:opacity-50"
+                            className="va-micro rounded-lg bg-teal-700/40 border border-teal-700/50 px-2 py-1 text-teal-100 disabled:opacity-50"
                           >
                             {resettingId === p.id ? 'Resetting…' : 'Reset pwd'}
                           </button>
                         )}
                         {editId !== p.id && (
                           <select value={p.role} onChange={(e) => changeRole(p.id, e.target.value)}
-                            className="rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1 text-xs">
+                            className="va-micro rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-1">
                             {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
                           </select>
                         )}
                         <button
                           onClick={() => handleDeleteUser(p.id, authEmail || p.full_name || 'user')}
                           disabled={deletingId === p.id}
-                          className="rounded-lg bg-live/40 border border-live/50 px-2 py-1 text-xs text-white disabled:opacity-50"
+                          className="va-micro rounded-lg bg-live/40 border border-live/50 px-2 py-1 text-white disabled:opacity-50"
                         >
                           {deletingId === p.id ? 'Deleting…' : 'Delete'}
                         </button>
@@ -293,17 +293,17 @@ export default function UserManagement() {
                     </div>
                     {resetCreds?.profileId === p.id && (
                       <div className="border-t border-teal-700/40 bg-teal-900/20 px-3 py-2">
-                        <p className="text-teal-200 font-semibold text-xs mb-1">New credentials for {p.full_name || resetCreds.email}:</p>
-                        <p className="text-white text-xs">Email: <span className="tabular">{resetCreds.email}</span></p>
-                        <p className="text-white text-xs">Password: <span className="tabular font-mono">{resetCreds.password}</span></p>
-                        <p className="text-teal-500 text-[0.65rem] mt-1">Ask the user to change this password after first login.</p>
-                        <button onClick={() => setResetCreds(null)} className="text-[0.65rem] text-teal-600 hover:text-teal-400 mt-0.5 transition">Dismiss</button>
+                        <p className="va-micro text-teal-200 font-semibold mb-1">New credentials for {p.full_name || resetCreds.email}:</p>
+                        <p className="va-micro text-white">Email: <span className="tabular">{resetCreds.email}</span></p>
+                        <p className="va-micro text-white">Password: <span className="tabular font-mono">{resetCreds.password}</span></p>
+                        <p className="va-micro text-teal-500 mt-1">Ask the user to change this password after first login.</p>
+                        <button onClick={() => setResetCreds(null)} className="va-micro text-teal-600 hover:text-teal-400 mt-0.5 transition">Dismiss</button>
                       </div>
                     )}
                   </div>
                 )
               })}
-              {profiles.length === 0 && <p className="text-teal-500 text-sm">No profiles yet.</p>}
+              {profiles.length === 0 && <p className="va-support text-teal-500">No profiles yet.</p>}
             </div>
           </div>
         </div>
