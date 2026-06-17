@@ -88,7 +88,7 @@ export default function AuctionTimer({
               </span>
             </div>
           ) : (
-            <span className={`font-score text-3xl sm:text-4xl tabular leading-none ${
+            <span className={`font-score text-3xl sm:text-4xl font-semibold tabular leading-none ${
               remaining <= 5 ? 'text-amber-400' : 'text-white'
             }`}>
               {seconds}
@@ -96,7 +96,7 @@ export default function AuctionTimer({
           )}
         </div>
       </div>
-      <span className="text-xs text-teal-400 uppercase tracking-wider">
+      <span className="text-xs uppercase tracking-[0.16em] text-[#93ada6]">
         {remaining <= 0 ? 'Time!' : isUrgent ? 'Going…' : 'Bid clock'}
       </span>
 

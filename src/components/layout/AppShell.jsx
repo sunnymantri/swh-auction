@@ -204,9 +204,9 @@ function UserMenu({
           className="absolute right-0 mt-2 w-60 rounded-xl border border-gold/15 bg-[#0b1312] shadow-card overflow-hidden z-30"
         >
           <div className="px-3 py-2.5 border-b border-gold/10">
-            <p className="text-xs text-white truncate">{fullName || email}</p>
-            {fullName && <p className="text-[0.65rem] text-[#a7beb8] truncate">{email}</p>}
-            <p className="text-[0.65rem] uppercase tracking-wider text-gold/70 mt-0.5">{ROLE_LABELS[role] ?? role}</p>
+            <p className="text-sm font-medium text-white truncate">{fullName || email}</p>
+            {fullName && <p className="text-xs text-[#a7beb8] truncate">{email}</p>}
+            <p className="mt-0.5 text-xs uppercase tracking-[0.16em] text-gold/70">{ROLE_LABELS[role] ?? role}</p>
           </div>
           {editing && (
             <div className="px-3 py-2.5 border-b border-gold/10 space-y-2">
@@ -214,15 +214,15 @@ function UserMenu({
                 value={nameDraft}
                 onChange={(e) => setNameDraft(e.target.value)}
                 placeholder="Full name"
-                className="w-full rounded-lg bg-black/20 border border-gold/15 px-2 py-1.5 text-xs text-white"
+                className="w-full rounded-lg bg-black/20 border border-gold/15 px-2 py-1.5 text-sm text-white"
               />
               <input
                 value={photoDraft}
                 onChange={(e) => setPhotoDraft(e.target.value)}
                 placeholder="Photo URL"
-                className="w-full rounded-lg bg-black/20 border border-gold/15 px-2 py-1.5 text-xs text-white"
+                className="w-full rounded-lg bg-black/20 border border-gold/15 px-2 py-1.5 text-sm text-white"
               />
-              <label className="inline-flex items-center text-[0.7rem] px-2 py-1 rounded bg-gold/15 cursor-pointer text-gold-soft">
+              <label className="inline-flex items-center rounded bg-gold/15 px-2 py-1 text-xs cursor-pointer text-gold-soft">
                 {uploadingPhoto ? 'Uploading…' : 'Upload photo'}
                 <input
                   type="file"
@@ -363,9 +363,9 @@ export default function AppShell({ title, children }) {
             </a>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-score text-[1.35rem] sm:text-[1.7rem] text-white leading-none truncate tracking-tight">{headingPrimary}</h1>
+                <h1 className="font-score text-2xl sm:text-[1.85rem] font-semibold text-white leading-none truncate tracking-tight">{headingPrimary}</h1>
                 {auction && (
-                  <span className={`text-[0.64rem] sm:text-[0.68rem] px-2.5 py-1 rounded-full font-semibold tracking-[0.18em] ${
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-semibold tracking-[0.16em] ${
                     auction.status === 'live'
                       ? 'bg-gold/20 text-gold animate-pulsegold'
                       : 'bg-gold/10 text-gold-soft'
@@ -375,7 +375,7 @@ export default function AppShell({ title, children }) {
                 )}
               </div>
               {headingCaption && (
-                <p className="mt-1 truncate text-[0.8rem] text-[#97aba6]">{headingCaption}</p>
+                <p className="mt-1 truncate text-sm text-[#97aba6]">{headingCaption}</p>
               )}
             </div>
           </div>
@@ -386,7 +386,7 @@ export default function AppShell({ title, children }) {
                 <select
                   value={auctionId ?? ''}
                   onChange={(e) => selectAuction(e.target.value)}
-                  className="appearance-none w-full rounded-xl bg-black/15 hover:bg-black/25 border border-gold/15 hover:border-gold/35 pl-3.5 pr-9 py-2 text-[0.82rem] text-white focus:outline-none focus:ring-1 focus:ring-gold/45 transition cursor-pointer"
+                  className="appearance-none w-full rounded-xl bg-black/15 hover:bg-black/25 border border-gold/15 hover:border-gold/35 pl-3.5 pr-9 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-gold/45 transition cursor-pointer"
                 >
                   {auctions.map((a) => (
                     <option key={a.id} value={a.id}>{a.name} ({fmtStatus(a.status)})</option>
@@ -431,7 +431,7 @@ export default function AppShell({ title, children }) {
                     const dropdownActive = Array.isArray(l.dropdown)
                       && l.dropdown.some((item) => item.to && item.to !== '#' && loc.pathname === item.to)
                     const active = loc.pathname === l.to || dropdownActive
-                    const navClasses = `group inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-[0.84rem] font-medium whitespace-nowrap transition-all ${
+                    const navClasses = `group inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-all ${
                       active
                         ? 'border-gold/28 bg-gold/12 text-gold-soft shadow-[0_12px_25px_-18px_rgba(244,183,64,0.7)]'
                         : 'border-transparent bg-white/[0.02] text-white/78 hover:border-gold/14 hover:bg-white/[0.05] hover:text-white'
@@ -477,7 +477,7 @@ export default function AppShell({ title, children }) {
       {sponsors.length > 0 && (
         <div className="border-b border-gold/10 bg-black/10">
           <div className="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center gap-3 sm:gap-4">
-            <span className="text-[0.65rem] sm:text-xs uppercase tracking-widest text-gold/60">Sponsors</span>
+            <span className="text-xs uppercase tracking-[0.18em] text-gold/60">Sponsors</span>
             {sponsors.map((s, i) => (
               s?.url ? <img key={i} src={s.url} alt={s.name || ''} title={s.name || ''} className="h-6 sm:h-7 object-contain" /> : null
             ))}

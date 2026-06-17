@@ -6,8 +6,8 @@ const initials = (n = '') => n.split(' ').map(w => w[0]).slice(0, 2).join('').to
 function Stat({ label, value }) {
   return (
     <div className="text-center">
-      <div className="font-score text-2xl leading-none tabular text-white">{value}</div>
-      <div className="mt-1 text-[0.62rem] uppercase tracking-[0.18em] text-[#93ada6]">{label}</div>
+      <div className="font-score text-2xl font-semibold leading-none tabular text-white">{value}</div>
+      <div className="mt-1 text-xs uppercase tracking-[0.16em] text-[#93ada6]">{label}</div>
     </div>
   )
 }
@@ -35,7 +35,7 @@ function PointsBreakdown({
   return (
       <div className="bg-black/10 px-4 py-4 sm:px-6 border-t victory-divider">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#f5f2e8]">Performance Points</h4>
+        <h4 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#f5f2e8]">Performance Points</h4>
         <div className="flex items-center gap-2">
           {onFetchAndRecalculate && (
             <button
@@ -59,24 +59,24 @@ function PointsBreakdown({
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="rounded-xl border border-gold/10 bg-black/10 p-2.5 text-center">
-          <div className="font-score text-lg text-white tabular">{batting.toFixed(0)}</div>
-          <div className="mt-0.5 text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">Batting</div>
+          <div className="font-score text-lg font-semibold text-white tabular">{batting.toFixed(0)}</div>
+          <div className="mt-0.5 text-xs uppercase tracking-[0.16em] text-[#93ada6]">Batting</div>
         </div>
         <div className="rounded-xl border border-gold/10 bg-black/10 p-2.5 text-center">
-          <div className="font-score text-lg text-white tabular">{bowling.toFixed(0)}</div>
-          <div className="mt-0.5 text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">Bowling</div>
+          <div className="font-score text-lg font-semibold text-white tabular">{bowling.toFixed(0)}</div>
+          <div className="mt-0.5 text-xs uppercase tracking-[0.16em] text-[#93ada6]">Bowling</div>
         </div>
         <div className="rounded-xl border border-gold/10 bg-black/10 p-2.5 text-center">
-          <div className="font-score text-lg text-white tabular">{fielding.toFixed(0)}</div>
-          <div className="mt-0.5 text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">Fielding</div>
+          <div className="font-score text-lg font-semibold text-white tabular">{fielding.toFixed(0)}</div>
+          <div className="mt-0.5 text-xs uppercase tracking-[0.16em] text-[#93ada6]">Fielding</div>
         </div>
         <div className="rounded-xl border border-gold/10 bg-black/10 p-2.5 text-center">
-          <div className="font-score text-lg text-white tabular">{total.toFixed(0)}</div>
-          <div className="mt-0.5 text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">Total</div>
+          <div className="font-score text-lg font-semibold text-white tabular">{total.toFixed(0)}</div>
+          <div className="mt-0.5 text-xs uppercase tracking-[0.16em] text-[#93ada6]">Total</div>
         </div>
         <div className={`rounded-xl border p-2.5 text-center ${tier.label === 'Platinum' ? 'bg-white/5 border-white/10' : tier.label === 'Gold' ? 'bg-gold/12 border-gold/20' : tier.label === 'Silver' ? 'bg-white/5 border-white/10' : 'bg-amber-900/20 border-amber-700/30'}`}>
-          <div className={`font-score text-lg tabular ${tier.color}`}>{ppm.toFixed(1)}</div>
-          <div className="mt-0.5 text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">PPM · {tier.label}</div>
+          <div className={`font-score text-lg font-semibold tabular ${tier.color}`}>{ppm.toFixed(1)}</div>
+          <div className="mt-0.5 text-xs uppercase tracking-[0.16em] text-[#93ada6]">PPM · {tier.label}</div>
         </div>
       </div>
     </div>
@@ -109,7 +109,7 @@ export default function PlayerCard({
             : <span className="font-score text-3xl text-[#c0dad3]">{initials(player.name)}</span>}
         </div>
         <div className="min-w-0">
-          <h2 className="font-score text-3xl sm:text-4xl leading-none text-white break-words">{player.name}</h2>
+          <h2 className="font-score text-3xl sm:text-4xl font-semibold leading-none text-white break-words">{player.name}</h2>
           <div className="flex flex-wrap gap-2 mt-2">
             <span className="rounded-full bg-gold/15 px-2.5 py-0.5 text-xs font-semibold text-gold">{player.role}</span>
             <span className="rounded-full bg-[#1a5c54]/30 px-2.5 py-0.5 text-xs text-[#c0dad3]">{player.category}</span>
@@ -123,8 +123,8 @@ export default function PlayerCard({
           </div>
         </div>
         <div className="sm:ml-auto sm:text-right">
-          <div className="text-[0.7rem] uppercase tracking-[0.16em] text-[#93ada6] sm:text-xs">Base</div>
-          <div className="font-score text-2xl text-gold tabular">{fmtPoints(player.base_price)}</div>
+          <div className="text-xs uppercase tracking-[0.16em] text-[#93ada6]">Base</div>
+          <div className="font-score text-2xl font-semibold text-gold tabular">{fmtPoints(player.base_price)}</div>
         </div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 px-4 sm:px-6 py-5 stat-grid">

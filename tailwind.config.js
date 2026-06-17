@@ -20,8 +20,8 @@ export default {
         }
       },
       fontFamily: {
-        score: ['"Barlow Condensed"', 'system-ui', 'sans-serif'],
-        sans:  ['"Hanken Grotesk"', 'system-ui', 'sans-serif']
+        score: ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+        sans:  ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif']
       },
       boxShadow: {
         glow: '0 0 0 1px rgba(244,183,64,.35), 0 0 40px -8px rgba(244,183,64,.45)',
