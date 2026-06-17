@@ -1,10 +1,61 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { fmtPoints } from '../../lib/format'
 import { calcIncrement } from '../../lib/bidding'
 
 export { calcIncrement }
 
-const btn = 'px-3 py-2 rounded-lg font-semibold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed'
+const initials = (label = '') =>
+  String(label)
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('') || '?'
+
+function HammerIcon({ className = 'h-5 w-5' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M14.5 3.5L20.5 9.5L18 12L12 6L14.5 3.5Z" fill="currentColor" />
+      <path d="M11 7L17 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M4 20L11.5 12.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M8.5 20H4V15.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function CheckIcon({ className = 'h-4 w-4' }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
+      <path d="M4.5 10.5L8.25 14.25L15.5 6.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function XIcon({ className = 'h-4 w-4' }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
+      <path d="M5.5 5.5L14.5 14.5M14.5 5.5L5.5 14.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function RotateIcon({ className = 'h-4 w-4' }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
+      <path d="M15.5 8A6 6 0 1 0 16 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M12.75 4.5H16.5V8.25" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ArrowIcon({ className = 'h-4 w-4' }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
+      <path d="M4 10H16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M11.5 5.5L16 10L11.5 14.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
 export default function AuctioneerControls({
   player, teams, highestBid, leaderTeamId, basePrice,
@@ -14,42 +65,57 @@ export default function AuctioneerControls({
   const [teamId, setTeamId] = useState('')
   const [manual, setManual] = useState('')
 
-  // Re-auction players can be sold below their base price
   const isReauction = player?.status === 'reauction'
-
   const dynamicIncrement = calcIncrement(highestBid)
-
-  // Re-auction floor uses auction min player price instead of base price.
   const bidFloor = isReauction ? minPlayerPrice : basePrice
   const nextBid = Math.max((highestBid || 0) + dynamicIncrement, bidFloor)
+  const leader = teams.find((t) => t.id === leaderTeamId)
 
-  const leader = teams.find(t => t.id === leaderTeamId)
+  const selectedTeam = useMemo(
+    () => teams.find((t) => t.id === teamId) ?? null,
+    [teamId, teams]
+  )
+
+  const bumpAmount = (delta) => {
+    setManual((current) => {
+      const startingPoint = current ? Number(current) : nextBid
+      return String(startingPoint + delta)
+    })
+  }
 
   if (!player) {
     return (
-      <div className="rounded-2xl bg-ink-800/70 border border-teal-700/40 p-5">
-        <button className={`${btn} w-full bg-gold text-ink-900 hover:bg-gold-soft`}
-          disabled={busy} onClick={onStart}>▶  Start auction</button>
+      <div className="rounded-[1.75rem] border border-gold/12 bg-ink-800/80 p-5 shadow-card">
+        <div className="va-label text-center text-[#8ca09b]">Auctioneer stage</div>
+        <button
+          className="mt-4 flex w-full items-center justify-center gap-3 rounded-2xl bg-gold px-4 py-4 text-2xl font-semibold text-[#11130e] shadow-[0_18px_35px_-24px_rgba(244,183,64,0.85)] transition hover:bg-gold-soft disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={busy}
+          onClick={onStart}
+        >
+          <ArrowIcon className="h-6 w-6" />
+          Start auction
+        </button>
       </div>
     )
   }
 
   return (
-    <div className="rounded-2xl bg-ink-800/80 border border-teal-700/50 p-4 sm:p-5 space-y-4 shadow-card">
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="font-score text-lg text-teal-200">Auctioneer</span>
-        {isReauction && (
-          <span className="px-2 py-0.5 rounded-full bg-yellow-700/50 text-yellow-300 text-xs font-semibold">
-            ↻ Re-auction · below base allowed
-          </span>
-        )}
-        {busy && <span className="text-xs text-teal-400 animate-pulsegold">working…</span>}
+    <div className="rounded-[1.75rem] border border-gold/12 bg-ink-800/80 p-4 sm:p-5 shadow-card">
+      <div className="flex items-center justify-between gap-3">
+        <div className="va-label text-[#8ca09b]">Auctioneer stage</div>
+        <div className="flex items-center gap-2">
+          {isReauction && (
+            <span className="va-micro rounded-full border border-yellow-500/25 bg-yellow-500/10 px-3 py-1 text-yellow-300">
+              Re-auction
+            </span>
+          )}
+          {busy && <span className="va-micro text-teal-400 animate-pulsegold">working…</span>}
+        </div>
       </div>
 
-      {/* Calling bids on behalf of a team */}
-      <div className="space-y-2">
-        <div className="text-xs text-teal-300 uppercase tracking-wide">Bidding team</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+      <div className="mt-4 rounded-[1.5rem] border border-gold/12 bg-black/10 p-4">
+        <div className="va-label mb-3 text-[#8ca09b]">Bidding team</div>
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {teams.map((t) => {
             const isSelected = teamId === t.id
             const isLeader = t.id === leaderTeamId
@@ -60,79 +126,137 @@ export default function AuctioneerControls({
                 type="button"
                 disabled={isFull || busy}
                 onClick={() => setTeamId(t.id)}
-                className={`
-                  rounded-lg border px-2 py-2 text-left transition
-                  ${isSelected
-                    ? 'border-gold bg-gold/15'
-                    : 'border-teal-700/40 bg-ink-900/70 hover:border-teal-500/60'}
-                  ${isFull ? 'opacity-40 cursor-not-allowed' : ''}
-                `}
                 title={isFull ? `${t.name} squad is full` : `${t.name} (${fmtPoints(t.points_remaining)} left)`}
+                className={`rounded-2xl border px-3 py-3 text-left transition ${
+                  isSelected
+                    ? 'border-gold/35 bg-gold/10 shadow-[0_14px_28px_-24px_rgba(244,183,64,0.8)]'
+                    : 'border-gold/10 bg-black/20 hover:border-gold/20'
+                } ${isFull ? 'cursor-not-allowed opacity-40' : ''}`}
               >
-                <div className="flex items-center gap-2">
-                  {t.logo_url ? (
-                    <img src={t.logo_url} alt="" className="h-6 w-6 rounded object-cover shrink-0" />
-                  ) : (
-                    <div className="h-6 w-6 rounded bg-teal-800/60 grid place-items-center text-[10px] text-teal-200">
-                      {(t.short_name || t.name || '?').slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 overflow-hidden rounded-xl border border-gold/12 bg-black/20 shrink-0">
+                    {t.logo_url ? (
+                      <img src={t.logo_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center bg-gold/10 text-sm font-semibold text-gold-soft">
+                        {initials(t.short_name || t.name)}
+                      </div>
+                    )}
+                  </div>
                   <div className="min-w-0">
-                    <p className="text-xs text-white truncate">
-                      {isLeader ? '★ ' : ''}{t.short_name || t.name}
-                    </p>
-                    <p className="text-xs text-teal-300 truncate">
+                    <div className="va-body truncate text-white">
+                      {t.short_name || t.name}
+                      {isLeader && <span className="va-micro ml-2 text-gold-soft">Leading</span>}
+                    </div>
+                    <div className="va-micro truncate text-[#9db0ac]">
                       {fmtPoints(t.points_remaining)} left{isFull ? ' · Full' : ''}
-                    </p>
+                    </div>
                   </div>
                 </div>
               </button>
             )
           })}
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="mt-4 rounded-[1.5rem] border border-gold/12 bg-black/10 p-4 sm:p-5">
+        <div className="mx-auto max-w-5xl">
+          <div className="va-label text-center text-[#8ca09b]">Quick action</div>
           <button
-            className={`${btn} bg-teal-600 hover:bg-teal-500 text-white`}
-            disabled={busy || !teamId}
+            disabled={busy || !selectedTeam}
             onClick={() => onBid(teamId, nextBid, 'team_bid', isReauction)}
-            title={isReauction
-              ? `Re-auction floor: ${fmtPoints(minPlayerPrice)}`
-              : `Increment: +${fmtPoints(dynamicIncrement)}`}
+            title={selectedTeam ? `Next bid ${fmtPoints(nextBid)}` : 'Select a bidding team'}
+            className="mt-4 flex w-full items-center justify-center gap-3 rounded-2xl bg-gold px-4 py-4 text-2xl font-semibold text-[#11130e] shadow-[0_18px_35px_-24px_rgba(244,183,64,0.85)] transition hover:bg-gold-soft disabled:cursor-not-allowed disabled:opacity-40"
           >
-            + {fmtPoints(dynamicIncrement)} → {fmtPoints(nextBid)}
+            <HammerIcon className="h-7 w-7" />
+            Bid {fmtPoints(nextBid)}
           </button>
-          <div className="flex gap-1">
-            <input value={manual} onChange={e => setManual(e.target.value.replace(/[^\d]/g, ''))}
-              placeholder="amount" inputMode="numeric"
-              className="w-full rounded-lg bg-ink-900 border border-teal-700/50 px-2 py-2 text-sm text-white tabular" />
-            <button className={`${btn} bg-teal-700 hover:bg-teal-600 text-white shrink-0`}
-              disabled={busy || !teamId || !manual}
+
+          <button
+            disabled={busy || !hasBids}
+            onClick={() => onSold(leaderTeamId, highestBid)}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-gold/20 bg-gold/12 px-4 py-3 text-lg font-semibold text-gold-soft transition hover:bg-gold/16 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <CheckIcon className="h-5 w-5" />
+            Sold{leader ? ` → ${leader.short_name}` : ''}
+          </button>
+
+          <div className="my-4 flex items-center gap-3 text-[#8ca09b]">
+            <div className="h-px flex-1 bg-gold/10" />
+            <span className="va-micro uppercase tracking-[0.18em]">or</span>
+            <div className="h-px flex-1 bg-gold/10" />
+          </div>
+
+          <div className="mb-3 flex flex-wrap justify-center gap-2">
+            {[100, 500, 1000].map((delta) => (
+              <button
+                key={delta}
+                type="button"
+                onClick={() => bumpAmount(delta)}
+                disabled={busy || !selectedTeam}
+                className="rounded-full border border-gold/20 bg-gold/10 px-3 py-1.5 text-sm font-medium text-gold-soft transition hover:bg-gold/15 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                +{fmtPoints(delta)}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid gap-2 lg:grid-cols-[14rem_minmax(0,1fr)_auto]">
+            <div className="rounded-2xl border border-gold/12 bg-black/20 px-4 py-3 text-left text-[#8ca09b]">
+              Manual amount
+            </div>
+            <input
+              value={manual}
+              onChange={(e) => setManual(e.target.value.replace(/[^\d]/g, ''))}
+              placeholder={`${fmtPoints(nextBid)}`}
+              inputMode="numeric"
+              className="rounded-2xl border border-gold/12 bg-black/20 px-4 py-3 text-white placeholder:text-[#6f817c] focus:border-gold/35 focus:outline-none"
+            />
+            <button
+              disabled={busy || !selectedTeam || !manual}
               title="Manual bid (overrides increment rule)"
-              onClick={() => onBid(teamId, Number(manual), 'auctioneer_manual_bid', true)}>
-              Set
+              onClick={() => onBid(teamId, Number(manual), 'auctioneer_manual_bid', true)}
+              className="rounded-2xl border border-gold/20 bg-transparent px-8 py-3 font-medium uppercase tracking-[0.14em] text-gold-soft transition hover:bg-gold/10 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Place
+            </button>
+          </div>
+
+          <p className="mt-3 text-center text-sm text-[#9db0ac]">
+            {selectedTeam
+              ? `Next valid bid starts at ${fmtPoints(nextBid)}.`
+              : 'Select a bidding team to activate quick bid and manual amount actions.'}
+          </p>
+
+          {warning && <p className="va-support mt-3 rounded-2xl bg-live/10 px-4 py-3 text-center text-live">{warning}</p>}
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <button
+              className="flex items-center justify-center gap-2 rounded-2xl border border-live/18 bg-live/75 px-4 py-3 font-medium text-white transition hover:bg-live disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={busy}
+              onClick={onUnsold}
+            >
+              <XIcon className="h-5 w-5" />
+              Unsold
+            </button>
+            <button
+              className="flex items-center justify-center gap-2 rounded-2xl border border-gold/12 bg-white/5 px-4 py-3 font-medium text-teal-100 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={busy || !activeSale}
+              onClick={() => onReauction(activeSale?.id)}
+            >
+              <RotateIcon className="h-5 w-5" />
+              Re-auction
+            </button>
+            <button
+              className="flex items-center justify-center gap-2 rounded-2xl border border-teal-500/18 bg-teal-800 px-4 py-3 font-medium text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={busy}
+              onClick={onNext}
+            >
+              <ArrowIcon className="h-5 w-5" />
+              Next player
             </button>
           </div>
         </div>
-      </div>
-
-      {warning && <p className="text-live text-xs bg-live/10 rounded-lg px-3 py-2">{warning}</p>}
-
-      {/* Outcome */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-        <button className={`${btn} bg-gold text-ink-900 hover:bg-gold-soft`}
-          disabled={busy || !hasBids}
-          onClick={() => onSold(leaderTeamId, highestBid)}>
-          ✓ Sold{leader ? ` → ${leader.short_name}` : ''}
-        </button>
-        <button className={`${btn} bg-live/80 hover:bg-live text-white`}
-          disabled={busy} onClick={onUnsold}>✕ Unsold</button>
-        <button className={`${btn} bg-white/5 hover:bg-white/10 text-teal-200`}
-          disabled={busy || !activeSale} onClick={() => onReauction(activeSale?.id)}>
-          ↻ Re-auction
-        </button>
-        <button className={`${btn} bg-teal-800 hover:bg-teal-700 text-white`}
-          disabled={busy} onClick={onNext}>Next player →</button>
       </div>
     </div>
   )
