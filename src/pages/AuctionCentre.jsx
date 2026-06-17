@@ -19,6 +19,14 @@ import TeamBudgetGrid from '../components/auction/TeamBudgetGrid'
 import ActivityFeed from '../components/auction/ActivityFeed'
 import SoldCelebration from '../components/auction/SoldCelebration'
 
+const initials = (label = '') =>
+  String(label)
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('') || '?'
+
 export default function AuctionCentre() {
   const { isAdmin, role } = useAuth()
   const { auction } = useActiveAuction()
@@ -99,7 +107,8 @@ export default function AuctionCentre() {
   const top = bids.reduce((m, b) => (b.bid_amount > (m?.bid_amount ?? -1) ? b : m), null)
   const highestBid = top?.bid_amount ?? 0
   const leaderTeamId = top?.team_id ?? null
-  const leaderName = teams.find(t => t.id === leaderTeamId)?.name
+  const leaderTeam = teams.find(t => t.id === leaderTeamId) ?? null
+  const leaderName = leaderTeam?.name
   const timerDuration = bids.length > 0
     ? (auction?.bid_timer_seconds ?? 15)
     : (auction?.initial_bid_timer_seconds ?? 90)
@@ -261,7 +270,20 @@ export default function AuctionCentre() {
               )}
               <div className="sm:text-right min-w-0">
                 <div className="va-label text-teal-400">Highest bidder</div>
-                <div className="va-page-title text-white truncate">{leaderName || '—'}</div>
+                <div className="mt-3 flex items-center justify-end gap-3">
+                  {leaderTeam && (
+                    <div className="h-12 w-12 overflow-hidden rounded-2xl border border-gold/15 bg-black/20 shrink-0">
+                      {leaderTeam.logo_url ? (
+                        <img src={leaderTeam.logo_url} alt={leaderTeam.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="grid h-full w-full place-items-center bg-gold/10 text-sm font-semibold text-gold-soft">
+                          {initials(leaderTeam.short_name || leaderTeam.name)}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="va-page-title text-white truncate">{leaderName || '—'}</div>
+                </div>
               </div>
             </div>
 

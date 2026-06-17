@@ -182,7 +182,7 @@ export default function AuctioneerControls({
             className="mt-4 flex w-full items-center justify-center gap-3 rounded-2xl bg-gold px-4 py-4 text-2xl font-semibold text-[#11130e] shadow-[0_18px_35px_-24px_rgba(244,183,64,0.85)] transition hover:bg-gold-soft disabled:cursor-not-allowed disabled:opacity-40"
           >
             <HammerIcon className="h-7 w-7" />
-            Bid {fmtPoints(activeBidAmount)}
+            {hasManualAmount ? 'Bid' : 'Next bid'} {fmtPoints(activeBidAmount)}
           </button>
 
           <button
@@ -244,7 +244,9 @@ export default function AuctioneerControls({
                   ? `Enter at least ${fmtPoints(nextBid)} to beat the current bid.`
                   : manualBelowReauctionFloor
                     ? `Minimum bid for re-auction player is ${fmtPoints(minPlayerPrice)}.`
-                    : `Next valid bid starts at ${fmtPoints(nextBid)}.`}
+                    : hasManualAmount
+                      ? `Current highest bid is ${fmtPoints(highestBid)}. You are about to place ${fmtPoints(activeBidAmount)}.`
+                      : `Current highest bid is ${fmtPoints(highestBid)}. Next valid bid starts at ${fmtPoints(nextBid)}.`}
           </p>
 
           {warning && <p className="va-support mt-3 rounded-2xl bg-live/10 px-4 py-3 text-center text-live">{warning}</p>}

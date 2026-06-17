@@ -100,7 +100,8 @@ export default function TeamOwnerBidding() {
   const isLive = auction?.status === 'live'
   const top = bids.reduce((max, bid) => (bid.bid_amount > (max?.bid_amount ?? -1) ? bid : max), null)
   const highestBid = top?.bid_amount ?? 0
-  const leaderName = teams.find((team) => team.id === top?.team_id)?.name
+  const leaderTeam = teams.find((team) => team.id === top?.team_id) ?? null
+  const leaderName = leaderTeam?.name
   const iAmLeader = Boolean(top?.team_id && myTeam && top.team_id === myTeam.id)
   const isReauction = current?.players?.status === 'reauction'
   const bidFloor = isReauction
@@ -223,7 +224,19 @@ export default function TeamOwnerBidding() {
                       <div className="mt-5">
                         <div className="va-label text-[#8ca09b]">Leading team</div>
                         <div className="mt-3 flex flex-wrap items-center justify-center gap-3 xl:justify-start">
-                          <span className="text-3xl text-gold-soft">⌂</span>
+                          {leaderTeam ? (
+                            <div className="h-12 w-12 overflow-hidden rounded-2xl border border-gold/15 bg-black/20 shrink-0">
+                              {leaderTeam.logo_url ? (
+                                <img src={leaderTeam.logo_url} alt={leaderTeam.name} className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="grid h-full w-full place-items-center bg-gold/10 text-sm font-semibold text-gold-soft">
+                                  {initials(leaderTeam.short_name || leaderTeam.name)}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-3xl text-gold-soft">⌂</span>
+                          )}
                           <span className="va-page-title text-white">{leaderName || 'Awaiting first bid'}</span>
                           {iAmLeader && (
                             <span className="rounded-full border border-gold/25 bg-gold/10 px-3 py-1 text-xs font-medium text-gold-soft">
