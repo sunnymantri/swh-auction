@@ -66,9 +66,9 @@ export async function uploadUserPhoto(file) {
 // ---- Account creation via the admin-create-user Edge Function ----
 // Returns { ok, email, password, role, profile_id } so the admin can share
 // the generated credentials with the new team owner.
-export async function createUserAccount({ email, fullName, role = 'team_owner', teamId = null, password = null }) {
+export async function createUserAccount({ email, fullName, role = 'team_owner', teamId = null, isBidder = false, password = null }) {
   const { data, error } = await supabase.functions.invoke('admin-create-user', {
-    body: { email, full_name: fullName, role, team_id: teamId, password }
+    body: { email, full_name: fullName, role, team_id: teamId, is_bidder: !!isBidder, password }
   })
   if (error) {
     let detail = error.message

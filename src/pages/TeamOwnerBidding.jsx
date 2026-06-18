@@ -79,9 +79,13 @@ export default function TeamOwnerBidding() {
   const { celebration, dismiss: dismissCelebration } = useSoldCelebration(events)
 
   const myTeam = useMemo(
-    () => (profile ? teams.find((team) => team.owner_user_id === profile.id) || null : null),
+    () => {
+      if (!profile) return null
+      return teams.find((team) => team.id === profile.team_id) || teams.find((team) => team.owner_user_id === profile.id) || null
+    },
     [teams, profile]
   )
+  const isTeamBidder = Boolean(myTeam && profile && myTeam.owner_user_id === profile.id)
 
   const player = current?.players ?? null
 
@@ -113,6 +117,8 @@ export default function TeamOwnerBidding() {
     : (auction?.initial_bid_timer_seconds ?? 90)
   const cannotBidReason = !myTeam
     ? 'No team linked'
+    : !isTeamBidder
+      ? 'You are linked to this team but not designated as bidder'
     : !isLive
       ? `Auction is ${auction?.status}`
       : current?.clock_paused
