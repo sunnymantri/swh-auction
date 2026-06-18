@@ -4,6 +4,7 @@ import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import PlayerCard from '../components/auction/PlayerCard'
 import { useActiveAuction } from '../hooks/useActiveAuction'
+import { useAuth } from '../context/AuthContext'
 import {
   createPlayer, deletePlayer, exportPlayersCsv, listPlayers,
   parsePlayersCsvDetailed, playersCsvTemplate, updatePlayer, uploadPlayerPhoto,
@@ -101,7 +102,7 @@ const mergeFetchedStats = (player, stats) => ({
   bowling_style: stats.bowling_style || player.bowling_style,
   role: stats.role || player.role,
   photo_url: stats.photo_url || player.photo_url,
-  // Extended fields returned by PlayHQ (no-op for CricHeroes which omits these)
+  // Extended fields returned by Play Cricket/PlayHQ fetch (no-op for CricHeroes)
   ...(stats.fifties != null && { fifties: stats.fifties }),
   ...(stats.hundreds != null && { hundreds: stats.hundreds }),
   ...(stats.sixes != null && { sixes: stats.sixes }),
@@ -130,6 +131,7 @@ const buildStatsUpdatePayload = (player) => ({
 })
 
 export default function PlayersManagement() {
+  const { role } = useAuth()
   const { auction } = useActiveAuction()
   const location = useLocation()
   const navigate = useNavigate()
@@ -145,6 +147,7 @@ export default function PlayersManagement() {
   const [report, setReport] = useState(null)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [fetchingStats, setFetchingStats] = useState(false)
   const [fetchingPlayHQ, setFetchingPlayHQ] = useState(false)
@@ -333,11 +336,18 @@ export default function PlayersManagement() {
     )
   }
 
-  const set = (k, v) => setForm((s) => ({ ...s, [k]: v }))
+  const set = (k, v) => {
+    setSuccessMsg('')
+    setForm((s) => ({ ...s, [k]: v }))
+  }
 
   const save = async () => {
-    setErr(''); setSaving(true)
+    setErr('')
+    setSuccessMsg('')
+    setSaving(true)
     try {
+      const isEdit = Boolean(editId)
+      const savedName = form.name?.trim() || 'Player'
       // Base price is set via "Recalculate base prices" (cohort-relative),
       // not on save — keep whatever the admin entered here.
       const payload = { ...form, auction_id: auction.id }
@@ -346,6 +356,11 @@ export default function PlayersManagement() {
       setEditId(null)
       setForm(blankFor(auction))
       await reloadPlayers()
+      setSuccessMsg(
+        isEdit
+          ? `${savedName} profile updated successfully.`
+          : `New player profile saved for ${savedName}.`
+      )
     } catch (e) {
       setErr(e.message || 'Save failed — check browser console.')
     } finally {
@@ -379,13 +394,13 @@ export default function PlayersManagement() {
   }
 
   const fetchFromPlayHQ = async () => {
-    if (!form.playhq_url) { setErr('Enter a PlayHQ profile URL first.'); return }
+    if (!form.playhq_url) { setErr('Enter a Play Cricket profile URL first.'); return }
     setErr(''); setFetchingPlayHQ(true)
     try {
       const stats = await fetchPlayHQStats(form.playhq_url)
       setForm((s) => mergeFetchedStats(s, stats))
     } catch (e) {
-      setErr(`PlayHQ fetch failed: ${e.message}`)
+      setErr(`Play Cricket fetch failed: ${e.message}`)
     } finally {
       setFetchingPlayHQ(false)
     }
@@ -552,6 +567,22 @@ export default function PlayersManagement() {
                 fetchingAndRecalculating={syncingProfileStats}
                 tierOverride={viewPlayer ? (tierByPlayerId[viewPlayer.id] || getTier(calcPPM(viewPlayer))) : null}
               />
+              {role === 'admin' && (
+                <button
+                  onClick={() => {
+                    setEditId(viewPlayer.id)
+                    setForm({ ...blankFor(auction), ...viewPlayer })
+                    setErr('')
+                    setSuccessMsg('')
+                    setTab('Add Player')
+                    navigate('/players?tab=Add%20Player', { replace: true })
+                    setViewPlayer(null)
+                  }}
+                  className="va-body mt-3 w-full py-2 text-gold hover:text-white bg-ink-800/80 border border-gold/35 rounded-xl"
+                >
+                  Edit profile
+                </button>
+              )}
               <button onClick={() => setViewPlayer(null)}
                 className="va-body mt-3 w-full py-2 text-teal-300 hover:text-white bg-ink-800/80 border border-teal-700/40 rounded-xl">
                 Close
@@ -657,11 +688,11 @@ export default function PlayersManagement() {
                         </div>
                       </div>
                       <div className="rounded-lg border border-teal-700/30 bg-ink-900/40 p-3 space-y-2">
-                        <p className="va-label font-semibold text-teal-400">PlayHQ</p>
+                        <p className="va-label font-semibold text-teal-400">Play Cricket</p>
                         <div className="flex gap-2">
                           <input type="text" value={form.playhq_url ?? ''}
                             onChange={(e) => set('playhq_url', e.target.value)}
-                            placeholder="https://www.playhq.com/.../profile/{uuid}/statistics"
+                            placeholder="https://play.cricket.com.au/player/{uuid}/{name}?tab=career"
                             className="va-body flex-1 min-w-0 rounded-lg bg-ink-900 border border-teal-700/50 px-3 py-2 text-white" />
                           <button type="button" onClick={fetchFromPlayHQ}
                             disabled={fetchingPlayHQ || !form.playhq_url}
@@ -792,6 +823,11 @@ export default function PlayersManagement() {
                   </div>
                 )}
 
+                {successMsg && (
+                  <p className="va-support mt-3 rounded-lg border border-green-600/40 bg-green-900/20 px-3 py-2 text-green-400">
+                    {successMsg}
+                  </p>
+                )}
                 {err && <p className="va-support text-red-400 mt-3">{err}</p>}
                 <div className="flex items-center gap-3 mt-5">
                   {addStep > 1 && (
