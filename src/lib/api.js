@@ -312,8 +312,17 @@ export const finalizeCurrentIfExpired = (auctionId) =>
 export const setNonRegularBowlers = (teamId, playerIds) =>
   rpc('set_non_regular_bowlers', { p_team_id: teamId, p_player_ids: playerIds })
 
+function safeStorageName(name = 'file') {
+  return String(name)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9._-]/g, '-')
+    .replace(/-+/g, '-')
+}
+
 export async function uploadTeamLogo(file) {
-  const path = `team-${Date.now()}-${file.name}`
+  const path = `team-${Date.now()}-${safeStorageName(file.name)}`
   const { error } = await supabase.storage.from('team-logos').upload(path, file, { upsert: true })
   if (error) throw error
   const { data } = supabase.storage.from('team-logos').getPublicUrl(path)
@@ -321,7 +330,7 @@ export async function uploadTeamLogo(file) {
 }
 
 export async function uploadPlayerPhoto(file) {
-  const path = `player-${Date.now()}-${file.name}`
+  const path = `player-${Date.now()}-${safeStorageName(file.name)}`
   const { error } = await supabase.storage.from('player-photos').upload(path, file, { upsert: true })
   if (error) throw error
   const { data } = supabase.storage.from('player-photos').getPublicUrl(path)
@@ -329,7 +338,7 @@ export async function uploadPlayerPhoto(file) {
 }
 
 export async function uploadBranding(file) {
-  const path = `brand-${Date.now()}-${file.name}`
+  const path = `brand-${Date.now()}-${safeStorageName(file.name)}`
   const { error } = await supabase.storage.from('branding').upload(path, file, { upsert: true })
   if (error) throw error
   const { data } = supabase.storage.from('branding').getPublicUrl(path)

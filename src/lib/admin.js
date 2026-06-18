@@ -1,5 +1,14 @@
 import { supabase } from './supabase'
 
+function safeStorageName(name = 'file') {
+  return String(name)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9._-]/g, '-')
+    .replace(/-+/g, '-')
+}
+
 // ---- Profiles / roles ----
 export async function listProfiles() {
   const { data, error } = await supabase
@@ -47,7 +56,7 @@ export async function updateUserProfile(profileId, payload) {
 }
 
 export async function uploadUserPhoto(file) {
-  const path = `profile-${Date.now()}-${file.name}`
+  const path = `profile-${Date.now()}-${safeStorageName(file.name)}`
   const { error } = await supabase.storage.from('player-photos').upload(path, file, { upsert: true })
   if (error) throw error
   const { data } = supabase.storage.from('player-photos').getPublicUrl(path)
