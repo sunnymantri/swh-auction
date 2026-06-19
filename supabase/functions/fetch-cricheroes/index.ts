@@ -101,19 +101,19 @@ function deepFindFirstNumber(source: unknown, candidateKeys: string[]): number |
 // Pull the per-discipline statistics tab the cricheroes.com Stats page uses.
 // Shape: { data: { statistics: { batting: [{title, value}], bowling: [...], fielding: [...] } } }
 // Returns label-keyed maps, or null on any failure (caller falls back to summary-only).
-// TEMP debug bucket so the caller can attach diagnosis info to the API response.
-const detailDebug: Record<string, unknown> = {}
-
+// The detail endpoint at api.cricheroes.in rejects the summary key with
+// "Invalid api-key" — it requires the public web key that cricheroes.com itself
+// sends (visible in any DevTools network tab on the site, hence not secret).
+// Overridable via env var in case CricHeroes rotates it.
 async function fetchDetailStats(
-  playerId: string,
-  apiKey: string
+  playerId: string
 ): Promise<{ batting: Map<string, unknown>, bowling: Map<string, unknown>, fielding: Map<string, unknown> } | null> {
+  const detailApiKey = Deno.env.get('CRICHEROES_DETAIL_API_KEY') || 'cr!CkH3r0s'
   const url = `https://api.cricheroes.in/api/v1/player/get-player-statistic/${playerId}?pagesize=12`
-  detailDebug.url = url
   try {
     const res = await fetch(url, {
       headers: {
-        'api-key': apiKey,
+        'api-key': detailApiKey,
         'device-type': 'Chrome: 120.0.0.0',
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'en-AU,en;q=0.9',
@@ -122,27 +122,17 @@ async function fetchDetailStats(
         'Referer': 'https://cricheroes.com/'
       }
     })
-    detailDebug.httpStatus = res.status
     if (!res.ok) {
-      const body = await res.text().catch(() => '')
-      detailDebug.bodySnippet = body.slice(0, 400)
-      console.error('[fetch-cricheroes] detail endpoint non-OK', res.status, body.slice(0, 400))
+      console.error('[fetch-cricheroes] detail endpoint non-OK', res.status)
       return null
     }
     const data = await res.json()
-    detailDebug.payloadStatus = data?.status
-    detailDebug.payloadKeys = data && typeof data === 'object' ? Object.keys(data) : null
     if (data?.status !== true) {
-      detailDebug.errorMessage = data?.error?.message ?? data?.message ?? null
-      console.error('[fetch-cricheroes] detail status:false', JSON.stringify(data).slice(0, 400))
+      console.error('[fetch-cricheroes] detail rejected:', data?.error?.message ?? data?.message ?? 'unknown')
       return null
     }
     const stats = data?.data?.statistics
-    if (!stats) {
-      detailDebug.dataKeys = data?.data && typeof data.data === 'object' ? Object.keys(data.data) : null
-      console.error('[fetch-cricheroes] detail missing statistics', JSON.stringify(data?.data).slice(0, 400))
-      return null
-    }
+    if (!stats) return null
 
     const toLabelMap = (arr: unknown): Map<string, unknown> => {
       const m = new Map<string, unknown>()
@@ -155,14 +145,12 @@ async function fetchDetailStats(
       }
       return m
     }
-    const batting = toLabelMap(stats.batting)
-    const bowling = toLabelMap(stats.bowling)
-    const fielding = toLabelMap(stats.fielding)
-    detailDebug.labelCounts = { batting: batting.size, bowling: bowling.size, fielding: fielding.size }
-    detailDebug.fieldingTitles = Array.from(fielding.keys())
-    return { batting, bowling, fielding }
+    return {
+      batting: toLabelMap(stats.batting),
+      bowling: toLabelMap(stats.bowling),
+      fielding: toLabelMap(stats.fielding)
+    }
   } catch (e) {
-    detailDebug.exception = String(e)
     console.error('[fetch-cricheroes] detail endpoint threw', e)
     return null
   }
@@ -267,7 +255,7 @@ Deno.serve(async (req: Request) => {
 
     // Per-discipline detail stats (catches, run_outs, stumpings, bowl_avg, etc.)
     // live on a separate endpoint that the cricheroes.com Stats tab calls.
-    const detail = await fetchDetailStats(playerId, cricHeroesApiKey)
+    const detail = await fetchDetailStats(playerId)
     const bat = detail?.batting
     const bowl = detail?.bowling
     const field = detail?.fielding
@@ -316,7 +304,7 @@ Deno.serve(async (req: Request) => {
       photo_url: player.profile_photo || null
     }
 
-    return json({ ok: true, ...result, _detailDebug: detailDebug })
+    return json({ ok: true, ...result })
   } catch (e) {
     return json({ error: `Failed to fetch from CricHeroes: ${e.message}` }, 502)
   }
