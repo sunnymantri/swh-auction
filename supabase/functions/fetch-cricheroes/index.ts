@@ -12,10 +12,16 @@ function parsePlayerStatement(statement: string) {
   const clean = statement.replace(/<[^>]+>/g, '')
   const avgMatch = clean.match(/average of\s*([\d.]+)/i)
   if (avgMatch) stats.bat_avg = parseFloat(avgMatch[1])
+  const bowlAvgMatch = clean.match(/bowling average of\s*([\d.]+)/i)
+  if (bowlAvgMatch) stats.bowl_avg = parseFloat(bowlAvgMatch[1])
+  const bowlAvgAltMatch = clean.match(/average of\s*([\d.]+)\s*(?:while|in)\s*bowling/i)
+  if (!stats.bowl_avg && bowlAvgAltMatch) stats.bowl_avg = parseFloat(bowlAvgAltMatch[1])
   const srMatch = clean.match(/strike rate of\s*([\d.]+)/i)
   if (srMatch) stats.strike_rate = parseFloat(srMatch[1])
   const econMatch = clean.match(/economy rate of\s*([\d.]+)/i)
   if (econMatch) stats.economy = parseFloat(econMatch[1])
+  const econAltMatch = clean.match(/economy(?: rate)? of\s*([\d.]+)/i)
+  if (!stats.economy && econAltMatch) stats.economy = parseFloat(econAltMatch[1])
   const wicketsMatch = clean.match(/taking\s*(\d+)\s*wickets/i)
   if (wicketsMatch) stats.wickets = parseInt(wicketsMatch[1])
   const topScoreMatch = clean.match(/top score of\s*(\d+)/i)
@@ -55,6 +61,17 @@ function normalizeKey(input: string): string {
 
 function toNumber(value: unknown): number | null {
   if (value == null) return null
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/,/g, '')
+    const direct = Number(cleaned)
+    if (Number.isFinite(direct)) return direct
+    const firstNumeric = cleaned.match(/-?\d+(?:\.\d+)?/)
+    if (firstNumeric) {
+      const extracted = Number(firstNumeric[0])
+      if (Number.isFinite(extracted)) return extracted
+    }
+    return null
+  }
   const n = Number(value)
   return Number.isFinite(n) ? n : null
 }
@@ -75,6 +92,86 @@ function deepFindFirstNumber(source: unknown, candidateKeys: string[]): number |
         const n = toNumber(value)
         if (n != null) return n
       }
+      if (value && typeof value === 'object') stack.push(value)
+    }
+  }
+  return null
+}
+
+// Pull the per-discipline statistics tab the cricheroes.com Stats page uses.
+// Shape: { data: { statistics: { batting: [{title, value}], bowling: [...], fielding: [...] } } }
+// Returns label-keyed maps, or null on any failure (caller falls back to summary-only).
+async function fetchDetailStats(
+  playerId: string,
+  apiKey: string
+): Promise<{ batting: Map<string, unknown>, bowling: Map<string, unknown>, fielding: Map<string, unknown> } | null> {
+  try {
+    const res = await fetch(
+      `https://api.cricheroes.in/api/v1/player/get-player-statistic/${playerId}?pagesize=12`,
+      {
+        headers: {
+          'api-key': apiKey,
+          'device-type': 'Chrome: 120.0.0.0',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'en-AU,en;q=0.9',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Origin': 'https://cricheroes.com',
+          'Referer': 'https://cricheroes.com/'
+        }
+      }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    if (data?.status !== true) return null
+    const stats = data?.data?.statistics
+    if (!stats) return null
+
+    const toLabelMap = (arr: unknown): Map<string, unknown> => {
+      const m = new Map<string, unknown>()
+      if (!Array.isArray(arr)) return m
+      for (const item of arr) {
+        const title = (item as Record<string, unknown>)?.title
+        if (typeof title === 'string') {
+          m.set(title.toLowerCase().trim(), (item as Record<string, unknown>).value)
+        }
+      }
+      return m
+    }
+    return {
+      batting: toLabelMap(stats.batting),
+      bowling: toLabelMap(stats.bowling),
+      fielding: toLabelMap(stats.fielding)
+    }
+  } catch {
+    return null
+  }
+}
+
+function deepFindByLabelValue(source: unknown, labels: string[]): number | null {
+  if (!source || typeof source !== 'object') return null
+  const wanted = labels.map((l) => l.toLowerCase())
+  const stack: unknown[] = [source]
+  while (stack.length > 0) {
+    const node = stack.pop()
+    if (!node || typeof node !== 'object') continue
+    if (Array.isArray(node)) {
+      for (const item of node) stack.push(item)
+      continue
+    }
+    const obj = node as Record<string, unknown>
+    const labelRaw =
+      obj.label ?? obj.title ?? obj.name ?? obj.metric ?? obj.key ?? null
+    const valueRaw =
+      obj.value ?? obj.count ?? obj.total ?? obj.stat ?? obj.stats ?? null
+
+    if (typeof labelRaw === 'string') {
+      const label = labelRaw.toLowerCase().trim()
+      if (wanted.some((w) => label.includes(w))) {
+        const n = toNumber(valueRaw)
+        if (n != null) return n
+      }
+    }
+    for (const value of Object.values(obj)) {
       if (value && typeof value === 'object') stack.push(value)
     }
   }
@@ -147,25 +244,54 @@ Deno.serve(async (req: Request) => {
     const statementStats = parsePlayerStatement(player.player_statement || '')
     const role = inferRole(player, statementStats)
 
-    const catches = deepFindFirstNumber(player, ['total_catches', 'catches', 'catch'])
-    const runOuts = deepFindFirstNumber(player, ['run_outs', 'runouts', 'run_out', 'runout'])
-    const stumpings = deepFindFirstNumber(player, ['stumpings', 'stumping'])
+    // Per-discipline detail stats (catches, run_outs, stumpings, bowl_avg, etc.)
+    // live on a separate endpoint that the cricheroes.com Stats tab calls.
+    const detail = await fetchDetailStats(playerId, cricHeroesApiKey)
+    const bat = detail?.batting
+    const bowl = detail?.bowling
+    const field = detail?.fielding
 
+    // Fallback scans against the summary payload, used only when the detail
+    // endpoint is unavailable (network failure, key revoked, shape change).
+    const catchesFallback = deepFindFirstNumber(player, ['total_catches', 'catches', 'catch'])
+      ?? deepFindByLabelValue(player, ['catches', 'catch'])
+    const runOutsFallback = deepFindFirstNumber(player, ['run_outs', 'runouts', 'run_out', 'runout'])
+      ?? deepFindByLabelValue(player, ['run out', 'run-outs', 'runouts'])
+    const stumpingsFallback = deepFindFirstNumber(player, ['stumpings', 'stumping'])
+      ?? deepFindByLabelValue(player, ['stumpings', 'stumping'])
+    const bowlAvgFallback = statementStats.bowl_avg
+      ?? deepFindFirstNumber(player, ['bowl_avg', 'bowling_average', 'average_bowling'])
+      ?? deepFindByLabelValue(player, ['bowling average', 'avg'])
+    const economyFallback = statementStats.economy
+      ?? deepFindFirstNumber(player, ['economy', 'economy_rate', 'econ'])
+      ?? deepFindByLabelValue(player, ['economy'])
+
+    // Fields the summary endpoint reliably populates (matches/runs/wickets) keep
+    // numeric defaults. Everything else returns null when truly absent so the
+    // frontend merger's `?? player.x` / `!= null` checks preserve existing values
+    // instead of overwriting them with 0.
     const result = {
       name: player.name || null,
-      matches: player.total_matches ?? 0,
-      runs: player.total_runs ?? 0,
-      wickets: statementStats.wickets ?? player.total_wickets ?? 0,
+      matches: toNumber(bat?.get('matches')) ?? player.total_matches ?? 0,
+      runs: toNumber(bat?.get('runs')) ?? player.total_runs ?? 0,
+      wickets: toNumber(bowl?.get('wickets')) ?? statementStats.wickets ?? player.total_wickets ?? 0,
       batting_style: player.batting_hand === 'RHB' ? 'Right-hand bat' :
                      player.batting_hand === 'LHB' ? 'Left-hand bat' : player.batting_hand || null,
       bowling_style: player.bowling_style || null,
       role,
-      bat_avg: statementStats.bat_avg ?? 0,
-      strike_rate: statementStats.strike_rate ?? 0,
-      economy: statementStats.economy ?? 0,
-      catches: catches ?? 0,
-      run_outs: runOuts ?? 0,
-      stumpings: stumpings ?? 0,
+      bat_avg: toNumber(bat?.get('avg')) ?? statementStats.bat_avg ?? null,
+      strike_rate: toNumber(bat?.get('sr')) ?? statementStats.strike_rate ?? null,
+      bowl_avg: toNumber(bowl?.get('avg')) ?? bowlAvgFallback ?? null,
+      economy: toNumber(bowl?.get('economy')) ?? economyFallback ?? null,
+      catches: toNumber(field?.get('catches')) ?? catchesFallback ?? null,
+      run_outs: toNumber(field?.get('run outs')) ?? runOutsFallback ?? null,
+      stumpings: toNumber(field?.get('stumpings')) ?? stumpingsFallback ?? null,
+      fifties: toNumber(bat?.get('50s')) ?? null,
+      hundreds: toNumber(bat?.get('100s')) ?? null,
+      sixes: toNumber(bat?.get('6s')) ?? null,
+      dot_balls: toNumber(bowl?.get('dot balls')) ?? null,
+      three_wicket_hauls: toNumber(bowl?.get('3 wickets')) ?? null,
+      five_wicket_hauls: toNumber(bowl?.get('5 wickets')) ?? null,
       photo_url: player.profile_photo || null
     }
 
