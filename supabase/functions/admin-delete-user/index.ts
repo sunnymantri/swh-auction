@@ -45,6 +45,27 @@ Deno.serve(async (req: Request) => {
     .eq('owner_user_id', profileId)
   if (unlinkErr) return json({ error: unlinkErr.message }, 400)
 
+  // Clear FK references from historical audit columns before deleting profile.
+  // These records should stay for auction history, but no longer reference
+  // a soon-to-be-deleted profile row.
+  const { error: bidsRefErr } = await admin
+    .from('bids')
+    .update({ created_by: null })
+    .eq('created_by', profileId)
+  if (bidsRefErr) return json({ error: bidsRefErr.message }, 400)
+
+  const { error: eventsRefErr } = await admin
+    .from('auction_events')
+    .update({ created_by: null })
+    .eq('created_by', profileId)
+  if (eventsRefErr) return json({ error: eventsRefErr.message }, 400)
+
+  const { error: nonRegularRefErr } = await admin
+    .from('team_non_regular_bowlers')
+    .update({ created_by: null })
+    .eq('created_by', profileId)
+  if (nonRegularRefErr) return json({ error: nonRegularRefErr.message }, 400)
+
   const { error: profileDeleteErr } = await admin.from('profiles').delete().eq('id', profileId)
   if (profileDeleteErr) return json({ error: profileDeleteErr.message }, 400)
 

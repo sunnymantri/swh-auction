@@ -49,6 +49,38 @@ function inferRole(player: Record<string, unknown>, statementStats: Record<strin
   return 'Batsman'
 }
 
+function normalizeKey(input: string): string {
+  return input.toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function toNumber(value: unknown): number | null {
+  if (value == null) return null
+  const n = Number(value)
+  return Number.isFinite(n) ? n : null
+}
+
+function deepFindFirstNumber(source: unknown, candidateKeys: string[]): number | null {
+  if (!source || typeof source !== 'object') return null
+  const wanted = new Set(candidateKeys.map(normalizeKey))
+  const stack: unknown[] = [source]
+  while (stack.length > 0) {
+    const node = stack.pop()
+    if (!node || typeof node !== 'object') continue
+    if (Array.isArray(node)) {
+      for (const item of node) stack.push(item)
+      continue
+    }
+    for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+      if (wanted.has(normalizeKey(key))) {
+        const n = toNumber(value)
+        if (n != null) return n
+      }
+      if (value && typeof value === 'object') stack.push(value)
+    }
+  }
+  return null
+}
+
 Deno.serve(async (req: Request) => {
   const cors = corsHeaders(req)
   const json = (body: unknown, status = 200) =>
@@ -115,6 +147,10 @@ Deno.serve(async (req: Request) => {
     const statementStats = parsePlayerStatement(player.player_statement || '')
     const role = inferRole(player, statementStats)
 
+    const catches = deepFindFirstNumber(player, ['total_catches', 'catches', 'catch'])
+    const runOuts = deepFindFirstNumber(player, ['run_outs', 'runouts', 'run_out', 'runout'])
+    const stumpings = deepFindFirstNumber(player, ['stumpings', 'stumping'])
+
     const result = {
       name: player.name || null,
       matches: player.total_matches ?? 0,
@@ -127,7 +163,9 @@ Deno.serve(async (req: Request) => {
       bat_avg: statementStats.bat_avg ?? 0,
       strike_rate: statementStats.strike_rate ?? 0,
       economy: statementStats.economy ?? 0,
-      catches: player.total_catches ?? 0,
+      catches: catches ?? 0,
+      run_outs: runOuts ?? 0,
+      stumpings: stumpings ?? 0,
       photo_url: player.profile_photo || null
     }
 
