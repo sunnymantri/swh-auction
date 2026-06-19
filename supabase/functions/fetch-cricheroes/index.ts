@@ -101,30 +101,48 @@ function deepFindFirstNumber(source: unknown, candidateKeys: string[]): number |
 // Pull the per-discipline statistics tab the cricheroes.com Stats page uses.
 // Shape: { data: { statistics: { batting: [{title, value}], bowling: [...], fielding: [...] } } }
 // Returns label-keyed maps, or null on any failure (caller falls back to summary-only).
+// TEMP debug bucket so the caller can attach diagnosis info to the API response.
+const detailDebug: Record<string, unknown> = {}
+
 async function fetchDetailStats(
   playerId: string,
   apiKey: string
 ): Promise<{ batting: Map<string, unknown>, bowling: Map<string, unknown>, fielding: Map<string, unknown> } | null> {
+  const url = `https://api.cricheroes.in/api/v1/player/get-player-statistic/${playerId}?pagesize=12`
+  detailDebug.url = url
   try {
-    const res = await fetch(
-      `https://api.cricheroes.in/api/v1/player/get-player-statistic/${playerId}?pagesize=12`,
-      {
-        headers: {
-          'api-key': apiKey,
-          'device-type': 'Chrome: 120.0.0.0',
-          'Accept': 'application/json, text/plain, */*',
-          'Accept-Language': 'en-AU,en;q=0.9',
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Origin': 'https://cricheroes.com',
-          'Referer': 'https://cricheroes.com/'
-        }
+    const res = await fetch(url, {
+      headers: {
+        'api-key': apiKey,
+        'device-type': 'Chrome: 120.0.0.0',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-AU,en;q=0.9',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Origin': 'https://cricheroes.com',
+        'Referer': 'https://cricheroes.com/'
       }
-    )
-    if (!res.ok) return null
+    })
+    detailDebug.httpStatus = res.status
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      detailDebug.bodySnippet = body.slice(0, 400)
+      console.error('[fetch-cricheroes] detail endpoint non-OK', res.status, body.slice(0, 400))
+      return null
+    }
     const data = await res.json()
-    if (data?.status !== true) return null
+    detailDebug.payloadStatus = data?.status
+    detailDebug.payloadKeys = data && typeof data === 'object' ? Object.keys(data) : null
+    if (data?.status !== true) {
+      detailDebug.errorMessage = data?.error?.message ?? data?.message ?? null
+      console.error('[fetch-cricheroes] detail status:false', JSON.stringify(data).slice(0, 400))
+      return null
+    }
     const stats = data?.data?.statistics
-    if (!stats) return null
+    if (!stats) {
+      detailDebug.dataKeys = data?.data && typeof data.data === 'object' ? Object.keys(data.data) : null
+      console.error('[fetch-cricheroes] detail missing statistics', JSON.stringify(data?.data).slice(0, 400))
+      return null
+    }
 
     const toLabelMap = (arr: unknown): Map<string, unknown> => {
       const m = new Map<string, unknown>()
@@ -137,12 +155,15 @@ async function fetchDetailStats(
       }
       return m
     }
-    return {
-      batting: toLabelMap(stats.batting),
-      bowling: toLabelMap(stats.bowling),
-      fielding: toLabelMap(stats.fielding)
-    }
-  } catch {
+    const batting = toLabelMap(stats.batting)
+    const bowling = toLabelMap(stats.bowling)
+    const fielding = toLabelMap(stats.fielding)
+    detailDebug.labelCounts = { batting: batting.size, bowling: bowling.size, fielding: fielding.size }
+    detailDebug.fieldingTitles = Array.from(fielding.keys())
+    return { batting, bowling, fielding }
+  } catch (e) {
+    detailDebug.exception = String(e)
+    console.error('[fetch-cricheroes] detail endpoint threw', e)
     return null
   }
 }
@@ -295,7 +316,7 @@ Deno.serve(async (req: Request) => {
       photo_url: player.profile_photo || null
     }
 
-    return json({ ok: true, ...result })
+    return json({ ok: true, ...result, _detailDebug: detailDebug })
   } catch (e) {
     return json({ error: `Failed to fetch from CricHeroes: ${e.message}` }, 502)
   }
