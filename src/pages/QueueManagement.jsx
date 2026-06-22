@@ -134,7 +134,7 @@ export default function QueueManagement() {
                     {pending.map((q) => (
                       (() => {
                         const playerStatus = q.players?.status || ''
-                        const canSetCurrent = START_ELIGIBLE_STATUSES.has(playerStatus)
+                        const canSetCurrent = q.status !== 'current' && START_ELIGIBLE_STATUSES.has(playerStatus)
                         return (
                       <div key={q.id}
                         draggable={!busy && q.status !== 'current'}
@@ -164,8 +164,8 @@ export default function QueueManagement() {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <button disabled={busy} onClick={() => reorder(q.id, -1)} className="px-2 py-1 rounded text-xs bg-teal-700/50 disabled:opacity-40">Up</button>
-                          <button disabled={busy} onClick={() => reorder(q.id, 1)} className="px-2 py-1 rounded text-xs bg-teal-700/50 disabled:opacity-40">Down</button>
+                          <button disabled={busy || q.status === 'current'} onClick={() => reorder(q.id, -1)} className="px-2 py-1 rounded text-xs bg-teal-700/50 disabled:opacity-40">Up</button>
+                          <button disabled={busy || q.status === 'current'} onClick={() => reorder(q.id, 1)} className="px-2 py-1 rounded text-xs bg-teal-700/50 disabled:opacity-40">Down</button>
                           <button
                             onClick={async () => {
                               if (!canSetCurrent) {
