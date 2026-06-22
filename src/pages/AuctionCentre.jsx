@@ -173,6 +173,8 @@ export default function AuctionCentre() {
     }
   }
 
+  const showNextPlayerAction = Boolean(player || lastDecided)
+
   if (!auction) {
     return (
       <AppShell title="Auction Console">
@@ -236,9 +238,9 @@ export default function AuctionCentre() {
                 <button
                   className="px-3 py-2 rounded-lg bg-gold text-ink-900 font-semibold text-sm disabled:opacity-40"
                   disabled={busy || !nextUp}
-                  onClick={player ? handlers.onNext : handlers.onStart}
+                  onClick={showNextPlayerAction ? handlers.onNext : handlers.onStart}
                 >
-                  {player ? 'Next player →' : '▶ Start auction'}
+                  {showNextPlayerAction ? 'Next player →' : '▶ Start auction'}
                 </button>
                 {!!player && (
                   <button

@@ -169,9 +169,10 @@ export async function getUnsoldOrReauction(auctionId) {
 export async function getNextPending(auctionId) {
   const { data, error } = await supabase
     .from('auction_queue')
-    .select('*, players(*)')
+    .select('*, players!inner(*)')
     .eq('auction_id', auctionId)
     .in('status', ['pending', 'reauction'])
+    .in('players.status', ['ready_for_auction', 'reauction'])
     .order('queue_order').limit(1).maybeSingle()
   if (error) throw error
   return data

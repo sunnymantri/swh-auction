@@ -357,6 +357,12 @@ export default function PlayersManagement() {
     try {
       const isEdit = Boolean(editId)
       const savedName = form.name?.trim() || 'Player'
+      if (isEdit) {
+        const previous = players.find((p) => p.id === editId)
+        if (previous?.status === 'sold' && form.status === 'ready_for_auction') {
+          throw new Error('Sold players cannot be moved directly to Ready for auction. Use Re-auction from Auction Results or Auction Console.')
+        }
+      }
       // Base price is set via "Recalculate base prices" (cohort-relative),
       // not on save — keep whatever the admin entered here.
       const payload = { ...form, auction_id: auction.id }
@@ -416,7 +422,15 @@ export default function PlayersManagement() {
   }
 
   const toggleApprove = async (p) => {
-    const next = p.status === 'ready_for_auction' ? 'registered' : 'ready_for_auction'
+    if (p.status === 'sold') {
+      setErr('Sold players must be returned via Re-auction, not Ready for auction.')
+      return
+    }
+    const next = p.status === 'ready_for_auction'
+      ? 'registered'
+      : p.status === 'unsold'
+        ? 'reauction'
+        : 'ready_for_auction'
     await updatePlayer(p.id, { status: next })
     await reloadPlayers()
   }
@@ -434,7 +448,18 @@ export default function PlayersManagement() {
   const bulkSetStatus = async (status) => {
     setBulkBusy(true)
     try {
-      await Promise.all([...selected].map((id) => updatePlayer(id, { status })))
+      const selectedPlayers = players.filter((p) => selected.has(p.id))
+      if (status === 'ready_for_auction' && selectedPlayers.some((p) => p.status === 'sold')) {
+        throw new Error('One or more selected players are sold. Use Re-auction to return sold players to bidding.')
+      }
+      await Promise.all(
+        selectedPlayers.map((p) => {
+          const nextStatus = status === 'ready_for_auction' && p.status === 'unsold'
+            ? 'reauction'
+            : status
+          return updatePlayer(p.id, { status: nextStatus })
+        })
+      )
       setSelected(new Set())
       await reloadPlayers()
     } catch (e) {
@@ -1022,7 +1047,11 @@ export default function PlayersManagement() {
                           {p.status !== 'retired' && (
                             <button onClick={() => toggleApprove(p)}
                               className={`va-micro px-2 py-1 rounded ${p.status === 'ready_for_auction' ? 'bg-green-700/50 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300'}`}>
-                              {p.status === 'ready_for_auction' ? '✓ Ready — Remove' : 'Set Ready for Auction'}
+                              {p.status === 'ready_for_auction'
+                                ? '✓ Ready — Remove'
+                                : p.status === 'unsold'
+                                  ? 'Set Re-auction'
+                                  : 'Set Ready for Auction'}
                             </button>
                           )}
                           <button

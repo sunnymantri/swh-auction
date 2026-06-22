@@ -8,6 +8,7 @@ export default function UnsoldReauctionQueue() {
   const { auction } = useActiveAuction()
   const [items, setItems] = useState([])
   const [busy, setBusy] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const reload = async () => {
     if (!auction) return
@@ -23,17 +24,33 @@ export default function UnsoldReauctionQueue() {
           This view is maintained for compatibility. Prefer the consolidated queue workflow in the main Queue page.
         </div>
         <div className="space-y-2">
+          {errorMsg && (
+            <div className="rounded-lg border border-live/50 bg-live/10 px-3 py-2 text-sm text-live">
+              {errorMsg}
+            </div>
+          )}
           {items.map((p) => (
+            (() => {
+              const canStart = p.status === 'reauction'
+              return (
             <div key={p.id} className="rounded-lg border border-teal-700/40 bg-ink-800/60 p-3 flex justify-between items-center">
               <div>
                 <p>{p.name}</p>
-                <p className="text-xs text-teal-300">{p.status} · {p.category}</p>
+                <p className="text-xs text-teal-300">
+                  {p.status} · {p.category}
+                  {!canStart && <span className="text-live"> · Set to Re-auction first</span>}
+                </p>
               </div>
               <button
-                disabled={busy}
+                disabled={busy || !canStart}
                 onClick={async () => {
+                  if (!canStart) {
+                    setErrorMsg(`"${p.name}" must be in Re-auction status before it can be brought to auction.`)
+                    return
+                  }
                   if (busy) return
                   setBusy(true)
+                  setErrorMsg('')
                   try {
                     await startPlayer(p.id)
                     await reload()
@@ -46,6 +63,8 @@ export default function UnsoldReauctionQueue() {
                 Bring to Auction
               </button>
             </div>
+              )
+            })()
           ))}
           {items.length === 0 && <p className="text-teal-500">No unsold/reauction players right now.</p>}
         </div>
