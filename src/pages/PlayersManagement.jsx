@@ -350,6 +350,38 @@ export default function PlayersManagement() {
     setForm((s) => ({ ...s, [k]: v }))
   }
 
+  // Recalculate points from within the Edit form: persist the current stats,
+  // refresh the player's calculated_value, then re-price the whole cohort
+  // (base prices are relative). Stays in edit mode on the same player.
+  const recalculateForm = async () => {
+    if (!editId || recalculating || saving) return
+    setErr('')
+    setSuccessMsg('')
+    setRecalculating(true)
+    try {
+      const calculatedPoints = getCalculatedPoints(form)
+      await updatePlayer(editId, {
+        ...buildStatsUpdatePayload(form),
+        calculated_value: calculatedPoints
+      })
+      // Re-price the cohort with this player's current stats applied.
+      const updatedList = players.map((p) => (
+        p.id === editId ? { ...form, calculated_value: calculatedPoints } : p
+      ))
+      const priceById = await persistBasePrices(updatedList)
+      const refreshed = await listPlayers(auction.id)
+      setPlayers(refreshed)
+      const saved = refreshed.find((p) => p.id === editId)
+      if (saved) setForm({ ...blankFor(auction), ...saved })
+      else setForm((s) => ({ ...s, calculated_value: calculatedPoints, base_price: priceById[editId] ?? s.base_price }))
+      setSuccessMsg(`Points recalculated for ${form.name?.trim() || 'player'}.`)
+    } catch (e) {
+      setErr(e?.message || 'Recalculate failed. Please try again.')
+    } finally {
+      setRecalculating(false)
+    }
+  }
+
   const save = async () => {
     setErr('')
     setSuccessMsg('')
@@ -885,8 +917,15 @@ export default function PlayersManagement() {
                       Next →
                     </button>
                   )}
+                  {editId && (
+                    <button type="button" onClick={recalculateForm}
+                      disabled={recalculating || saving}
+                      className="va-body ml-auto px-4 py-2 rounded-lg border border-teal-500/50 text-teal-200 hover:text-white hover:border-teal-400 disabled:opacity-50 transition">
+                      {recalculating ? 'Calculating…' : 'Recalculate points'}
+                    </button>
+                  )}
                   <button onClick={save} disabled={!form.name || saving || uploadingPhoto}
-                    className="va-body ml-auto px-5 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50">
+                    className={`va-body ${editId ? '' : 'ml-auto'} px-5 py-2 rounded-lg bg-gold text-ink-900 font-semibold disabled:opacity-50`}>
                     {saving ? 'Saving…' : 'Save player'}
                   </button>
                 </div>
