@@ -109,11 +109,16 @@ async function fetchDetailStats(
   playerId: string
 ): Promise<{ batting: Map<string, unknown>, bowling: Map<string, unknown>, fielding: Map<string, unknown> } | null> {
   const detailApiKey = Deno.env.get('CRICHEROES_DETAIL_API_KEY') || 'cr!CkH3r0s'
+  // The detail endpoint now rejects requests without a udid header
+  // ("UDID not found", code 2003). The web client sends a stable device id;
+  // any non-empty value satisfies it. Overridable in case CricHeroes tightens this.
+  const detailUdid = Deno.env.get('CRICHEROES_DETAIL_UDID') || 'cr-web-2c0a4f7e'
   const url = `https://api.cricheroes.in/api/v1/player/get-player-statistic/${playerId}?pagesize=12`
   try {
     const res = await fetch(url, {
       headers: {
         'api-key': detailApiKey,
+        'udid': detailUdid,
         'device-type': 'Chrome: 120.0.0.0',
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'en-AU,en;q=0.9',
