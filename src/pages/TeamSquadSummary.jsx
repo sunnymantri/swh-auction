@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
-import { exportSquadsCsv, listNonRegularBowlers, listSoldPlayers, listTeamSummaries, setNonRegularBowlers } from '../lib/api'
+import { exportSquadsCsv, listNonRegularBowlers, listSoldPlayers, listTeamSummaries, reauctionPlayer, setNonRegularBowlers } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { fmtPoints } from '../lib/format'
 
@@ -34,6 +34,7 @@ export default function TeamSquadSummary() {
   const [selectedId, setSelectedId] = useState(null)
   const [msg, setMsg] = useState('')
   const [savingTeamId, setSavingTeamId] = useState(null)
+  const [reauctioningSaleId, setReauctioningSaleId] = useState(null)
 
   const reload = useCallback(async () => {
     if (!auction) return
@@ -90,6 +91,30 @@ export default function TeamSquadSummary() {
       setMsg(e.message)
     } finally {
       setSavingTeamId(null)
+    }
+  }
+
+  const releasePlayer = async (sale) => {
+    if (role !== 'admin') return
+    const ok = window.confirm(
+      `Release "${sale.players?.name ?? 'this player'}" for re-auction?\n\n` +
+      'The player will move back to the queue as Re-auction.'
+    )
+    if (!ok) return
+    setMsg('')
+    setReauctioningSaleId(sale.id)
+    try {
+      await reauctionPlayer(sale.id)
+      setMsg(
+        auction?.reauction_refund_enabled
+          ? 'Player released to re-auction. Team points refunded.'
+          : 'Player released to re-auction. Refund is disabled for this auction.'
+      )
+      await reload()
+    } catch (e) {
+      setMsg(e.message || 'Failed to release player to re-auction.')
+    } finally {
+      setReauctioningSaleId(null)
     }
   }
 
@@ -216,6 +241,16 @@ export default function TeamSquadSummary() {
                           onClick={() => toggleNomination(selectedTeam.id, s.player_id)}
                         >
                           {nominated.includes(s.player_id) ? 'Tagged' : 'Tag'}
+                        </button>
+                      )}
+                      {role === 'admin' && (
+                        <button
+                          className="px-2 py-0.5 text-[0.65rem] rounded border border-teal-700/50 text-teal-300 hover:text-white hover:border-teal-500 disabled:opacity-50 shrink-0"
+                          disabled={reauctioningSaleId === s.id}
+                          onClick={() => releasePlayer(s)}
+                          title="Release this sold player to re-auction"
+                        >
+                          {reauctioningSaleId === s.id ? '…' : 'Release'}
                         </button>
                       )}
                       <span className="text-sm text-gold font-semibold tabular shrink-0">{fmtPoints(s.sold_price)}</span>

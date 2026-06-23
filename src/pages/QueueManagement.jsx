@@ -134,7 +134,9 @@ export default function QueueManagement() {
                     {pending.map((q) => (
                       (() => {
                         const playerStatus = q.players?.status || ''
-                        const canSetCurrent = q.status !== 'current' && START_ELIGIBLE_STATUSES.has(playerStatus)
+                        const isCurrentRow = q.status === 'current'
+                        const canSetCurrent = !isCurrentRow && START_ELIGIBLE_STATUSES.has(playerStatus)
+                        const isIneligible = !isCurrentRow && !canSetCurrent
                         return (
                       <div key={q.id}
                         draggable={!busy && q.status !== 'current'}
@@ -157,38 +159,44 @@ export default function QueueManagement() {
                             <p>{q.queue_order}. {q.players?.name}</p>
                             <p className="text-xs text-teal-300">
                               {q.status} · {q.category}
-                              {!canSetCurrent && (
+                              {isIneligible && (
                                 <span className="text-live"> · Not eligible ({playerStatus || 'unknown'})</span>
                               )}
                             </p>
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <button disabled={busy || q.status === 'current'} onClick={() => reorder(q.id, -1)} className="px-2 py-1 rounded text-xs bg-teal-700/50 disabled:opacity-40">Up</button>
-                          <button disabled={busy || q.status === 'current'} onClick={() => reorder(q.id, 1)} className="px-2 py-1 rounded text-xs bg-teal-700/50 disabled:opacity-40">Down</button>
-                          <button
-                            onClick={async () => {
-                              if (!canSetCurrent) {
-                                setErrorMsg(`"${q.players?.name}" is ${playerStatus || 'not eligible'} and cannot be set current.`)
-                                return
-                              }
-                              if (!window.confirm(`Set "${q.players?.name}" as the current player? This will advance the auction.`)) return
-                              if (busy) return
-                              setErrorMsg('')
-                              setBusy(true)
-                              try {
-                                await startPlayer(q.player_id)
-                                await reloadQueue()
-                              } catch (e) {
-                                setErrorMsg(e.message || 'Could not set current player.')
-                              } finally {
-                                setBusy(false)
-                              }
-                            }}
-                            disabled={busy || !canSetCurrent}
-                            className="px-2 py-1 rounded text-xs bg-gold text-ink-900 font-semibold">
-                            Set Current
-                          </button>
+                          <button disabled={busy || isCurrentRow} onClick={() => reorder(q.id, -1)} className="px-2 py-1 rounded text-xs bg-teal-700/50 disabled:opacity-40">Up</button>
+                          <button disabled={busy || isCurrentRow} onClick={() => reorder(q.id, 1)} className="px-2 py-1 rounded text-xs bg-teal-700/50 disabled:opacity-40">Down</button>
+                          {isCurrentRow ? (
+                            <span className="px-2 py-1 rounded text-xs bg-gold/30 text-gold font-semibold cursor-default">
+                              Current
+                            </span>
+                          ) : isIneligible ? (
+                            <span className="px-2 py-1 rounded text-xs bg-live/20 text-live cursor-default">
+                              Ineligible
+                            </span>
+                          ) : (
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm(`Set "${q.players?.name}" as the current player? This will advance the auction.`)) return
+                                if (busy) return
+                                setErrorMsg('')
+                                setBusy(true)
+                                try {
+                                  await startPlayer(q.player_id)
+                                  await reloadQueue()
+                                } catch (e) {
+                                  setErrorMsg(e.message || 'Could not set current player.')
+                                } finally {
+                                  setBusy(false)
+                                }
+                              }}
+                              disabled={busy}
+                              className="px-2 py-1 rounded text-xs bg-gold text-ink-900 font-semibold">
+                              Set Current
+                            </button>
+                          )}
                         </div>
                       </div>
                         )
@@ -205,41 +213,49 @@ export default function QueueManagement() {
                         {completed.map((q) => (
                           (() => {
                             const playerStatus = q.players?.status || ''
-                            const canSetCurrent = START_ELIGIBLE_STATUSES.has(playerStatus)
+                            const isCurrentRow = q.status === 'current'
+                            const canSetCurrent = !isCurrentRow && START_ELIGIBLE_STATUSES.has(playerStatus)
+                            const isIneligible = !isCurrentRow && !canSetCurrent
                             return (
                           <div key={q.id} className="border border-teal-700/20 rounded-lg p-2 bg-ink-900/40 flex justify-between items-center">
                             <div>
                               <p className="text-sm">{q.queue_order}. {q.players?.name}</p>
                               <p className="text-xs text-teal-400">
                                 {q.status} · {q.category}
-                                {!canSetCurrent && (
+                                {isIneligible && (
                                   <span className="text-live"> · Not eligible ({playerStatus || 'unknown'})</span>
                                 )}
                               </p>
                             </div>
-                            <button
-                              onClick={async () => {
-                                if (!canSetCurrent) {
-                                  setErrorMsg(`"${q.players?.name}" is ${playerStatus || 'not eligible'} and cannot be set current.`)
-                                  return
-                                }
-                                if (!window.confirm(`Re-start "${q.players?.name}"? This will bring them back to auction.`)) return
-                                if (busy) return
-                                setErrorMsg('')
-                                setBusy(true)
-                                try {
-                                  await startPlayer(q.player_id)
-                                  await reloadQueue()
-                                } catch (e) {
-                                  setErrorMsg(e.message || 'Could not restart player.')
-                                } finally {
-                                  setBusy(false)
-                                }
-                              }}
-                              disabled={busy || !canSetCurrent}
-                              className="px-2 py-1 rounded text-xs bg-gold text-ink-900 font-semibold">
-                              Set Current
-                            </button>
+                            {isCurrentRow ? (
+                              <span className="px-2 py-1 rounded text-xs bg-gold/30 text-gold font-semibold cursor-default">
+                                Current
+                              </span>
+                            ) : isIneligible ? (
+                              <span className="px-2 py-1 rounded text-xs bg-live/20 text-live cursor-default">
+                                Ineligible
+                              </span>
+                            ) : (
+                              <button
+                                onClick={async () => {
+                                  if (!window.confirm(`Re-start "${q.players?.name}"? This will bring them back to auction.`)) return
+                                  if (busy) return
+                                  setErrorMsg('')
+                                  setBusy(true)
+                                  try {
+                                    await startPlayer(q.player_id)
+                                    await reloadQueue()
+                                  } catch (e) {
+                                    setErrorMsg(e.message || 'Could not restart player.')
+                                  } finally {
+                                    setBusy(false)
+                                  }
+                                }}
+                                disabled={busy}
+                                className="px-2 py-1 rounded text-xs bg-gold text-ink-900 font-semibold">
+                                Set Current
+                              </button>
+                            )}
                           </div>
                             )
                           })()
