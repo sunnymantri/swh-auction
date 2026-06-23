@@ -211,46 +211,72 @@ export function basePriceForPlayer(players = [], playerId, options = {}) {
 }
 
 // =====================================================================
-//  TIERS (display only, PPM-based) — unchanged
+//  TIERS (display only) — derived from the cohort-relative BASE PRICE
+// ---------------------------------------------------------------------
+//  Tier and base price are now the *same* signal, so they can never
+//  disagree (the old bug: a 2-match player whose raw PPM was huge showed
+//  "Platinum" while their credibility-shrunk base price sat near the
+//  floor). Base price already bakes in cohort rank + small-sample
+//  shrinkage, so the tier inherits both for free.
+//
+//  Mapping: base price lives on [minBase, maxBase]; its position in that
+//  band is the player's cohort percentile. We cut it on the same
+//  10% / 35% / 70% bands the old rank tiers used. A small-sample guard
+//  blocks Platinum below PLATINUM_MIN_MATCHES regardless of price.
 // =====================================================================
-function tierFromRank(rank, total) {
-  if (total <= 0) return { label: 'Bronze', color: 'text-amber-600', base: 2000 }
-  const platinumMaxRank = Math.max(1, Math.ceil(total * 0.10))
-  const goldMaxRank = Math.max(platinumMaxRank, Math.ceil(total * 0.35))
-  const silverMaxRank = Math.max(goldMaxRank, Math.ceil(total * 0.70))
 
-  if (rank <= platinumMaxRank) return { label: 'Platinum', color: 'text-purple-400', base: 15000 }
-  if (rank <= goldMaxRank) return { label: 'Gold', color: 'text-gold', base: 10000 }
-  if (rank <= silverMaxRank) return { label: 'Silver', color: 'text-gray-300', base: 5000 }
-  return { label: 'Bronze', color: 'text-amber-600', base: 2000 }
+// Minimum matches a player must have played to qualify for Platinum.
+export const PLATINUM_MIN_MATCHES = 10
+
+const TIER = {
+  platinum: { label: 'Platinum', color: 'text-purple-400', base: 15000 },
+  gold:     { label: 'Gold',     color: 'text-gold',       base: 10000 },
+  silver:   { label: 'Silver',   color: 'text-gray-300',   base: 5000 },
+  bronze:   { label: 'Bronze',   color: 'text-amber-600',  base: 2000 },
 }
 
-export function buildTierIndexByPlayerId(players = []) {
-  const ranked = (players || [])
-    .filter((p) => p?.id)
-    .map((p) => ({ id: p.id, ppm: calcPPM(p), name: p.name || '' }))
-    .sort((a, b) => {
-      if (b.ppm !== a.ppm) return b.ppm - a.ppm
-      return a.name.localeCompare(b.name)
-    })
+// Where a base price sits inside the configured band, clamped to [0,1].
+function basePricePercentile(basePrice, cfg = BASE_PRICE_CONFIG) {
+  const span = cfg.maxBase - cfg.minBase
+  if (span <= 0) return 0
+  return Math.min(1, Math.max(0, (num(basePrice) - cfg.minBase) / span))
+}
 
-  const total = ranked.length
+// Tier from a player's cohort-relative base price + match count.
+// matches gates Platinum only; the rest follow the price band.
+export function getTierFromBasePrice(basePrice, matches = 0, cfg = BASE_PRICE_CONFIG) {
+  const pct = basePricePercentile(basePrice, cfg)
+  if (pct >= 0.90 && num(matches) >= PLATINUM_MIN_MATCHES) return TIER.platinum
+  if (pct >= 0.65) return TIER.gold
+  if (pct >= 0.30) return TIER.silver
+  return TIER.bronze
+}
+
+// Cohort tier lookup: re-prices the pool, then maps each player's base
+// price to a tier. Same { [id]: tier } shape as before.
+export function buildTierIndexByPlayerId(players = [], options = {}) {
+  const pool = (players || []).filter((p) => p?.id)
+  const priceById = computeCohortBasePrices(pool, options)
   const byId = {}
-  ranked.forEach((entry, idx) => {
-    byId[entry.id] = tierFromRank(idx + 1, total)
-  })
+  for (const p of pool) {
+    byId[p.id] = getTierFromBasePrice(priceById[p.id], p.matches)
+  }
   return byId
 }
 
-export function getTierForPlayer(players = [], playerId, fallbackPPM = 0) {
+export function getTierForPlayer(players = [], playerId, fallbackPlayer = null) {
   const byId = buildTierIndexByPlayerId(players)
-  return byId[playerId] || getTier(fallbackPPM)
+  if (byId[playerId]) return byId[playerId]
+  return getTierFromBasePrice(fallbackPlayer?.base_price, fallbackPlayer?.matches)
 }
 
+// Absolute PPM → tier. Retained for any caller that only has a PPM and no
+// cohort/base-price context; prefer getTierFromBasePrice where a base price
+// is available so the tier agrees with the price.
 export function getTier(ppm) {
   // Product decision: keep 55.0 in Platinum (inclusive boundary).
-  if (ppm >= 55) return { label: 'Platinum', color: 'text-purple-400', base: 15000 }
-  if (ppm >= 40) return { label: 'Gold', color: 'text-gold', base: 10000 }
-  if (ppm >= 25) return { label: 'Silver', color: 'text-gray-300', base: 5000 }
-  return { label: 'Bronze', color: 'text-amber-600', base: 2000 }
+  if (ppm >= 55) return TIER.platinum
+  if (ppm >= 40) return TIER.gold
+  if (ppm >= 25) return TIER.silver
+  return TIER.bronze
 }

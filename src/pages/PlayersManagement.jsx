@@ -13,7 +13,7 @@ import {
   fetchCricHeroesStats, fetchPlayHQStats
 } from '../lib/api'
 import { supabase } from '../lib/supabase'
-import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier, buildTierIndexByPlayerId, computeCohortBasePrices } from '../lib/points'
+import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier, getTierFromBasePrice, buildTierIndexByPlayerId, computeCohortBasePrices } from '../lib/points'
 
 const TABS = ['Players', 'Add Player', 'Categories', 'Vacation']
 
@@ -640,7 +640,7 @@ export default function PlayersManagement() {
                 recalculating={recalculating}
                 onFetchAndRecalculate={() => fetchAndRecalculateProfilePlayer(viewPlayer)}
                 fetchingAndRecalculating={syncingProfileStats}
-                tierOverride={viewPlayer ? (tierByPlayerId[viewPlayer.id] || getTier(calcPPM(viewPlayer))) : null}
+                tierOverride={viewPlayer ? (tierByPlayerId[viewPlayer.id] || getTierFromBasePrice(viewPlayer.base_price, viewPlayer.matches)) : null}
               />
               {role === 'admin' && (
                 <button
@@ -1057,7 +1057,7 @@ export default function PlayersManagement() {
               <div className="space-y-2 max-h-[60vh] overflow-y-auto">
                 {filteredPlayers.map((p) => {
                   const ppm = calcPPM(p)
-                  const tier = tierByPlayerId[p.id] || getTier(ppm)
+                  const tier = tierByPlayerId[p.id] || getTierFromBasePrice(p.base_price, p.matches)
                   return (
                     <div key={p.id}
                       className={`border rounded-lg p-3 flex flex-col gap-2 ${selected.has(p.id) ? 'border-teal-500/60 bg-teal-900/20' : 'border-teal-700/40'}`}>

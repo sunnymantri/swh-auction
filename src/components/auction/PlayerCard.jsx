@@ -1,5 +1,5 @@
 import { fmtPoints } from '../../lib/format'
-import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier } from '../../lib/points'
+import { calcBattingPoints, calcBowlingPoints, calcFieldingPoints, calcTotalPoints, calcPPM, getTier, getTierFromBasePrice } from '../../lib/points'
 
 const initials = (n = '') => n.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 
@@ -30,7 +30,12 @@ function PointsBreakdown({
   const fielding = calcFieldingPoints(player)
   const total = calcTotalPoints(player)
   const ppm = calcPPM(player)
-  const tier = tierOverride || getTier(ppm)
+  // Prefer the cohort tierOverride. Otherwise derive the tier from the
+  // player's persisted base price (same signal, so the tier agrees with
+  // the price) and only fall back to the absolute PPM tier when no base
+  // price is set yet.
+  const tier = tierOverride
+    || (player?.base_price != null ? getTierFromBasePrice(player.base_price, player.matches) : getTier(ppm))
 
   return (
       <div className="bg-black/10 px-4 py-4 sm:px-6 border-t victory-divider">
