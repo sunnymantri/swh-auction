@@ -228,39 +228,57 @@ Deno.serve(async (req: Request) => {
     const cricHeroesApiKey = Deno.env.get('CRICHEROES_API_KEY') ?? ''
     if (!cricHeroesApiKey) return json({ error: 'Server missing CRICHEROES_API_KEY' }, 500)
 
-    const res = await fetch(
-      `https://cricheroes.in/api/v1/player/get-player-profile-web/${playerId}`,
-      {
-        headers: {
-          'api-key': cricHeroesApiKey,
-          'device-type': 'Chrome: 120.0.0.0',
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Origin': 'https://cricheroes.com',
-          'Referer': 'https://cricheroes.com/'
+    // The summary endpoint carries identity/style fields but is the more fragile
+    // of the two: it 404s / errors for profiles with incomplete data (e.g. no
+    // city set — the same gap that crashes cricheroes.com itself). The detail
+    // endpoint holds the actual batting/bowling/fielding numbers and is more
+    // robust. So treat the summary as best-effort: if it fails we keep going and
+    // return whatever the detail endpoint gives us, rather than failing the
+    // whole fetch. We only error out at the end if BOTH sources came up empty.
+    let player: Record<string, unknown> | null = null
+    let summaryError: string | null = null
+    try {
+      const res = await fetch(
+        `https://cricheroes.in/api/v1/player/get-player-profile-web/${playerId}`,
+        {
+          headers: {
+            'api-key': cricHeroesApiKey,
+            'device-type': 'Chrome: 120.0.0.0',
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Origin': 'https://cricheroes.com',
+            'Referer': 'https://cricheroes.com/'
+          }
+        }
+      )
+      if (!res.ok) {
+        summaryError = `CricHeroes API returned ${res.status}`
+      } else {
+        const data = await res.json()
+        if (data?.status === false) {
+          summaryError = data?.error?.message || 'CricHeroes API error'
+        } else if (!data?.data) {
+          summaryError = 'No player data returned'
+        } else {
+          player = data.data
         }
       }
-    )
-
-    if (!res.ok) {
-      return json({ error: `CricHeroes API returned ${res.status}` }, 502)
+    } catch (e) {
+      summaryError = `summary fetch failed: ${e.message}`
     }
+    if (summaryError) console.warn('[fetch-cricheroes] summary unavailable:', summaryError)
 
-    const data = await res.json()
-
-    if (data?.status === false) {
-      return json({ error: data?.error?.message || 'CricHeroes API error' }, 502)
-    }
-
-    const player = data?.data
-    if (!player) return json({ error: 'No player data returned' }, 404)
-
-    const statementStats = parsePlayerStatement(player.player_statement || '')
-    const role = inferRole(player, statementStats)
+    const statementStats = player ? parsePlayerStatement(player.player_statement || '') : {}
+    const role = player ? inferRole(player, statementStats) : null
 
     // Per-discipline detail stats (catches, run_outs, stumpings, bowl_avg, etc.)
     // live on a separate endpoint that the cricheroes.com Stats tab calls.
     const detail = await fetchDetailStats(playerId)
+
+    // If neither source produced anything usable, surface the summary error.
+    if (!player && !detail) {
+      return json({ error: summaryError || 'No player data returned' }, 502)
+    }
     const bat = detail?.batting
     const bowl = detail?.bowling
     const field = detail?.fielding
@@ -285,13 +303,13 @@ Deno.serve(async (req: Request) => {
     // frontend merger's `?? player.x` / `!= null` checks preserve existing values
     // instead of overwriting them with 0.
     const result = {
-      name: player.name || null,
-      matches: toNumber(bat?.get('matches')) ?? player.total_matches ?? 0,
-      runs: toNumber(bat?.get('runs')) ?? player.total_runs ?? 0,
-      wickets: toNumber(bowl?.get('wickets')) ?? statementStats.wickets ?? player.total_wickets ?? 0,
-      batting_style: player.batting_hand === 'RHB' ? 'Right-hand bat' :
-                     player.batting_hand === 'LHB' ? 'Left-hand bat' : player.batting_hand || null,
-      bowling_style: player.bowling_style || null,
+      name: player?.name || null,
+      matches: toNumber(bat?.get('matches')) ?? player?.total_matches ?? 0,
+      runs: toNumber(bat?.get('runs')) ?? player?.total_runs ?? 0,
+      wickets: toNumber(bowl?.get('wickets')) ?? statementStats.wickets ?? player?.total_wickets ?? 0,
+      batting_style: player?.batting_hand === 'RHB' ? 'Right-hand bat' :
+                     player?.batting_hand === 'LHB' ? 'Left-hand bat' : player?.batting_hand || null,
+      bowling_style: player?.bowling_style || null,
       role,
       bat_avg: toNumber(bat?.get('avg')) ?? statementStats.bat_avg ?? null,
       strike_rate: toNumber(bat?.get('sr')) ?? statementStats.strike_rate ?? null,
@@ -306,7 +324,7 @@ Deno.serve(async (req: Request) => {
       dot_balls: toNumber(bowl?.get('dot balls')) ?? null,
       three_wicket_hauls: toNumber(bowl?.get('3 wickets')) ?? null,
       five_wicket_hauls: toNumber(bowl?.get('5 wickets')) ?? null,
-      photo_url: player.profile_photo || null
+      photo_url: player?.profile_photo || null
     }
 
     return json({ ok: true, ...result })

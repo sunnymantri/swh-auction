@@ -368,9 +368,18 @@ export default function PlayersManagement() {
       const payload = { ...form, auction_id: auction.id }
       if (editId) await updatePlayer(editId, payload)
       else await createPlayer(payload)
-      setEditId(null)
-      setForm(blankFor(auction))
-      await reloadPlayers()
+      const refreshed = await listPlayers(auction.id)
+      setPlayers(refreshed)
+      if (isEdit) {
+        // Stay on the player just saved: keep edit mode and repopulate the
+        // form from the persisted row so the admin can keep working on them.
+        const saved = refreshed.find((p) => p.id === editId)
+        if (saved) setForm({ ...blankFor(auction), ...saved })
+      } else {
+        // New player: clear the form so the next one can be added.
+        setEditId(null)
+        setForm(blankFor(auction))
+      }
       setSuccessMsg(
         isEdit
           ? `${savedName} profile updated successfully.`
