@@ -95,6 +95,7 @@ const NAV_GROUPS = [
         { label: 'Vacation', to: '/vacation' },
         { label: 'Schedule', to: '/schedule' },
       ]},
+      { to: '/squads',      label: 'Squads',   roles: ['admin', 'team_owner'] },
     ]
   },
   {
