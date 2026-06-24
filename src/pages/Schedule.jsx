@@ -49,7 +49,9 @@ export default function Schedule() {
 
         {/* Rounds */}
         <div className="space-y-4">
-          {schedule.map((round) => (
+          {schedule.map((round) => {
+          const hasDivision = round.matches.some((m) => m.division)
+          return (
             <div key={round.round} className="rounded-xl border border-teal-700/40 bg-ink-800/60 overflow-hidden">
               {/* Round header */}
               <div className="px-4 py-3 bg-teal-900/40 border-b border-teal-700/30 flex items-center justify-between">
@@ -68,26 +70,31 @@ export default function Schedule() {
                 <table className="va-body w-full">
                   <thead>
                     <tr className="border-b border-teal-700/20">
-                      <th className="va-label text-left px-4 py-2 text-teal-500 font-medium w-[38%]">Home</th>
-                      <th className="va-label text-center px-2 py-2 text-teal-500 font-medium w-[8%]">vs</th>
-                      <th className="va-label text-left px-4 py-2 text-teal-500 font-medium w-[38%]">Away</th>
+                      {hasDivision && <th className="va-label text-left px-4 py-2 text-teal-500 font-medium w-[12%]">Division</th>}
+                      <th className="va-label text-left px-4 py-2 text-teal-500 font-medium w-[28%]">Home</th>
+                      <th className="va-label text-center px-2 py-2 text-teal-500 font-medium w-[6%]">vs</th>
+                      <th className="va-label text-left px-4 py-2 text-teal-500 font-medium w-[28%]">Away</th>
                       <th className="va-label text-left px-4 py-2 text-teal-500 font-medium w-[16%]">Venue</th>
+                      <th className="va-label text-left px-4 py-2 text-teal-500 font-medium w-[14%]">Umpire</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-teal-700/20">
                     {round.matches.map((match, i) => (
                       <tr key={i} className="hover:bg-teal-900/20 transition">
+                        {hasDivision && <td className="va-micro px-4 py-2.5 text-teal-300 font-medium">{match.division || '—'}</td>}
                         <td className="px-4 py-2.5 text-white font-medium">{match.home}</td>
                         <td className="va-micro px-2 py-2.5 text-center text-teal-500">vs</td>
                         <td className="px-4 py-2.5 text-teal-200">{match.away}</td>
                         <td className="va-micro px-4 py-2.5 text-teal-400">{match.venue || '—'}</td>
+                        <td className="va-micro px-4 py-2.5 text-teal-400">{match.umpire || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             </div>
-          ))}
+          )
+          })}
         </div>
       </div>
     </AppShell>
