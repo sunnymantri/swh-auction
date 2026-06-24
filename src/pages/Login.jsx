@@ -135,7 +135,7 @@ export default function Login() {
           {/* Main login card */}
           <div className="rounded-2xl bg-ink-800/80 border border-teal-700/50 shadow-card p-7">
             <div className="flex items-center gap-3 mb-1">
-              <img src="/club-logo.png" alt="" className="h-10 w-10 rounded-lg object-cover" />
+              <img src="/club-logo.png" alt="" className="h-8 w-8 rounded-lg object-cover" />
               <h1 className="font-score text-4xl text-white leading-none">Auction</h1>
             </div>
             <p className="text-teal-400 text-sm mt-1 mb-6">South West Hitters · Player Auction</p>

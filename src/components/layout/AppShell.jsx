@@ -342,7 +342,7 @@ export default function AppShell({ title, children }) {
               <img
                 src="/club-logo.png"
                 alt="Club logo"
-                className="h-10 w-10 rounded-xl object-cover ring-1 ring-gold/25"
+                className="h-8 w-8 rounded-xl object-cover ring-1 ring-gold/25"
               />
               {auction?.banner_logo_url && (
                 <>
