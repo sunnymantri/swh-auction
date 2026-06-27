@@ -141,6 +141,8 @@ const buildStatsUpdatePayload = (player) => ({
 
 export default function PlayersManagement() {
   const { role } = useAuth()
+  const canEditPlayers = role === 'admin'
+  const visibleTabs = canEditPlayers ? TABS : ['Players']
   const { auction } = useActiveAuction()
   const location = useLocation()
   const navigate = useNavigate()
@@ -191,8 +193,9 @@ export default function PlayersManagement() {
   useEffect(() => { setAddStep(1) }, [editId])
   useEffect(() => {
     const t = new URLSearchParams(location.search).get('tab')
-    if (t && TABS.includes(t)) setTab(t)
-  }, [location.search])
+    if (t && visibleTabs.includes(t)) setTab(t)
+    else if (!t || !visibleTabs.includes(t)) setTab('Players')
+  }, [location.search, visibleTabs])
 
   // Status counts and filtered list
   const statusCounts = useMemo(() => {
@@ -207,7 +210,12 @@ export default function PlayersManagement() {
     const term = search.trim().toLowerCase()
     return players
       .filter((p) => !statusFilter || p.status === statusFilter)
-      .filter((p) => !term || p.name.toLowerCase().includes(term))
+      .filter((p) => {
+        if (!term) return true
+        const name = String(p.name || '').toLowerCase()
+        const category = String(p.category || '').toLowerCase()
+        return name.includes(term) || category.includes(term)
+      })
   }, [players, statusFilter, search])
 
   const tierByPlayerId = useMemo(() => buildTierIndexByPlayerId(players), [players])
@@ -467,13 +475,13 @@ export default function PlayersManagement() {
       setErr('Sold players must be returned via Re-auction, not Ready for auction.')
       return
     }
-    const next = p.status === 'ready_for_auction'
-      ? 'registered'
-      : p.status === 'unsold'
-        ? 'reauction'
-        : 'ready_for_auction'
-    await updatePlayer(p.id, { status: next })
-    await reloadPlayers()
+    const next = p.status === 'ready_for_auction' ? 'registered' : 'ready_for_auction'
+    try {
+      await updatePlayer(p.id, { status: next })
+      await reloadPlayers()
+    } catch (e) {
+      setErr(e.message || 'Failed to update player status.')
+    }
   }
 
   const toggleSelect = (id) => setSelected((s) => {
@@ -494,12 +502,7 @@ export default function PlayersManagement() {
         throw new Error('One or more selected players are sold. Use Re-auction to return sold players to bidding.')
       }
       await Promise.all(
-        selectedPlayers.map((p) => {
-          const nextStatus = status === 'ready_for_auction' && p.status === 'unsold'
-            ? 'reauction'
-            : status
-          return updatePlayer(p.id, { status: nextStatus })
-        })
+        selectedPlayers.map((p) => updatePlayer(p.id, { status }))
       )
       setSelected(new Set())
       await reloadPlayers()
@@ -620,7 +623,7 @@ export default function PlayersManagement() {
       <RoleGate allow={['admin', 'team_owner']}>
         {/* Tab bar */}
         <div className="flex gap-1 border-b border-teal-700/40 pb-px mb-5 overflow-x-auto scrollbar-none">
-          {TABS.map(t => (
+          {visibleTabs.map(t => (
             <button key={t} onClick={() => { setTab(t); navigate(`/players?tab=${encodeURIComponent(t)}`, { replace: true }) }}
               className={`px-4 py-2 va-body font-medium rounded-t-lg transition ${tab === t ? 'bg-ink-800/60 text-gold border border-teal-700/40 border-b-transparent -mb-px' : 'text-teal-300 hover:text-white'}`}>
               {t}
@@ -666,10 +669,10 @@ export default function PlayersManagement() {
           </div>
         )}
 
-        {(tab === 'Players' || tab === 'Add Player') && (
+        {(tab === 'Players' || (canEditPlayers && tab === 'Add Player')) && (
           <div className={tab === 'Add Player' ? '' : 'grid gap-4 xl:grid-cols-3'}>
             {/* Create / Edit form */}
-            {tab === 'Add Player' && (
+            {canEditPlayers && tab === 'Add Player' && (
               <div className="rounded-xl border border-teal-700/40 bg-ink-800/60 p-5">
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="va-section-title text-teal-200">{editId ? 'Edit player' : 'Add player'}</h3>
@@ -1092,33 +1095,31 @@ export default function PlayersManagement() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 shrink-0">
-                          {p.status !== 'retired' && (
+                        {canEditPlayers && (
+                          <div className="flex flex-wrap gap-2 shrink-0">
+                            {p.status !== 'retired' && (
                             <button onClick={() => toggleApprove(p)}
                               className={`va-micro px-2 py-1 rounded ${p.status === 'ready_for_auction' ? 'bg-green-700/50 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300'}`}>
-                              {p.status === 'ready_for_auction'
-                                ? '✓ Ready — Remove'
-                                : p.status === 'unsold'
-                                  ? 'Set Re-auction'
-                                  : 'Set Ready for Auction'}
+                              {p.status === 'ready_for_auction' ? '✓ Ready — Remove' : 'Set Ready for Auction'}
                             </button>
-                          )}
-                          <button
-                            onClick={async () => {
-                              await updatePlayer(p.id, { status: p.status === 'retired' ? 'registered' : 'retired' })
-                              await reloadPlayers()
+                            )}
+                            <button
+                              onClick={async () => {
+                                await updatePlayer(p.id, { status: p.status === 'retired' ? 'registered' : 'retired' })
+                                await reloadPlayers()
+                              }}
+                              className={`va-micro px-2 py-1 rounded ${p.status === 'retired' ? 'bg-teal-700/50 text-teal-200' : 'bg-slate-800/60 border border-slate-600/50 text-slate-400'}`}>
+                              {p.status === 'retired' ? 'Unretire' : 'Retire'}
+                            </button>
+                            <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr(''); setTab('Add Player') }}
+                              className="va-micro px-2 py-1 rounded bg-teal-700/50">Edit</button>
+                            <button onClick={async () => {
+                              if (!window.confirm(`Delete player "${p.name}"? This cannot be undone.`)) return
+                              await deletePlayer(p.id); reloadPlayers()
                             }}
-                            className={`va-micro px-2 py-1 rounded ${p.status === 'retired' ? 'bg-teal-700/50 text-teal-200' : 'bg-slate-800/60 border border-slate-600/50 text-slate-400'}`}>
-                            {p.status === 'retired' ? 'Unretire' : 'Retire'}
-                          </button>
-                          <button onClick={() => { setEditId(p.id); setForm({ ...blankFor(auction), ...p }); setErr(''); setTab('Add Player') }}
-                            className="va-micro px-2 py-1 rounded bg-teal-700/50">Edit</button>
-                          <button onClick={async () => {
-                            if (!window.confirm(`Delete player "${p.name}"? This cannot be undone.`)) return
-                            await deletePlayer(p.id); reloadPlayers()
-                          }}
-                            className="va-micro px-2 py-1 rounded bg-red-900/50">Delete</button>
-                        </div>
+                              className="va-micro px-2 py-1 rounded bg-red-900/50">Delete</button>
+                          </div>
+                        )}
                       </div>
                       {/* Points breakdown row */}
                       {p.matches > 0 && (
