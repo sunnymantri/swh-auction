@@ -6,6 +6,7 @@ import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
 import { exportSquadsCsv, listNonRegularBowlers, listSoldPlayers, listTeamSummaries, reauctionPlayer, setNonRegularBowlers } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { fmtPoints } from '../lib/format'
+import SpendGauge, { getZoneColor } from '../components/common/SpendGauge'
 
 function downloadCsv(filename, text) {
   const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' })
@@ -64,6 +65,16 @@ export default function TeamSquadSummary() {
     }
     return map
   }, [sold])
+
+  const spendMultiplierByTeam = useMemo(() => {
+    const result = {}
+    for (const [teamId, players] of Object.entries(byTeam)) {
+      const totalBase = players.reduce((sum, s) => sum + (s.players?.base_price ?? 0), 0)
+      const totalSold = players.reduce((sum, s) => sum + (s.sold_price ?? 0), 0)
+      result[teamId] = totalBase > 0 ? totalSold / totalBase : null
+    }
+    return result
+  }, [byTeam])
 
   const nominationByTeam = useMemo(() => {
     const map = {}
@@ -209,6 +220,14 @@ export default function TeamSquadSummary() {
                     · left {fmtPoints(selectedTeam.points_remaining)}
                   </p>
                 </div>
+                <div className="shrink-0">
+                  <SpendGauge
+                    multiplier={spendMultiplierByTeam[selectedTeam.id] ?? null}
+                    benchmark={auction?.budget_multiplier ?? 1.6}
+                    playerCount={squad.length}
+                    compact
+                  />
+                </div>
               </div>
 
               {/* Player list */}
@@ -258,6 +277,14 @@ export default function TeamSquadSummary() {
                         >
                           {reauctioningSaleId === s.id ? '…' : 'Release'}
                         </button>
+                      )}
+                      {(s.players?.base_price ?? 0) > 0 && (
+                        <span
+                          className="text-[0.6rem] tabular shrink-0 font-medium"
+                          style={{ color: getZoneColor(s.sold_price / s.players.base_price) }}
+                        >
+                          {(s.sold_price / s.players.base_price).toFixed(1)}×
+                        </span>
                       )}
                       <span className="text-sm text-gold font-semibold tabular shrink-0">{fmtPoints(s.sold_price)}</span>
                     </div>

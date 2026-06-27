@@ -4,8 +4,9 @@ import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuth } from '../context/AuthContext'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
-import { getBidsForPlayer, getCurrentQueueItem, getRecentEvents, listTeamSummaries, placeBid } from '../lib/api'
+import { getBidsForPlayer, getCurrentQueueItem, getRecentEvents, listSoldPlayers, listTeamSummaries, placeBid } from '../lib/api'
 import { fmtPoints } from '../lib/format'
+import SpendGauge from '../components/common/SpendGauge'
 import { useSoldCelebration } from '../hooks/useSoldCelebration'
 import AuctionTimer from '../components/auction/AuctionTimer'
 import SoldCelebration from '../components/auction/SoldCelebration'
@@ -54,6 +55,7 @@ export default function TeamOwnerBidding() {
   const [teams, setTeams] = useState([])
   const [bids, setBids] = useState([])
   const [events, setEvents] = useState([])
+  const [sold, setSold] = useState([])
   const [amount, setAmount] = useState('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
@@ -62,14 +64,16 @@ export default function TeamOwnerBidding() {
 
   const reload = useCallback(async () => {
     if (!auction) return
-    const [cur, t, e] = await Promise.all([
+    const [cur, t, e, s] = await Promise.all([
       getCurrentQueueItem(auction.id),
       listTeamSummaries(auction.id),
-      getRecentEvents(auction.id, 20)
+      getRecentEvents(auction.id, 20),
+      listSoldPlayers(auction.id),
     ])
     setCurrent(cur)
     setTeams(t)
     setEvents(e)
+    setSold(s.filter(x => !x.reauctioned))
     setBids(cur?.player_id ? await getBidsForPlayer(cur.player_id) : [])
   }, [auction])
 
@@ -86,6 +90,18 @@ export default function TeamOwnerBidding() {
     [teams, profile]
   )
   const isTeamBidder = Boolean(myTeam && profile && myTeam.owner_user_id === profile.id)
+
+  const mySquad = useMemo(() => {
+    if (!myTeam) return []
+    return sold.filter(s => s.team_id === myTeam.id)
+  }, [sold, myTeam])
+
+  const spendMultiplier = useMemo(() => {
+    if (mySquad.length === 0) return null
+    const totalBase = mySquad.reduce((sum, s) => sum + (s.players?.base_price ?? 0), 0)
+    const totalSold = mySquad.reduce((sum, s) => sum + (s.sold_price ?? 0), 0)
+    return totalBase > 0 ? totalSold / totalBase : null
+  }, [mySquad])
 
   const player = current?.players ?? null
 
@@ -308,6 +324,17 @@ export default function TeamOwnerBidding() {
                       <TeamMetric label="Squad" value={`${myTeam?.players_count ?? 0}/${myTeam?.squad_size ?? 0}`} />
                       <TeamMetric label="Max safe bid" value={fmtPoints(myTeam?.max_safe_bid ?? 0)} />
                     </div>
+                    {(mySquad.length > 0 || spendMultiplier == null) && (
+                      <div className="mt-4 rounded-2xl border border-teal-700/30 bg-black/20 py-3 px-4 flex flex-col items-center gap-1">
+                        <p className="va-micro text-teal-500 uppercase tracking-widest mb-1">Spend efficiency</p>
+                        <SpendGauge
+                          multiplier={spendMultiplier}
+                          benchmark={auction?.budget_multiplier ?? 1.6}
+                          playerCount={mySquad.length}
+                          compact
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-4 rounded-[1.5rem] border border-gold/12 bg-black/10 p-4 sm:p-5">
