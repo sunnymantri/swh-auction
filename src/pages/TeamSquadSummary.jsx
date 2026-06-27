@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import AppShell from '../components/layout/AppShell'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
@@ -28,6 +29,7 @@ const roleBadgeClass = (role = '') => {
 export default function TeamSquadSummary() {
   const { auction, loading: auctionLoading } = useActiveAuction()
   const { role, profile } = useAuth()
+  const location = useLocation()
   const [teams, setTeams] = useState([])
   const [sold, setSold] = useState([])
   const [nominations, setNominations] = useState([])
@@ -50,6 +52,10 @@ export default function TeamSquadSummary() {
 
   useEffect(() => { reload() }, [reload])
   useAuctionRealtime(auction?.id, reload)
+
+  useEffect(() => {
+    if (location.state?.teamId) setSelectedId(location.state.teamId)
+  }, [location.state?.teamId])
 
   const byTeam = useMemo(() => {
     const map = {}

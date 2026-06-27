@@ -89,8 +89,8 @@ const NAV_GROUPS = [
     label: 'Overview',
     roles: ['admin', 'team_owner', 'public'],
     links: [
-      { to: '/public-live', label: 'Live',     roles: ['public', 'team_owner'] },
-      { to: '/results',     label: 'Results',  roles: ['public', 'team_owner'] },
+      { to: '/public-live', label: 'Live',     roles: ['public'] },
+      { to: '/results',     label: 'Results',  roles: ['public'] },
       { to: '/vacation',    label: 'Vacation', roles: ['public', 'team_owner', 'admin'], dropdown: [
         { label: 'Vacation', to: '/vacation' },
         { label: 'Schedule', to: '/schedule' },

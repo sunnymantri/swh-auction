@@ -1005,7 +1005,7 @@ export default function PlayersManagement() {
                   className={`va-micro px-2.5 py-1 rounded-full font-medium transition ${!statusFilter ? 'bg-teal-600 text-white' : 'bg-ink-900 border border-teal-700/50 text-teal-300 hover:text-white'}`}>
                   All ({players.length})
                 </button>
-                {['not_registered', 'registered', 'ready_for_auction', 'in_auction', 'sold', 'unsold', 'retired'].map((s) => {
+                {['not_registered', 'registered', 'ready_for_auction', 'in_auction', 'sold', 'unsold', 'reauction', 'retired'].map((s) => {
                   const count = statusCounts[s] || 0
                   if (count === 0 && s !== 'ready_for_auction' && s !== 'registered') return null
                   const colors = {
@@ -1015,6 +1015,7 @@ export default function PlayersManagement() {
                     in_auction: 'bg-yellow-900/40 border-yellow-600/50 text-yellow-400',
                     sold: 'bg-gold/20 border-gold/50 text-gold',
                     unsold: 'bg-red-900/40 border-red-600/50 text-red-400',
+                    reauction: 'bg-amber-900/50 border-amber-600/60 text-amber-300',
                     retired: 'bg-slate-800/60 border-slate-600/50 text-slate-400',
                   }
                   const tooltip = s === 'registered' ? 'Club member — not playing this season' : undefined

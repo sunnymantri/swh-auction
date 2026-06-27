@@ -131,7 +131,7 @@ export default function QueueManagement() {
               return (
                 <>
                   <div className="space-y-2">
-                    {pending.map((q) => (
+                    {pending.map((q, idx) => (
                       (() => {
                         const playerStatus = q.players?.status || ''
                         const isCurrentRow = q.status === 'current'
@@ -156,7 +156,7 @@ export default function QueueManagement() {
                             <span className="text-teal-600 text-lg select-none shrink-0" title="Drag to reorder">⠿</span>
                           )}
                           <div>
-                            <p>{q.queue_order}. {q.players?.name}</p>
+                            <p>{isCurrentRow ? '▶' : idx + 1}. {q.players?.name}</p>
                             <p className="text-xs text-teal-300">
                               {q.status} · {q.category}
                               {isIneligible && (
