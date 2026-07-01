@@ -44,7 +44,10 @@ export default function Auctions() {
     draft: ['draft', 'live'],
     live: ['live', 'paused', 'completed'],
     paused: ['paused', 'live', 'completed'],
-    completed: ['completed']
+    // Admins can reopen a completed auction — 'paused' first is the safer
+    // resume path (no bidding until explicitly set live), but 'live' is also
+    // allowed for one-click reset.
+    completed: ['completed', 'paused', 'live']
   }
 
   useEffect(() => {
