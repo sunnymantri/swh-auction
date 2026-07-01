@@ -135,8 +135,9 @@ export async function createPlayer(payload) {
     .from('players')
     .insert(payload)
     .select()
-    .single()
+    .maybeSingle()
   if (error) throw error
+  if (!data) throw new Error('You do not have permission to create players. Admin access required.')
   return data
 }
 
@@ -146,8 +147,9 @@ export async function updatePlayer(playerId, payload) {
     .update(payload)
     .eq('id', playerId)
     .select()
-    .single()
+    .maybeSingle()
   if (error) throw error
+  if (!data) throw new Error('You do not have permission to update this player. Admin access required.')
   return data
 }
 
@@ -274,8 +276,31 @@ export async function deleteCategory(categoryId) {
 }
 
 // ---- RPCs (the only sanctioned state mutations) ----
-export const startPlayer = (playerId) =>
-  rpc('start_player', { p_player_id: playerId })
+export async function startPlayer(playerId) {
+  try {
+    return await rpc('start_player', { p_player_id: playerId })
+  } catch (error) {
+    const message = String(error?.message || '')
+    const shouldRetry =
+      message.includes('QUEUE_STATE_REJECTED') ||
+      message.includes('not eligible to be set as current') ||
+      message.includes('queue')
+    if (!shouldRetry) throw error
+
+    // Queue can drift when statuses are manually changed; rebuild and retry once.
+    const { data: playerRow, error: playerErr } = await supabase
+      .from('players')
+      .select('auction_id')
+      .eq('id', playerId)
+      .maybeSingle()
+    if (playerErr) throw playerErr
+    const auctionId = playerRow?.auction_id
+    if (!auctionId) throw error
+
+    await rpc('generate_queue', { p_auction_id: auctionId })
+    return rpc('start_player', { p_player_id: playerId })
+  }
+}
 
 export const placeBid = (playerId, teamId, amount, type = 'team_bid', override = false) =>
   rpc('place_bid', {

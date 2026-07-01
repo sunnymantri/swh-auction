@@ -30,7 +30,7 @@ export default function Login() {
   const [publicErr, setPublicErr] = useState(null)
   const [publicBusy, setPublicBusy] = useState(false)
 
-  const footerVersion = `v${String(packageMeta.version || '0.0.0').split('.').slice(0, 2).join('.')}`
+  const footerVersion = `v${String(packageMeta.version || '0.0.0')}`
 
   useEffect(() => {
     const hash = window.location.hash || ''

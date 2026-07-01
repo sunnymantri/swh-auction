@@ -328,7 +328,7 @@ export default function AppShell({ title, children }) {
 
   const sponsors = Array.isArray(auction?.sponsor_logos) ? auction.sponsor_logos : []
   const overviewPath = getOverviewPath(role)
-  const footerVersion = `v${String(packageMeta.version || '0.0.0').split('.').slice(0, 2).join('.')}`
+  const footerVersion = `v${String(packageMeta.version || '0.0.0')}`
 
   const headingPrimary = auction?.name || title
   const headingCaption = auction?.name ? title : null

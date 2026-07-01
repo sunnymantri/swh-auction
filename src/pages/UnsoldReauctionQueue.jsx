@@ -12,7 +12,9 @@ export default function UnsoldReauctionQueue() {
 
   const reload = async () => {
     if (!auction) return
-    setItems(await getUnsoldOrReauction(auction.id))
+    const rows = await getUnsoldOrReauction(auction.id)
+    // Defensive UI guard: this screen should only list unsold/reauction rows.
+    setItems((rows ?? []).filter((p) => p?.status === 'unsold' || p?.status === 'reauction'))
   }
 
   useEffect(() => { reload() }, [auction])
@@ -30,24 +32,16 @@ export default function UnsoldReauctionQueue() {
             </div>
           )}
           {items.map((p) => (
-            (() => {
-              const canStart = p.status === 'reauction'
-              return (
             <div key={p.id} className="rounded-lg border border-teal-700/40 bg-ink-800/60 p-3 flex justify-between items-center">
               <div>
                 <p>{p.name}</p>
                 <p className="text-xs text-teal-300">
                   {p.status} · {p.category}
-                  {!canStart && <span className="text-live"> · Set to Re-auction first</span>}
                 </p>
               </div>
               <button
-                disabled={busy || !canStart}
+                disabled={busy}
                 onClick={async () => {
-                  if (!canStart) {
-                    setErrorMsg(`"${p.name}" must be in Re-auction status before it can be brought to auction.`)
-                    return
-                  }
                   if (busy) return
                   setBusy(true)
                   setErrorMsg('')
@@ -63,8 +57,6 @@ export default function UnsoldReauctionQueue() {
                 Bring to Auction
               </button>
             </div>
-              )
-            })()
           ))}
           {items.length === 0 && <p className="text-teal-500">No unsold/reauction players right now.</p>}
         </div>

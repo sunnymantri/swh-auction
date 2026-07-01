@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AppShell from '../components/layout/AppShell'
 import RoleGate from '../components/common/RoleGate'
 import { useActiveAuction } from '../hooks/useActiveAuction'
 import { useAuth } from '../context/AuthContext'
 import { useAuctionRealtime } from '../hooks/useAuctionRealtime'
-import { getBidsForPlayer, getCurrentQueueItem, getRecentEvents, listSoldPlayers, listTeamSummaries, placeBid } from '../lib/api'
+import { getBidsForPlayer, getCurrentQueueItem, getRecentEvents, listSoldPlayers, listTeamSummaries, placeBid, resumeCurrentClock } from '../lib/api'
 import { fmtPoints } from '../lib/format'
 import SpendGauge from '../components/common/SpendGauge'
 import { useSoldCelebration } from '../hooks/useSoldCelebration'
@@ -13,6 +14,7 @@ import SoldCelebration from '../components/auction/SoldCelebration'
 import PlayerCard from '../components/auction/PlayerCard'
 import { calcIncrement } from '../components/auction/AuctioneerControls'
 import ActivityFeed from '../components/auction/ActivityFeed'
+import TeamBudgetGrid from '../components/auction/TeamBudgetGrid'
 
 const initials = (name = '') => name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
 
@@ -49,13 +51,14 @@ function TeamMetric({ label, value, accent = false }) {
 }
 
 export default function TeamOwnerBidding() {
+  const navigate = useNavigate()
   const { auction } = useActiveAuction()
   const { profile, role } = useAuth()
   const [current, setCurrent] = useState(null)
   const [teams, setTeams] = useState([])
   const [bids, setBids] = useState([])
   const [events, setEvents] = useState([])
-  const [sold, setSold] = useState([])
+  const [sales, setSales] = useState([])
   const [amount, setAmount] = useState('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
@@ -73,7 +76,7 @@ export default function TeamOwnerBidding() {
     setCurrent(cur)
     setTeams(t)
     setEvents(e)
-    setSold(s.filter(x => !x.reauctioned))
+    setSales(s)
     setBids(cur?.player_id ? await getBidsForPlayer(cur.player_id) : [])
   }, [auction])
 
@@ -93,8 +96,8 @@ export default function TeamOwnerBidding() {
 
   const mySquad = useMemo(() => {
     if (!myTeam) return []
-    return sold.filter(s => s.team_id === myTeam.id)
-  }, [sold, myTeam])
+    return sales.filter(s => s.team_id === myTeam.id && !s.reauctioned)
+  }, [sales, myTeam])
 
   const spendMultiplier = useMemo(() => {
     if (mySquad.length === 0) return null
@@ -123,7 +126,11 @@ export default function TeamOwnerBidding() {
   const leaderTeam = teams.find((team) => team.id === top?.team_id) ?? null
   const leaderName = leaderTeam?.name
   const iAmLeader = Boolean(top?.team_id && myTeam && top.team_id === myTeam.id)
-  const isReauction = current?.players?.status === 'reauction'
+  const wasReauctioned = useMemo(() => {
+    if (!current?.player_id) return false
+    return sales.some((s) => s.player_id === current.player_id && s.reauctioned)
+  }, [sales, current?.player_id])
+  const isReauction = current?.players?.status === 'reauction' || wasReauctioned
   const bidFloor = isReauction
     ? (auction?.min_player_price ?? 0)
     : (current?.players?.base_price ?? 0)
@@ -189,6 +196,21 @@ export default function TeamOwnerBidding() {
       await reload()
     } catch (e) {
       setMsg(e.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const resumeFromBidderConsole = async () => {
+    if (!auction?.id || role !== 'admin') return
+    setBusy(true)
+    setMsg('')
+    try {
+      await resumeCurrentClock(auction.id)
+      await reload()
+      setMsg('Clock resumed.')
+    } catch (e) {
+      setMsg(e.message || 'Could not resume clock.')
     } finally {
       setBusy(false)
     }
@@ -339,6 +361,22 @@ export default function TeamOwnerBidding() {
 
                   <div className="mt-4 rounded-[1.5rem] border border-gold/12 bg-black/10 p-4 sm:p-5">
                     <div className="mx-auto max-w-5xl">
+                      {current?.clock_paused && (
+                        <div className="mb-3 rounded-xl border border-live/45 bg-live/10 px-3 py-2 text-center text-sm text-live">
+                          <p>Bidding is paused by the auctioneer.</p>
+                          {role === 'admin' ? (
+                            <button
+                              onClick={resumeFromBidderConsole}
+                              disabled={busy}
+                              className="mt-2 rounded-lg border border-live/50 bg-live/20 px-3 py-1 text-xs font-medium text-live disabled:opacity-50"
+                            >
+                              Resume clock now
+                            </button>
+                          ) : (
+                            <p className="mt-1 text-xs text-[#ffb6b6]">Ask admin to resume clock in Auction Console.</p>
+                          )}
+                        </div>
+                      )}
                       <div className="va-label text-center text-[#8ca09b]">Quick action</div>
                       <button
                         disabled={!myTeam || !isLive || busy || !!actionBlockedReason}
@@ -402,7 +440,15 @@ export default function TeamOwnerBidding() {
               </section>
             </div>
 
-            <aside>
+            <aside className="space-y-4">
+              <div>
+                <h3 className="font-score text-lg text-teal-200 mb-2">Team Summary</h3>
+                <TeamBudgetGrid
+                  teams={teams}
+                  leaderTeamId={top?.team_id ?? null}
+                  onTeamClick={(teamId) => navigate('/squads', { state: { teamId } })}
+                />
+              </div>
               <ActivityFeed events={events} scrollable={false} />
             </aside>
           </div>

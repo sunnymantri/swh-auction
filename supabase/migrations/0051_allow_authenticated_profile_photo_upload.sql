@@ -15,6 +15,7 @@
 
 -- Replace the admin-only insert with an authenticated insert.
 drop policy if exists "admin write player-photos" on storage.objects;
+drop policy if exists "authenticated write player-photos" on storage.objects;
 
 create policy "authenticated write player-photos" on storage.objects
   for insert to authenticated
@@ -22,11 +23,13 @@ create policy "authenticated write player-photos" on storage.objects
 
 -- Broaden update/delete to admins OR the original uploader.
 drop policy if exists "admin update player-photos" on storage.objects;
+drop policy if exists "admin or owner update player-photos" on storage.objects;
 create policy "admin or owner update player-photos" on storage.objects
   for update to authenticated
   using (bucket_id = 'player-photos' and (public.is_admin() or owner = auth.uid()));
 
 drop policy if exists "admin delete player-photos" on storage.objects;
+drop policy if exists "admin or owner delete player-photos" on storage.objects;
 create policy "admin or owner delete player-photos" on storage.objects
   for delete to authenticated
   using (bucket_id = 'player-photos' and (public.is_admin() or owner = auth.uid()));

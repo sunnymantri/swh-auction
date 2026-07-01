@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tax 2024–25 Review – Sunny Mantri & Apoorva Patwa</title>
+  <style>
+    :root { --navy:#16324f; --navy2:#244b71; --bg:#f4f6f8; --card:#fff; --text:#1f2937; --muted:#5b6472; --border:#d9e1e7; --accent:#eef4fb; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
+    .page { max-width:1400px; margin:0 auto; padding:24px; }
+    .hero,.note,.tab-panel,.summary-card { background:var(--card); border:1px solid var(--border); border-radius:14px; box-shadow:0 8px 24px rgba(22,50,79,.05); }
+    .hero { padding:24px; margin-bottom:16px; }
+    .hero h1 { margin:0 0 8px; font-size:28px; color:var(--navy); }
+    .hero p,.panel-header p { margin:6px 0 0; color:var(--muted); line-height:1.45; }
+    .note { padding:16px 18px; margin-bottom:16px; background:var(--accent); line-height:1.5; }
+    .tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+    .tab-button { border:1px solid var(--border); background:#fff; color:var(--navy); border-radius:999px; padding:10px 14px; font-weight:600; cursor:pointer; }
+    .tab-button.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+    .tab-panel { display:none; padding:18px; margin-bottom:16px; }
+    .tab-panel.active { display:block; }
+    .panel-header { display:flex; justify-content:space-between; gap:16px; align-items:end; margin-bottom:12px; }
+    .panel-header h2 { margin:0; color:var(--navy); font-size:22px; }
+    .summary-pill { padding:8px 12px; border-radius:999px; background:var(--accent); color:var(--navy); font-weight:600; }
+    .panel-actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .owner-select { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--border); border-radius:999px; background:#fff; color:var(--navy); font-weight:600; }
+    .owner-select select { border:none; background:transparent; color:var(--navy); font:inherit; font-weight:700; }
+    .table-filter { min-width:280px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); font:inherit; }
+    .table-wrap { overflow:auto; border:1px solid var(--border); border-radius:12px; }
+    table { border-collapse:collapse; width:100%; min-width:1180px; background:#fff; }
+    th,td { padding:10px 12px; border-bottom:1px solid var(--border); border-right:1px solid var(--border); vertical-align:top; text-align:left; line-height:1.35; }
+    th:last-child,td:last-child { border-right:none; }
+    thead th { position:sticky; top:0; background:var(--navy); color:#fff; z-index:1; }
+    tbody tr:nth-child(even) { background:#fbfcfd; }
+    a { color:var(--navy2); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    .amount-cell { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .badge { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:4px 10px; font-size:12px; font-weight:700; letter-spacing:.01em; }
+    .badge-confirmed { background:#dff3e4; color:#17683a; }
+    .badge-candidate { background:#fff4cc; color:#7a5a00; }
+    .badge-missing { background:#fde2e1; color:#9e2b25; }
+    .badge-excluded { background:#e5e7eb; color:#4b5563; }
+    .row-excluded { background:#f3f4f6 !important; color:#6b7280; }
+    .row-excluded a { color:#6b7280; }
+    .include-toggle { display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text); }
+    .include-toggle input { width:16px; height:16px; accent-color:var(--navy); }
+    .col-item { min-width:220px; }
+    .col-treatment { min-width:260px; }
+    .col-evidence { min-width:220px; }
+    .col-status { min-width:140px; }
+    .col-amount { min-width:110px; }
+    .col-note { min-width:340px; width:340px; }
+    .col-include { min-width:120px; width:120px; white-space:nowrap; }
+    .calc-note { color:var(--muted); font-size:13px; }
+    .view-note { margin:0 0 14px; color:var(--muted); font-size:14px; }
+    .summary-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:16px; }
+    .summary-card { padding:16px; }
+    .summary-card h3 { margin:0 0 8px; color:var(--navy); font-size:16px; }
+    .summary-card .big-number { font-size:28px; font-weight:800; color:var(--text); margin:0; }
+    .summary-card .sub-number { margin-top:4px; color:var(--muted); font-size:13px; }
+    .summary-section { margin-bottom:18px; }
+    .summary-section h3 { margin:0 0 10px; color:var(--navy); }
+    .summary-section table { min-width:0; }
+    .summary-empty { padding:18px; border:1px dashed var(--border); border-radius:12px; color:var(--muted); background:#fafafa; }
+    @media (max-width:900px) { .panel-header { flex-direction:column; align-items:stretch; } .table-filter { min-width:0; width:100%; } .page { padding:14px; } }
+    @media (max-width:1100px) { .summary-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <h1>Tax 2024–25 Review</h1>
+      <p>Sunny Mantri &amp; Apoorva Patwa</p>
+      <p>Property focus: 1/56-60 Ingleburn Road, Ingleburn NSW 2565</p>
+    </div>
+    <div class="note">
+      <strong>Important:</strong> Use the Raine &amp; Horne annual rental statement as the primary rental income source. The ANZ bank rent deposits are a reconciliation aid only and should not be added again if the annual statement already includes them.
+      <br /><br />
+      <strong>Loan note:</strong> Bank of China repayments seen in ANZ were identified by you as relating to 3 Livingstone Ave, not the Ingleburn property. The Ingleburn loan interest still needs its own lender statement.
+    </div>
+    <div class="tabs"><button class="tab-button active" data-tab="summary">Summary</button><button class="tab-button" data-tab="rental">Rental Property</button><button class="tab-button" data-tab="cgt">CGT Sale</button><button class="tab-button" data-tab="personal">Personal &amp; Work</button><button class="tab-button" data-tab="missing">Missing Info</button><button class="tab-button" data-tab="references">References</button></div>
+    
+        <section class="tab-panel active" id="summary">
+          <div class="panel-header">
+            <div>
+              <h2>Summary</h2>
+              <p>High-level totals and major gaps for the 2024–25 return.</p>
+            </div>
+            <div class="panel-actions"><div class="summary-pill">Live calculator</div><label class="owner-select">Statement view<select id="owner-view"><option value="combined">Combined</option><option value="sunny">Sunny</option><option value="apoorva">Apoorva</option></select></label></div>
+          </div>
+          <div id="summary-dashboard"></div>
+        </section>
+        <section class="tab-panel" id="rental">
+          <div class="panel-header">
+            <div>
+              <h2>Rental Property</h2>
+              <p>Income and deductions for 1/56-60 Ingleburn Road.</p>
+            </div>
+            <input class="table-filter" data-table="rental-table" type="search" placeholder="Filter this table..." />
+          </div>
+          <div class="table-wrap"><table id="rental-table"><thead><tr><th>Category</th><th>Item</th><th>Total AUD</th><th>Your 50%</th><th>Apoorva 50%</th><th>Likely treatment</th><th>Evidence link</th><th>Status</th><th>Missing / note</th></tr></thead><tbody><tr data-section="rental" data-row-index="0"><td>Rental income</td><td>Rent received</td><td>$22,885.16</td><td>$11,442.58</td><td>$11,442.58</td><td>Rental income</td><td><a href="https://mail.google.com/mail/#all/197c426a7e6f83e3" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/197c426a7e6f83e3</a></td><td>Confirmed</td><td>Use the Raine &amp; Horne annual statement as primary income support; ANZ rent deposits appear to reconcile only.</td></tr><tr data-section="rental" data-row-index="1"><td>Rental deduction</td><td>Property management fees</td><td>$1,006.84</td><td>$503.42</td><td>$503.42</td><td>Deductible rental expense</td><td><a href="https://mail.google.com/mail/#all/197c426a7e6f83e3" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/197c426a7e6f83e3</a></td><td>Confirmed</td><td>Good to use</td></tr><tr data-section="rental" data-row-index="2"><td>Rental deduction</td><td>Strata fees</td><td>$3,281.81</td><td>$1,640.91</td><td>$1,640.91</td><td>Deductible rental expense</td><td><a href="https://mail.google.com/mail/#all/195b040fad2a1a47" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/195b040fad2a1a47</a></td><td>Partial</td><td>Conservative total; Aug 2024 notice missing</td></tr><tr data-section="rental" data-row-index="3"><td>Rental deduction</td><td>Council rates</td><td>$385.18</td><td>$192.59</td><td>$192.59</td><td>Deductible rental expense</td><td><a href="https://mail.google.com/mail/#all/195b16269bd9e2b9" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/195b16269bd9e2b9</a></td><td>Partial</td><td>Only one notice found</td></tr><tr data-section="rental" data-row-index="4"><td>Rental deduction</td><td>Water charges</td><td>$435.72</td><td>$217.86</td><td>$217.86</td><td>Deductible rental expense</td><td><a href="https://mail.google.com/mail/#all/195fdeb8c69b97bc" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/195fdeb8c69b97bc</a></td><td>Partial</td><td>Three bills found, not clearly all four quarters</td></tr><tr data-section="rental" data-row-index="5"><td>Rental deduction</td><td>Loan interest</td><td></td><td></td><td></td><td>Usually deductible if investment loan</td><td></td><td>Missing</td><td>Need annual interest statement for the Ingleburn loan. Bank of China repayments seen in ANZ were identified by user as 3 Livingstone Ave, not this property.</td></tr><tr data-section="rental" data-row-index="6"><td>Rental deduction</td><td>Landlord insurance</td><td>$520.00</td><td>$260.00</td><td>$260.00</td><td>Likely deductible rental expense</td><td><a href="https://mail.google.com/mail/#all/195ab564966aec66" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/195ab564966aec66</a></td><td>Review</td><td>Need payment proof</td></tr><tr data-section="rental" data-row-index="7"><td>Rental deduction</td><td>Cleaning</td><td>$750.00</td><td>$375.00</td><td>$375.00</td><td>Possible rental or sale-related cost</td><td></td><td>Missing support</td><td>Need receipt</td></tr><tr data-section="rental" data-row-index="8"><td>Rental deduction</td><td>Bunnings repair item</td><td>$117.08</td><td>$58.54</td><td>$58.54</td><td>Maybe deductible if for rental repair</td><td><a href="https://mail.google.com/mail/#all/192eb180e85209db" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/192eb180e85209db</a></td><td>Review</td><td>User said Bunnings may relate to the investment property, but earlier evidence pointed to 3 Livingstone Ave. Confirm item-by-item before claiming.</td></tr><tr data-section="rental" data-row-index="9"><td>Depreciation</td><td>Duo Tax report fee</td><td>$595.00</td><td>$297.50</td><td>$297.50</td><td>Supporting evidence / tax affairs context</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/DT-Receipt%20238117.pdf" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/DT-Receipt%20238117.pdf</a></td><td>Confirmed</td><td>Not the depreciation claim itself</td></tr><tr data-section="rental" data-row-index="10"><td>Depreciation</td><td>Division 43 capital works full-year</td><td>$1,362.00</td><td>$681.00</td><td>$681.00</td><td>Rental depreciation / capital works</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/DT-Report%20238117.pdf" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/DT-Report%20238117.pdf</a></td><td>Confirmed</td><td>Full-year schedule amount</td></tr><tr data-section="rental" data-row-index="11"><td>Depreciation</td><td>Estimated Div 43 to 20 May 2025</td><td>$1,209.01</td><td>$604.50</td><td>$604.50</td><td>Likely apportioned 2024-25 claim</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/DT-Report%20238117.pdf" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/DT-Report%20238117.pdf</a></td><td>Estimate</td><td>Needs accountant confirmation</td></tr></tbody></table></div>
+        </section>
+        <section class="tab-panel" id="cgt">
+          <div class="panel-header">
+            <div>
+              <h2>CGT Sale</h2>
+              <p>Sale-related costs and capital gains working notes.</p>
+            </div>
+            <input class="table-filter" data-table="cgt-table" type="search" placeholder="Filter this table..." />
+          </div>
+          <div class="table-wrap"><table id="cgt-table"><thead><tr><th>Category</th><th>Item</th><th>Total AUD</th><th>Your Share</th><th>Apoorva Share</th><th>Likely treatment</th><th>Evidence link</th><th>Status</th><th>Missing / note</th></tr></thead><tbody><tr data-section="cgt" data-row-index="0"><td>CGT proceeds</td><td>Sale proceeds</td><td>$640,000.00</td><td>$320,000.00</td><td>$320,000.00</td><td>Capital proceeds on sale of 1/56-60 Ingleburn Road</td><td></td><td>Confirmed</td><td>Use final contract / settlement statement</td></tr><tr data-section="cgt" data-row-index="1"><td>CGT selling cost</td><td>Advertising / marketing</td><td>$2,000.00</td><td>$1,000.00</td><td>$1,000.00</td><td>Incidental selling cost for CGT</td><td></td><td>Confirmed</td><td>Open homes / marketing per sale records</td></tr><tr data-section="cgt" data-row-index="2"><td>CGT selling cost</td><td>Agent commission</td><td>$10,560.00</td><td>$5,280.00</td><td>$5,280.00</td><td>Incidental selling cost for CGT</td><td></td><td>Confirmed</td><td>Raine &amp; Horne commission on sale</td></tr><tr data-section="cgt" data-row-index="3"><td>CGT selling cost</td><td>Solicitor / conveyancing on sale</td><td>$2,463.93</td><td>$1,231.97</td><td>$1,231.97</td><td>Incidental selling cost for CGT</td><td><a href="https://mail.google.com/mail/#all/195c649924399ebe" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/195c649924399ebe</a></td><td>Confirmed</td><td>Legal costs to complete the sale</td></tr><tr data-section="cgt" data-row-index="4"><td>CGT selling cost</td><td>PEXA / settlement platform</td><td>$137.39</td><td>$68.70</td><td>$68.70</td><td>Incidental selling cost for CGT</td><td></td><td>Confirmed</td><td>Electronic settlement charge</td></tr><tr data-section="cgt" data-row-index="5"><td>Capital improvement</td><td>Kitchen renovation quote SK0269 (likely superseded)</td><td>$9,438.00</td><td>$4,719.00</td><td>$4,719.00</td><td>Capital improvement candidate for CGT cost base only if accepted and paid</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0269%20Sunny%20Ingleburn.pdf" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0269%20Sunny%20Ingleburn.pdf</a></td><td>Review</td><td>Earlier quote dated 5 Feb 2018. Keep excluded unless you confirm it was paid and not replaced by SK0270.</td></tr><tr data-section="cgt" data-row-index="6"><td>Capital improvement</td><td>Kitchen renovation quote SK0270 revised</td><td>$10,288.00</td><td>$5,144.00</td><td>$5,144.00</td><td>Capital improvement candidate for CGT cost base only if accepted and paid</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0270%20Revised%20Sunny%20Ingleburn.pdf" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0270%20Revised%20Sunny%20Ingleburn.pdf</a></td><td>Missing support</td><td>Revised kitchen quote dated 14 Feb 2018. Need invoice / payment proof.</td></tr><tr data-section="cgt" data-row-index="7"><td>Capital improvement</td><td>Bathroom renovation quote AJJ Tiling Services</td><td>$16,500.00</td><td>$8,250.00</td><td>$8,250.00</td><td>Capital improvement candidate for CGT cost base or Div 43 review</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/AJJ%20TILING%20SERVICES%20sunny.docx" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/AJJ%20TILING%20SERVICES%20sunny.docx</a></td><td>Missing support</td><td>Quote dated 10 May 2020. Check against Duo Tax schedule so it is not double-counted.</td></tr><tr data-section="cgt" data-row-index="8"><td>Capital improvement</td><td>General improvements estimate (user-provided)</td><td>$9,400.00</td><td>$4,700.00</td><td>$4,700.00</td><td>User-estimated capital improvement candidate</td><td></td><td>Missing support</td><td>Add only if you want to model unsupported improvement spend pending documents.</td></tr><tr data-section="cgt" data-row-index="9"><td>Missing cost-base item</td><td>Original purchase contract + settlement</td><td></td><td></td><td></td><td>Needed to finalise CGT cost base</td><td></td><td>Missing</td><td>Need 2018 acquisition documents</td></tr><tr data-section="cgt" data-row-index="10"><td>Missing cost-base item</td><td>Purchase stamp duty</td><td></td><td></td><td></td><td>Part of CGT cost base</td><td></td><td>Missing</td><td>Usually on settlement statement / transfer duty records</td></tr><tr data-section="cgt" data-row-index="11"><td>Missing cost-base item</td><td>Purchase legal fees</td><td></td><td></td><td></td><td>Part of CGT cost base</td><td></td><td>Missing</td><td>Need 2018 solicitor / conveyancer invoice</td></tr><tr data-section="cgt" data-row-index="12"><td>Missing cost-base item</td><td>Transfer / registration fee</td><td></td><td></td><td></td><td>Part of CGT cost base</td><td></td><td>Missing</td><td>User said a registration form fee was paid back then</td></tr></tbody></table></div>
+        </section>
+        <section class="tab-panel" id="personal">
+          <div class="panel-header">
+            <div>
+              <h2>Personal &amp; Work</h2>
+              <p>Employment income, subscriptions, insurance and work-expense candidates.</p>
+            </div>
+            <input class="table-filter" data-table="personal-table" type="search" placeholder="Filter this table..." />
+          </div>
+          <div class="table-wrap"><table id="personal-table"><thead><tr><th>Category</th><th>Item</th><th>Amount AUD</th><th>Likely treatment</th><th>Evidence link</th><th>Status</th><th>Missing / note</th></tr></thead><tbody><tr data-section="personal" data-row-index="0"><td>Employment income</td><td>SFDC AUSTRALIA PTY LIMITED</td><td>$247,413.00</td><td>Assessable salary and wages income</td><td><a href="file:///var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png" target="_blank" rel="noreferrer">/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png</a></td><td>Confirmed from screenshot</td><td>Screenshot shows salary, wages, allowances, tips, bonuses etc for FY 2024–25</td></tr><tr data-section="personal" data-row-index="1"><td>Interest income</td><td>ANZ BANKING GROUP LTD</td><td>$123.53</td><td>Assessable bank interest income</td><td><a href="file:///var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png" target="_blank" rel="noreferrer">/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png</a></td><td>Confirmed from screenshot</td><td>Interest earned, not deductible interest paid</td></tr><tr data-section="personal" data-row-index="2"><td>Interest income</td><td>BANK OF CHINA (AUSTRALIA) LIMITED</td><td>$10.62</td><td>Assessable bank interest income</td><td><a href="file:///var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png" target="_blank" rel="noreferrer">/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png</a></td><td>Confirmed from screenshot</td><td>Interest earned, not deductible interest paid</td></tr><tr data-section="personal" data-row-index="3"><td>Interest income</td><td>ST GEORGE BANK A DIVISION OF WESTPAC BANKING CORPORATION</td><td>$251.29</td><td>Assessable bank interest income</td><td><a href="file:///var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png" target="_blank" rel="noreferrer">/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png</a></td><td>Confirmed from screenshot</td><td>This appears to be deposit / account interest earned, not the investment-loan interest deduction we still need separately</td></tr><tr data-section="personal" data-row-index="4"><td>Interest income</td><td>ATO - Interest on overpayment</td><td>$0.93</td><td>Assessable interest income</td><td><a href="file:///var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png" target="_blank" rel="noreferrer">/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png</a></td><td>Confirmed from screenshot</td><td>ATO interest on overpayment is taxable income</td></tr><tr data-section="personal" data-row-index="5"><td>Interest income</td><td>Total interest income from screenshot</td><td>$386.37</td><td>Assessable interest income total</td><td><a href="file:///var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png" target="_blank" rel="noreferrer">/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png</a></td><td>Calculated</td><td>123.53 + 10.62 + 251.29 + 0.93</td></tr><tr data-section="personal" data-row-index="6"><td>Private health</td><td>Annual PHI details</td><td></td><td>PHI reporting item, not normal deduction</td><td><a href="https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/medicare-levy-questions-m1-m2-individual-tax-return-2025/private-health-insurance-policy-details-2025" target="_blank" rel="noreferrer">https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/medicare-levy-questions-m1-m2-individual-tax-return-2025/private-health-insurance-policy-details-2025</a></td><td>Missing statement</td><td>Need annual PHI statement or MyGov prefill</td></tr><tr data-section="personal" data-row-index="7"><td>Private health</td><td>GU Health membership / emails</td><td></td><td>Supports membership context only</td><td><a href="https://mail.google.com/mail/#all/1973e5cf56c8f34d" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/1973e5cf56c8f34d</a></td><td>Partial</td><td>No annual tax statement found yet</td></tr><tr data-section="personal" data-row-index="8"><td>Life insurance</td><td>TAL Life + TPD quoted monthly premium</td><td>$127.44</td><td>Usually not deductible if it is only life / TPD cover</td><td><a href="https://mail.google.com/mail/#all/1953abe13d5e0e48" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/1953abe13d5e0e48</a></td><td>Partial</td><td>Quote email dated 26 Nov 2024 shows $127.44 monthly; policy activated Feb 2025</td></tr><tr data-section="personal" data-row-index="9"><td>Life insurance</td><td>TAL premium payments</td><td></td><td>Need actual debits before claiming anything</td><td><a href="https://mail.google.com/mail/#all/1953abe13d5e0e48" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/1953abe13d5e0e48</a></td><td>Missing payment evidence</td><td>Need bank statements / annual premium statement</td></tr><tr data-section="personal" data-row-index="10"><td>Income protection / redundancy</td><td>Prior-year note to accountant</td><td>$872.28</td><td>Prior-year reference only, not FY 2024–25 evidence</td><td><a href="https://mail.google.com/mail/#all/19268ee0317319db" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/19268ee0317319db</a></td><td>Do not use yet</td><td>Email says income protection for the last financial year was 872.28; this appears to relate to the 2024 return, not FY 2024–25</td></tr><tr data-section="personal" data-row-index="11"><td>Work expense</td><td>Officeworks invoice 620847018</td><td>$5.00</td><td>Candidate work-related expense</td><td><a href="https://mail.google.com/mail/#all/195d72dfc4cf1d57" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/195d72dfc4cf1d57</a></td><td>Candidate</td><td>Need item detail / confirm work use</td></tr><tr data-section="personal" data-row-index="12"><td>Work expense</td><td>Amazon Bluetooth mouse</td><td>$19.98</td><td>Good candidate work-related expense</td><td><a href="https://mail.google.com/mail/#all/19582ad03d2738ea" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/19582ad03d2738ea</a></td><td>Candidate</td><td>Claim work-use portion if mixed use</td></tr><tr data-section="personal" data-row-index="13"><td>Work expense</td><td>Sony earbuds</td><td>$129.00</td><td>Candidate only if genuinely used for work</td><td><a href="https://mail.google.com/mail/#all/19582ad03d2738ea" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/19582ad03d2738ea</a></td><td>Review</td><td>Need work-use confirmation</td></tr><tr data-section="personal" data-row-index="14"><td>Work expense</td><td>Earbud case</td><td>$9.89</td><td>Candidate only if earbuds are work-related</td><td><a href="https://mail.google.com/mail/#all/19582ad03d2738ea" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/19582ad03d2738ea</a></td><td>Review</td><td>Low priority</td></tr><tr data-section="personal" data-row-index="15"><td>Software subscription</td><td>Google One 2 TB annual charge</td><td>$124.99</td><td>Candidate work-related software / storage expense</td><td><a href="https://mail.google.com/mail/#all/1940c191f64327c4" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/1940c191f64327c4</a></td><td>Review</td><td>Later refund email found for 68.15; claim only work-use portion after netting refund</td></tr><tr data-section="personal" data-row-index="16"><td>Software adjustment</td><td>Google One refund approved</td><td>-$68.15</td><td>Reduces any Google One claim</td><td><a href="https://mail.google.com/mail/#all/197620b2e1c26b81" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/197620b2e1c26b81</a></td><td>Adjustment</td><td>Need PayPal / bank confirmation refund actually landed in FY</td></tr><tr data-section="personal" data-row-index="17"><td>Software subscription</td><td>Surfshark recurring order</td><td>$147.01</td><td>Candidate software / VPN expense</td><td><a href="https://mail.google.com/mail/#all/195ee719371144cc" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/195ee719371144cc</a></td><td>Candidate</td><td>PayPal receipt shows 147.01 AUD charged on 1 Apr 2025 for Surfshark recurring subscription</td></tr><tr data-section="personal" data-row-index="18"><td>Software subscription</td><td>LinkedIn Premium receipts found</td><td>$274.94</td><td>Review carefully; may be non-deductible if mainly job-seeking</td><td><a href="https://mail.google.com/mail/#all/1976c6775aa9705a" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/1976c6775aa9705a</a></td><td>Review</td><td>Receipts found for 14 Oct 2024 27.49, 14 Nov 2024 27.49, 14 Dec 2024 54.99, 14 Mar 2025 54.99, 14 May 2025 54.99, 14 Jun 2025 54.99</td></tr><tr data-section="personal" data-row-index="19"><td>Software subscription</td><td>Grammarly annual payment authorisation</td><td>$225.35</td><td>Candidate software expense if work-related</td><td><a href="https://mail.google.com/mail/#all/19358c2bf7a6cdb7" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/19358c2bf7a6cdb7</a></td><td>Review</td><td>PayPal authorisation on 23 Nov 2024 for 139.95 USD / 225.35 AUD; ideally confirm final posted receipt in PayPal or bank</td></tr><tr data-section="personal" data-row-index="20"><td>Software subscription</td><td>OpenAI / ChatGPT subscription</td><td>$422.88</td><td>Candidate work-related software expense</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/ANZ%20-%20Offset.csv" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/ANZ%20-%20Offset.csv</a></td><td>Confirmed from ANZ bank statement</td><td>12 monthly OpenAI / ChatGPT subscription charges from 15 Jul 2024 to 13 Jun 2025. Claim work-use portion only. No Anthropic / Claude charge confirmed yet.</td></tr><tr data-section="personal" data-row-index="21"><td>Rules</td><td>ATO deduction rules</td><td></td><td>Must relate to earning employment income and be supported by records</td><td><a href="https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/supporting-information-individual-tax-return-2025/claiming-deductions-2025" target="_blank" rel="noreferrer">https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/supporting-information-individual-tax-return-2025/claiming-deductions-2025</a></td><td>Confirmed source</td><td>Reimbursed expenses cannot be claimed</td></tr></tbody></table></div>
+        </section>
+        <section class="tab-panel" id="missing">
+          <div class="panel-header">
+            <div>
+              <h2>Missing Info</h2>
+              <p>What is still needed to complete the return confidently.</p>
+            </div>
+            <input class="table-filter" data-table="missing-table" type="search" placeholder="Filter this table..." />
+          </div>
+          <div class="table-wrap"><table id="missing-table"><thead><tr><th>Priority</th><th>Missing item</th><th>Why needed</th><th>Best source</th></tr></thead><tbody><tr data-section="missing" data-row-index="0"><td>High</td><td>Bank statements for 1 Jul 2024 to 30 Jun 2025</td><td>Find TAL premiums, private health payments, loan interest, and other spending</td><td>Bank PDF / CSV statements</td></tr><tr data-section="missing" data-row-index="1"><td>High</td><td>PAYG income statements</td><td>Complete income side of return</td><td>MyGov / employer</td></tr><tr data-section="missing" data-row-index="2"><td>High</td><td>Investment loan interest statement</td><td>Major rental deduction for Ingleburn; ANZ Bank of China repayments were identified as another property</td><td>Ingleburn lender annual statement</td></tr><tr data-section="missing" data-row-index="3"><td>High</td><td>Original purchase contract + settlement</td><td>Needed to finish CGT cost base</td><td>Conveyancer / old email</td></tr><tr data-section="missing" data-row-index="4"><td>High</td><td>Purchase stamp duty + purchase legal fees</td><td>Needed for CGT cost base</td><td>Settlement docs</td></tr><tr data-section="missing" data-row-index="5"><td>High</td><td>2018 transfer / registration fee receipt</td><td>Needed for CGT cost base if paid on purchase</td><td>Settlement statement / conveyancer invoice / Revenue NSW</td></tr><tr data-section="missing" data-row-index="6"><td>High</td><td>Kitchen / bathroom renovation invoices and payment proof</td><td>Needed to decide CGT cost base vs capital works / depreciation treatment</td><td>Builder invoices / bank statements / emails</td></tr><tr data-section="missing" data-row-index="7"><td>Medium</td><td>Private health annual statement</td><td>Needed for PHI section</td><td>Insurer annual statement / MyGov prefill</td></tr><tr data-section="missing" data-row-index="8"><td>Medium</td><td>Full-year council notices</td><td>Complete rental deduction</td><td>Council notices / bank statements</td></tr><tr data-section="missing" data-row-index="9"><td>Medium</td><td>Missing water quarter if any</td><td>Complete rental deduction</td><td>Sydney Water / bank statements</td></tr><tr data-section="missing" data-row-index="10"><td>Medium</td><td>Landlord insurance payment proof</td><td>Support rental deduction</td><td>Bank statements</td></tr><tr data-section="missing" data-row-index="11"><td>Medium</td><td>Cleaning receipt for $750</td><td>Support claim</td><td>Invoice / bank transaction</td></tr><tr data-section="missing" data-row-index="12"><td>Medium</td><td>Any other Bunnings / repair invoices for the rental</td><td>Support repairs claim</td><td>Receipts / bank statements</td></tr><tr data-section="missing" data-row-index="13"><td>Medium</td><td>Prior year tax return / rental schedule</td><td>Helps reconcile depreciation already claimed</td><td>Accountant PDFs</td></tr><tr data-section="missing" data-row-index="14"><td>Medium</td><td>Check Duo Tax schedule includes later renovations</td><td>Needed so depreciation / capital works are not double-counted or missed</td><td>Duo Tax report + renovation invoices + accountant review</td></tr><tr data-section="missing" data-row-index="15"><td>Medium</td><td>Google One refund completion and work-use split</td><td>Needed before claiming any software storage deduction</td><td>PayPal / bank statement + your work-use estimate</td></tr><tr data-section="missing" data-row-index="16"><td>Medium</td><td>OpenAI / ChatGPT work-use percentage</td><td>Need a reasonable basis before claiming the subscription as a work deduction</td><td>Your estimate / work diary / accountant advice</td></tr><tr data-section="missing" data-row-index="17"><td>Medium</td><td>TAL premium debit evidence or annual premium statement</td><td>Needed to prove actual FY 2024–25 insurance payments</td><td>Bank statement / TAL statement / myTAL</td></tr><tr data-section="missing" data-row-index="18"><td>Medium</td><td>Clarify whether any policy includes income protection / redundancy cover</td><td>Life / TPD is usually not deductible, but income protection may be</td><td>Policy schedule / broker confirmation / accountant advice</td></tr><tr data-section="missing" data-row-index="19"><td>Medium</td><td>Council and Sydney Water notices not yet fully located in Gmail</td><td>Need quarterly evidence if you want a document-backed reconciliation</td><td>Council / Sydney Water PDFs or bank statement payments</td></tr><tr data-section="missing" data-row-index="20"><td>Medium</td><td>Support for the $9,400 general improvement estimate</td><td>Needed before treating the user estimate as a defendable CGT cost-base item</td><td>Invoices / receipts / bank statements / accountant workpapers</td></tr></tbody></table></div>
+        </section>
+        <section class="tab-panel" id="references">
+          <div class="panel-header">
+            <div>
+              <h2>References</h2>
+              <p>Evidence links, source files and ATO guidance.</p>
+            </div>
+            <input class="table-filter" data-table="references-table" type="search" placeholder="Filter this table..." />
+          </div>
+          <div class="table-wrap"><table id="references-table"><thead><tr><th>Reference type</th><th>Description</th><th>Link / path</th></tr></thead><tbody><tr data-section="references" data-row-index="0"><td>ATO</td><td>21 Rent 2025</td><td><a href="https://www.ato.gov.au/forms-and-instructions/individual-supplementary-tax-return-2025-instructions/income-questions-13-24-supplementary-tax-return-2025/21-rent-2025" target="_blank" rel="noreferrer">https://www.ato.gov.au/forms-and-instructions/individual-supplementary-tax-return-2025-instructions/income-questions-13-24-supplementary-tax-return-2025/21-rent-2025</a></td></tr><tr data-section="references" data-row-index="1"><td>ATO</td><td>18 Capital gains 2025</td><td><a href="https://www.ato.gov.au/forms-and-instructions/individual-supplementary-tax-return-2025-instructions/income-questions-13-24-supplementary-tax-return-2025/18-capital-gains-2025" target="_blank" rel="noreferrer">https://www.ato.gov.au/forms-and-instructions/individual-supplementary-tax-return-2025-instructions/income-questions-13-24-supplementary-tax-return-2025/18-capital-gains-2025</a></td></tr><tr data-section="references" data-row-index="2"><td>ATO</td><td>Rental properties guide 2025</td><td><a href="https://www.ato.gov.au/forms-and-instructions/rental-properties-2025" target="_blank" rel="noreferrer">https://www.ato.gov.au/forms-and-instructions/rental-properties-2025</a></td></tr><tr data-section="references" data-row-index="3"><td>ATO</td><td>Private health insurance policy details 2025</td><td><a href="https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/medicare-levy-questions-m1-m2-individual-tax-return-2025/private-health-insurance-policy-details-2025" target="_blank" rel="noreferrer">https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/medicare-levy-questions-m1-m2-individual-tax-return-2025/private-health-insurance-policy-details-2025</a></td></tr><tr data-section="references" data-row-index="4"><td>ATO</td><td>Claiming deductions 2025</td><td><a href="https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/supporting-information-individual-tax-return-2025/claiming-deductions-2025" target="_blank" rel="noreferrer">https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/supporting-information-individual-tax-return-2025/claiming-deductions-2025</a></td></tr><tr data-section="references" data-row-index="5"><td>ATO</td><td>CGT when selling your rental property</td><td><a href="https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/property-and-capital-gains-tax/cgt-when-selling-your-rental-property" target="_blank" rel="noreferrer">https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/property-and-capital-gains-tax/cgt-when-selling-your-rental-property</a></td></tr><tr data-section="references" data-row-index="6"><td>Local file</td><td>Duo Tax report</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/DT-Report%20238117.pdf" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/DT-Report%20238117.pdf</a></td></tr><tr data-section="references" data-row-index="7"><td>Local file</td><td>Duo Tax receipt</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/DT-Receipt%20238117.pdf" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/DT-Receipt%20238117.pdf</a></td></tr><tr data-section="references" data-row-index="8"><td>Gmail</td><td>Google One annual charge receipt</td><td><a href="https://mail.google.com/mail/#all/1940c191f64327c4" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/1940c191f64327c4</a></td></tr><tr data-section="references" data-row-index="9"><td>Gmail</td><td>Google One refund email</td><td><a href="https://mail.google.com/mail/#all/197620b2e1c26b81" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/197620b2e1c26b81</a></td></tr><tr data-section="references" data-row-index="10"><td>Gmail</td><td>Surfshark PayPal receipt</td><td><a href="https://mail.google.com/mail/#all/195ee719371144cc" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/195ee719371144cc</a></td></tr><tr data-section="references" data-row-index="11"><td>Gmail</td><td>LinkedIn PayPal receipt set</td><td><a href="https://mail.google.com/mail/#all/1976c6775aa9705a" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/1976c6775aa9705a</a></td></tr><tr data-section="references" data-row-index="12"><td>Gmail</td><td>Grammarly PayPal authorisation</td><td><a href="https://mail.google.com/mail/#all/19358c2bf7a6cdb7" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/19358c2bf7a6cdb7</a></td></tr><tr data-section="references" data-row-index="13"><td>Gmail</td><td>TAL quote / premium email</td><td><a href="https://mail.google.com/mail/#all/1936751257bc73f4" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/1936751257bc73f4</a></td></tr><tr data-section="references" data-row-index="14"><td>Gmail</td><td>TAL welcome / policy schedule email</td><td><a href="https://mail.google.com/mail/#all/1953abe13d5e0e48" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/1953abe13d5e0e48</a></td></tr><tr data-section="references" data-row-index="15"><td>Gmail</td><td>Prior-year income protection note</td><td><a href="https://mail.google.com/mail/#all/19268ee0317319db" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/19268ee0317319db</a></td></tr><tr data-section="references" data-row-index="16"><td>Local file</td><td>ANZ Offset CSV with OpenAI and Surfshark charges</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/ANZ%20-%20Offset.csv" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/ANZ%20-%20Offset.csv</a></td></tr><tr data-section="references" data-row-index="17"><td>Gmail</td><td>Sale contract preparation invoice 2080</td><td><a href="https://mail.google.com/mail/#all/195c649924399ebe" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/195c649924399ebe</a></td></tr><tr data-section="references" data-row-index="18"><td>Gmail</td><td>Approval emails PDF: 2018 flooring + 2020 bathroom works</td><td><a href="https://mail.google.com/mail/#all/1965c87eca55e56f" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/1965c87eca55e56f</a></td></tr><tr data-section="references" data-row-index="19"><td>Gmail</td><td>Sale enquiry email noting 2018 laminate / kitchen and 2020 bathroom works</td><td><a href="https://mail.google.com/mail/#all/1965c87eca55e56f" target="_blank" rel="noreferrer">https://mail.google.com/mail/#all/1965c87eca55e56f</a></td></tr><tr data-section="references" data-row-index="20"><td>Local file</td><td>Kitchen quote SK0269</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0269%20Sunny%20Ingleburn.pdf" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0269%20Sunny%20Ingleburn.pdf</a></td></tr><tr data-section="references" data-row-index="21"><td>Local file</td><td>Kitchen quote SK0270 revised</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0270%20Revised%20Sunny%20Ingleburn.pdf" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0270%20Revised%20Sunny%20Ingleburn.pdf</a></td></tr><tr data-section="references" data-row-index="22"><td>Local file</td><td>AJJ Tiling Services quote</td><td><a href="file:///Users/sunny.mantri/Documents/Personal/AJJ%20TILING%20SERVICES%20sunny.docx" target="_blank" rel="noreferrer">file:///Users/sunny.mantri/Documents/Personal/AJJ%20TILING%20SERVICES%20sunny.docx</a></td></tr></tbody></table></div>
+        </section>
+  </div>
+  <script id="section-data" type="application/json">[{"id":"summary","title":"Summary","description":"High-level totals and major gaps for the 2024–25 return.","tableId":"summary-table","values":[["Tax 2024–25 Working Paper – Sunny Mantri & Apoorva Patwa",null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],["Property: 1/56-60 Ingleburn Road, Ingleburn NSW 2565 | Ownership split assumed 50/50 | Period: 1 Jul 2024 to 30 Jun 2025",null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],["Area","Status","Total AUD","Your Share","Apoorva Share","Primary Source / Note",null,null],["Employment income (PAYG summary)","Confirmed",247413,null,null,"Raine & Horne FY statement is the primary source. Bank rent deposits in ANZ appear to reconcile and should not be double-counted.",null,null],["Interest income","Confirmed",386.37,null,null,"ANZ, Bank of China, St George and ATO interest from screenshot",null,null],["Rental income","Confirmed",22885.16,11442.58,11442.58,"Raine & Horne FY statement is the primary source. Bank rent deposits in ANZ appear to reconcile and should not be double-counted.",null,null],["Confirmed rental deductions (before interest/insurance/cleaning)","Partial",5109.55,2554.78,2554.78,"Strata, council, water, management fees",null,null],["Depreciation schedule found","Confirmed",1362,681,681,"Duo Tax Div 43 full-year schedule",null,null],["Estimated apportioned depreciation to 20 May 2025","Estimate",1209.01,604.5,604.5,"Needs accountant confirmation",null,null],["CGT selling costs confirmed","Confirmed",15161.32,7580.66,7580.66,"Commission, legal, PEXA, advertising",null,null],["Capital improvement candidates currently selected in calculator","Review",36188,18094,18094,"SK0270 revised kitchen quote, AJJ tiling quote and user-estimated improvements are included by default. SK0269 is left excluded as likely superseded.",null,null],["Loan interest","Missing",null,null,null,"Need bank/lender annual interest statement for the Ingleburn property",null,null],["Private health statement","Missing",null,null,null,"Need annual PHI statement or MyGov prefill",null,null],["PAYG withholding / full income statement detail","Partial",null,null,null,"Salary income is captured from the screenshot. If tax withheld needs separate support, use the full income statement / PAYG summary.",null,null],[null,null,null,null,null,null,null,null],["Use the 'Rental Property' and 'CGT Sale' tabs for likely tax return figures. Use 'Personal & Work' for insurance and work expense candidates. Use 'Missing Info' to close remaining gaps.",null,null,null,null,null,null,null]]},{"id":"rental","title":"Rental Property","description":"Income and deductions for 1/56-60 Ingleburn Road.","tableId":"rental-table","values":[["Category","Item","Total AUD","Your 50%","Apoorva 50%","Likely treatment","Evidence link","Status","Missing / note"],["Rental income","Rent received",22885.16,11442.58,11442.58,"Rental income","https://mail.google.com/mail/#all/197c426a7e6f83e3","Confirmed","Use the Raine & Horne annual statement as primary income support; ANZ rent deposits appear to reconcile only."],["Rental deduction","Property management fees",1006.84,503.42,503.42,"Deductible rental expense","https://mail.google.com/mail/#all/197c426a7e6f83e3","Confirmed","Good to use"],["Rental deduction","Strata fees",3281.81,1640.91,1640.91,"Deductible rental expense","https://mail.google.com/mail/#all/195b040fad2a1a47","Partial","Conservative total; Aug 2024 notice missing"],["Rental deduction","Council rates",385.18,192.59,192.59,"Deductible rental expense","https://mail.google.com/mail/#all/195b16269bd9e2b9","Partial","Only one notice found"],["Rental deduction","Water charges",435.72,217.86,217.86,"Deductible rental expense","https://mail.google.com/mail/#all/195fdeb8c69b97bc","Partial","Three bills found, not clearly all four quarters"],["Rental deduction","Loan interest",null,null,null,"Usually deductible if investment loan",null,"Missing","Need annual interest statement for the Ingleburn loan. Bank of China repayments seen in ANZ were identified by user as 3 Livingstone Ave, not this property."],["Rental deduction","Landlord insurance",520,260,260,"Likely deductible rental expense","https://mail.google.com/mail/#all/195ab564966aec66","Review","Need payment proof"],["Rental deduction","Cleaning",750,375,375,"Possible rental or sale-related cost",null,"Missing support","Need receipt"],["Rental deduction","Bunnings repair item",117.08,58.54,58.54,"Maybe deductible if for rental repair","https://mail.google.com/mail/#all/192eb180e85209db","Review","User said Bunnings may relate to the investment property, but earlier evidence pointed to 3 Livingstone Ave. Confirm item-by-item before claiming."],["Depreciation","Duo Tax report fee",595,297.5,297.5,"Supporting evidence / tax affairs context","file:///Users/sunny.mantri/Documents/Personal/DT-Receipt%20238117.pdf","Confirmed","Not the depreciation claim itself"],["Depreciation","Division 43 capital works full-year",1362,681,681,"Rental depreciation / capital works","file:///Users/sunny.mantri/Documents/Personal/DT-Report%20238117.pdf","Confirmed","Full-year schedule amount"],["Depreciation","Estimated Div 43 to 20 May 2025",1209.01,604.5,604.5,"Likely apportioned 2024-25 claim","file:///Users/sunny.mantri/Documents/Personal/DT-Report%20238117.pdf","Estimate","Needs accountant confirmation"]]},{"id":"cgt","title":"CGT Sale","description":"Sale-related costs and capital gains working notes.","tableId":"cgt-table","values":[["Category","Item","Total AUD","Your Share","Apoorva Share","Likely treatment","Evidence link","Status","Missing / note"],["CGT proceeds","Sale proceeds",640000,320000,320000,"Capital proceeds on sale of 1/56-60 Ingleburn Road",null,"Confirmed","Use final contract / settlement statement"],["CGT selling cost","Advertising / marketing",2000,1000,1000,"Incidental selling cost for CGT",null,"Confirmed","Open homes / marketing per sale records"],["CGT selling cost","Agent commission",10560,5280,5280,"Incidental selling cost for CGT",null,"Confirmed","Raine & Horne commission on sale"],["CGT selling cost","Solicitor / conveyancing on sale",2463.93,1231.97,1231.97,"Incidental selling cost for CGT","https://mail.google.com/mail/#all/195c649924399ebe","Confirmed","Legal costs to complete the sale"],["CGT selling cost","PEXA / settlement platform",137.39,68.7,68.7,"Incidental selling cost for CGT",null,"Confirmed","Electronic settlement charge"],["Capital improvement","Kitchen renovation quote SK0269 (likely superseded)",9438,4719,4719,"Capital improvement candidate for CGT cost base only if accepted and paid","file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0269%20Sunny%20Ingleburn.pdf","Review","Earlier quote dated 5 Feb 2018. Keep excluded unless you confirm it was paid and not replaced by SK0270."],["Capital improvement","Kitchen renovation quote SK0270 revised",10288,5144,5144,"Capital improvement candidate for CGT cost base only if accepted and paid","file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0270%20Revised%20Sunny%20Ingleburn.pdf","Missing support","Revised kitchen quote dated 14 Feb 2018. Need invoice / payment proof."],["Capital improvement","Bathroom renovation quote AJJ Tiling Services",16500,8250,8250,"Capital improvement candidate for CGT cost base or Div 43 review","file:///Users/sunny.mantri/Documents/Personal/AJJ%20TILING%20SERVICES%20sunny.docx","Missing support","Quote dated 10 May 2020. Check against Duo Tax schedule so it is not double-counted."],["Capital improvement","General improvements estimate (user-provided)",9400,4700,4700,"User-estimated capital improvement candidate",null,"Missing support","Add only if you want to model unsupported improvement spend pending documents."],["Missing cost-base item","Original purchase contract + settlement",null,null,null,"Needed to finalise CGT cost base",null,"Missing","Need 2018 acquisition documents"],["Missing cost-base item","Purchase stamp duty",null,null,null,"Part of CGT cost base",null,"Missing","Usually on settlement statement / transfer duty records"],["Missing cost-base item","Purchase legal fees",null,null,null,"Part of CGT cost base",null,"Missing","Need 2018 solicitor / conveyancer invoice"],["Missing cost-base item","Transfer / registration fee",null,null,null,"Part of CGT cost base",null,"Missing","User said a registration form fee was paid back then"]]},{"id":"personal","title":"Personal & Work","description":"Employment income, subscriptions, insurance and work-expense candidates.","tableId":"personal-table","values":[["Category","Item","Amount AUD","Likely treatment","Evidence link","Status","Missing / note"],["Employment income","SFDC AUSTRALIA PTY LIMITED",247413,"Assessable salary and wages income","/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png","Confirmed from screenshot","Screenshot shows salary, wages, allowances, tips, bonuses etc for FY 2024–25"],["Interest income","ANZ BANKING GROUP LTD",123.53,"Assessable bank interest income","/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png","Confirmed from screenshot","Interest earned, not deductible interest paid"],["Interest income","BANK OF CHINA (AUSTRALIA) LIMITED",10.62,"Assessable bank interest income","/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png","Confirmed from screenshot","Interest earned, not deductible interest paid"],["Interest income","ST GEORGE BANK A DIVISION OF WESTPAC BANKING CORPORATION",251.29,"Assessable bank interest income","/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png","Confirmed from screenshot","This appears to be deposit / account interest earned, not the investment-loan interest deduction we still need separately"],["Interest income","ATO - Interest on overpayment",0.93,"Assessable interest income","/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png","Confirmed from screenshot","ATO interest on overpayment is taxable income"],["Interest income","Total interest income from screenshot",386.37,"Assessable interest income total","/var/folders/zg/_wtvb95j10v3lq9_h03xrqy00000gn/T/codex-clipboard-bc7e1fda-ed08-4e90-a9a4-a2b0e6cd19dc.png","Calculated","123.53 + 10.62 + 251.29 + 0.93"],["Private health","Annual PHI details",null,"PHI reporting item, not normal deduction","https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/medicare-levy-questions-m1-m2-individual-tax-return-2025/private-health-insurance-policy-details-2025","Missing statement","Need annual PHI statement or MyGov prefill"],["Private health","GU Health membership / emails",null,"Supports membership context only","https://mail.google.com/mail/#all/1973e5cf56c8f34d","Partial","No annual tax statement found yet"],["Life insurance","TAL Life + TPD quoted monthly premium",127.44,"Usually not deductible if it is only life / TPD cover","https://mail.google.com/mail/#all/1953abe13d5e0e48","Partial","Quote email dated 26 Nov 2024 shows $127.44 monthly; policy activated Feb 2025"],["Life insurance","TAL premium payments",null,"Need actual debits before claiming anything","https://mail.google.com/mail/#all/1953abe13d5e0e48","Missing payment evidence","Need bank statements / annual premium statement"],["Income protection / redundancy","Prior-year note to accountant",872.28,"Prior-year reference only, not FY 2024–25 evidence","https://mail.google.com/mail/#all/19268ee0317319db","Do not use yet","Email says income protection for the last financial year was 872.28; this appears to relate to the 2024 return, not FY 2024–25"],["Work expense","Officeworks invoice 620847018",5,"Candidate work-related expense","https://mail.google.com/mail/#all/195d72dfc4cf1d57","Candidate","Need item detail / confirm work use"],["Work expense","Amazon Bluetooth mouse",19.98,"Good candidate work-related expense","https://mail.google.com/mail/#all/19582ad03d2738ea","Candidate","Claim work-use portion if mixed use"],["Work expense","Sony earbuds",129,"Candidate only if genuinely used for work","https://mail.google.com/mail/#all/19582ad03d2738ea","Review","Need work-use confirmation"],["Work expense","Earbud case",9.89,"Candidate only if earbuds are work-related","https://mail.google.com/mail/#all/19582ad03d2738ea","Review","Low priority"],["Software subscription","Google One 2 TB annual charge",124.99,"Candidate work-related software / storage expense","https://mail.google.com/mail/#all/1940c191f64327c4","Review","Later refund email found for 68.15; claim only work-use portion after netting refund"],["Software adjustment","Google One refund approved",-68.15,"Reduces any Google One claim","https://mail.google.com/mail/#all/197620b2e1c26b81","Adjustment","Need PayPal / bank confirmation refund actually landed in FY"],["Software subscription","Surfshark recurring order",147.01,"Candidate software / VPN expense","https://mail.google.com/mail/#all/195ee719371144cc","Candidate","PayPal receipt shows 147.01 AUD charged on 1 Apr 2025 for Surfshark recurring subscription"],["Software subscription","LinkedIn Premium receipts found",274.94,"Review carefully; may be non-deductible if mainly job-seeking","https://mail.google.com/mail/#all/1976c6775aa9705a","Review","Receipts found for 14 Oct 2024 27.49, 14 Nov 2024 27.49, 14 Dec 2024 54.99, 14 Mar 2025 54.99, 14 May 2025 54.99, 14 Jun 2025 54.99"],["Software subscription","Grammarly annual payment authorisation",225.35,"Candidate software expense if work-related","https://mail.google.com/mail/#all/19358c2bf7a6cdb7","Review","PayPal authorisation on 23 Nov 2024 for 139.95 USD / 225.35 AUD; ideally confirm final posted receipt in PayPal or bank"],["Software subscription","OpenAI / ChatGPT subscription",422.88,"Candidate work-related software expense","file:///Users/sunny.mantri/Documents/Personal/ANZ%20-%20Offset.csv","Confirmed from ANZ bank statement","12 monthly OpenAI / ChatGPT subscription charges from 15 Jul 2024 to 13 Jun 2025. Claim work-use portion only. No Anthropic / Claude charge confirmed yet."],["Rules","ATO deduction rules",null,"Must relate to earning employment income and be supported by records","https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/supporting-information-individual-tax-return-2025/claiming-deductions-2025","Confirmed source","Reimbursed expenses cannot be claimed"]]},{"id":"missing","title":"Missing Info","description":"What is still needed to complete the return confidently.","tableId":"missing-table","values":[["Priority","Missing item","Why needed","Best source"],["High","Bank statements for 1 Jul 2024 to 30 Jun 2025","Find TAL premiums, private health payments, loan interest, and other spending","Bank PDF / CSV statements"],["High","PAYG income statements","Complete income side of return","MyGov / employer"],["High","Investment loan interest statement","Major rental deduction for Ingleburn; ANZ Bank of China repayments were identified as another property","Ingleburn lender annual statement"],["High","Original purchase contract + settlement","Needed to finish CGT cost base","Conveyancer / old email"],["High","Purchase stamp duty + purchase legal fees","Needed for CGT cost base","Settlement docs"],["High","2018 transfer / registration fee receipt","Needed for CGT cost base if paid on purchase","Settlement statement / conveyancer invoice / Revenue NSW"],["High","Kitchen / bathroom renovation invoices and payment proof","Needed to decide CGT cost base vs capital works / depreciation treatment","Builder invoices / bank statements / emails"],["Medium","Private health annual statement","Needed for PHI section","Insurer annual statement / MyGov prefill"],["Medium","Full-year council notices","Complete rental deduction","Council notices / bank statements"],["Medium","Missing water quarter if any","Complete rental deduction","Sydney Water / bank statements"],["Medium","Landlord insurance payment proof","Support rental deduction","Bank statements"],["Medium","Cleaning receipt for $750","Support claim","Invoice / bank transaction"],["Medium","Any other Bunnings / repair invoices for the rental","Support repairs claim","Receipts / bank statements"],["Medium","Prior year tax return / rental schedule","Helps reconcile depreciation already claimed","Accountant PDFs"],["Medium","Check Duo Tax schedule includes later renovations","Needed so depreciation / capital works are not double-counted or missed","Duo Tax report + renovation invoices + accountant review"],["Medium","Google One refund completion and work-use split","Needed before claiming any software storage deduction","PayPal / bank statement + your work-use estimate"],["Medium","OpenAI / ChatGPT work-use percentage","Need a reasonable basis before claiming the subscription as a work deduction","Your estimate / work diary / accountant advice"],["Medium","TAL premium debit evidence or annual premium statement","Needed to prove actual FY 2024–25 insurance payments","Bank statement / TAL statement / myTAL"],["Medium","Clarify whether any policy includes income protection / redundancy cover","Life / TPD is usually not deductible, but income protection may be","Policy schedule / broker confirmation / accountant advice"],["Medium","Council and Sydney Water notices not yet fully located in Gmail","Need quarterly evidence if you want a document-backed reconciliation","Council / Sydney Water PDFs or bank statement payments"],["Medium","Support for the $9,400 general improvement estimate","Needed before treating the user estimate as a defendable CGT cost-base item","Invoices / receipts / bank statements / accountant workpapers"]]},{"id":"references","title":"References","description":"Evidence links, source files and ATO guidance.","tableId":"references-table","values":[["Reference type","Description","Link / path"],["ATO","21 Rent 2025","https://www.ato.gov.au/forms-and-instructions/individual-supplementary-tax-return-2025-instructions/income-questions-13-24-supplementary-tax-return-2025/21-rent-2025"],["ATO","18 Capital gains 2025","https://www.ato.gov.au/forms-and-instructions/individual-supplementary-tax-return-2025-instructions/income-questions-13-24-supplementary-tax-return-2025/18-capital-gains-2025"],["ATO","Rental properties guide 2025","https://www.ato.gov.au/forms-and-instructions/rental-properties-2025"],["ATO","Private health insurance policy details 2025","https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/medicare-levy-questions-m1-m2-individual-tax-return-2025/private-health-insurance-policy-details-2025"],["ATO","Claiming deductions 2025","https://www.ato.gov.au/forms-and-instructions/individual-tax-return-2025-instructions/supporting-information-individual-tax-return-2025/claiming-deductions-2025"],["ATO","CGT when selling your rental property","https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/property-and-capital-gains-tax/cgt-when-selling-your-rental-property"],["Local file","Duo Tax report","file:///Users/sunny.mantri/Documents/Personal/DT-Report%20238117.pdf"],["Local file","Duo Tax receipt","file:///Users/sunny.mantri/Documents/Personal/DT-Receipt%20238117.pdf"],["Gmail","Google One annual charge receipt","https://mail.google.com/mail/#all/1940c191f64327c4"],["Gmail","Google One refund email","https://mail.google.com/mail/#all/197620b2e1c26b81"],["Gmail","Surfshark PayPal receipt","https://mail.google.com/mail/#all/195ee719371144cc"],["Gmail","LinkedIn PayPal receipt set","https://mail.google.com/mail/#all/1976c6775aa9705a"],["Gmail","Grammarly PayPal authorisation","https://mail.google.com/mail/#all/19358c2bf7a6cdb7"],["Gmail","TAL quote / premium email","https://mail.google.com/mail/#all/1936751257bc73f4"],["Gmail","TAL welcome / policy schedule email","https://mail.google.com/mail/#all/1953abe13d5e0e48"],["Gmail","Prior-year income protection note","https://mail.google.com/mail/#all/19268ee0317319db"],["Local file","ANZ Offset CSV with OpenAI and Surfshark charges","file:///Users/sunny.mantri/Documents/Personal/ANZ%20-%20Offset.csv"],["Gmail","Sale contract preparation invoice 2080","https://mail.google.com/mail/#all/195c649924399ebe"],["Gmail","Approval emails PDF: 2018 flooring + 2020 bathroom works","https://mail.google.com/mail/#all/1965c87eca55e56f"],["Gmail","Sale enquiry email noting 2018 laminate / kitchen and 2020 bathroom works","https://mail.google.com/mail/#all/1965c87eca55e56f"],["Local file","Kitchen quote SK0269","file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0269%20Sunny%20Ingleburn.pdf"],["Local file","Kitchen quote SK0270 revised","file:///Users/sunny.mantri/Documents/Personal/Quote%20SK0270%20Revised%20Sunny%20Ingleburn.pdf"],["Local file","AJJ Tiling Services quote","file:///Users/sunny.mantri/Documents/Personal/AJJ%20TILING%20SERVICES%20sunny.docx"]]}]</script>
+  <script>
+    const sectionData = JSON.parse(document.getElementById('section-data').textContent);
+    const currency = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const calcStateKey = 'tax-2025-review-state-v3';
+    const ownerStateKey = 'tax-2025-owner-view-v1';
+
+    function fmtCurrency(value) {
+      return currency.format(Number(value || 0));
+    }
+
+    function num(value) {
+      if (value === null || value === undefined || value === '') return null;
+      if (typeof value === 'number') return value;
+      const parsed = Number(String(value).replace(/[^0-9.-]/g, ''));
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function escapeHtmlClient(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+    }
+
+    function normalizeStatus(raw) {
+      const value = String(raw || '').trim().toLowerCase();
+      if (!value) return 'missing';
+      if (value.includes('confirmed') || value === 'calculated') return 'confirmed';
+      if (value.includes('candidate') || value.includes('review') || value.includes('partial') || value.includes('estimate') || value.includes('adjustment') || value.includes('low confidence')) return 'candidate';
+      if (value.includes('missing') || value.includes('do not use')) return 'missing';
+      return 'candidate';
+    }
+
+    function badgeClass(kind) {
+      return { confirmed: 'badge-confirmed', candidate: 'badge-candidate', missing: 'badge-missing', excluded: 'badge-excluded' }[kind] || 'badge-candidate';
+    }
+
+    function columnClass(name) {
+      const value = String(name || '').trim().toLowerCase();
+      if (value === 'item' || value === 'area' || value === 'missing item') return 'col-item';
+      if (value === 'likely treatment' || value === 'why needed') return 'col-treatment';
+      if (value === 'evidence link' || value === 'link / path' || value === 'best source') return 'col-evidence';
+      if (value === 'status' || value === 'priority') return 'col-status';
+      if (value.includes('amount') || value.includes('share') || value === 'income') return 'col-amount';
+      if (value.includes('note') || value.includes('source')) return 'col-note';
+      if (value.includes('include in calc')) return 'col-include';
+      return '';
+    }
+
+    function getMeta(sectionId, row) {
+      if (sectionId === 'personal') {
+        const [category, item, amount, treatment, evidence, status] = row;
+        const statusKind = normalizeStatus(status);
+        const amountNum = num(amount);
+        if (category === 'Employment income') return { group: 'employment-income', optional: false, defaultIncluded: true, amount: amountNum, statusKind, owner: 'sunny' };
+        if (category === 'Interest income') {
+          if (String(item).includes('Total interest income')) return { group: 'interest-income', optional: false, defaultIncluded: true, amount: amountNum, statusKind, owner: 'sunny' };
+          return { group: 'info-only', optional: false, defaultIncluded: false, amount: amountNum, statusKind, owner: 'sunny' };
+        }
+        if (category === 'Work expense') return { group: 'office-equipment', optional: amountNum !== null, defaultIncluded: false, amount: amountNum, statusKind, owner: 'sunny' };
+        if (category === 'Software subscription' || category === 'Software adjustment') return { group: 'office-subscription', optional: amountNum !== null, defaultIncluded: false, amount: amountNum, statusKind, owner: 'sunny' };
+        if (amountNum !== null) {
+          return {
+            group: 'personal-other',
+            optional: true,
+            defaultIncluded: statusKind === 'confirmed',
+            amount: amountNum,
+            statusKind,
+            owner: 'sunny',
+          };
+        }
+        return { group: 'other', optional: false, defaultIncluded: false, amount: amountNum, statusKind, owner: 'sunny' };
+      }
+
+      if (sectionId === 'rental') {
+        const [category, item, amount, yourShare, apoorvaShare, treatment, evidence, status] = row;
+        const statusKind = normalizeStatus(status);
+        if (category === 'Rental income') return { group: 'rental-income', optional: false, defaultIncluded: true, amount: num(amount), yourShare: num(yourShare), apoorvaShare: num(apoorvaShare), statusKind, owner: 'shared' };
+        if (category === 'Rental deduction' || category === 'Depreciation') {
+          const amountNum = num(amount);
+          const optional = amountNum !== null;
+          const defaultIncluded = statusKind === 'confirmed' || statusKind === 'candidate';
+          return { group: 'rental-expense', optional, defaultIncluded, amount: amountNum, yourShare: num(yourShare), apoorvaShare: num(apoorvaShare), statusKind, category, item, owner: 'shared' };
+        }
+      }
+
+      if (sectionId === 'cgt') {
+        const [category, item, amount, yourShare, apoorvaShare, treatment, evidence, status] = row;
+        const statusKind = normalizeStatus(status);
+        if (item === 'Sale proceeds') return { group: 'cgt-proceeds', optional: false, defaultIncluded: true, amount: num(amount), yourShare: num(yourShare), apoorvaShare: num(apoorvaShare), statusKind, owner: 'shared' };
+        const amountNum = num(amount);
+        if (amountNum !== null) {
+          const isImprovement = /quote|renovation|improvement|estimate|tiling|kitchen|bathroom/i.test(String(item));
+          const isSuperseded = /superseded/i.test(String(item));
+          const optional = true;
+          const defaultIncluded = isImprovement ? !isSuperseded : statusKind === 'confirmed' || statusKind === 'candidate';
+          return {
+            group: isImprovement ? 'cgt-improvement' : 'cgt-selling-cost',
+            optional,
+            defaultIncluded,
+            amount: amountNum,
+            yourShare: num(yourShare),
+            apoorvaShare: num(apoorvaShare),
+            statusKind,
+            owner: 'shared',
+          };
+        }
+      }
+
+      return { group: 'other', optional: false, defaultIncluded: false, amount: null, statusKind: 'missing' };
+    }
+
+    function rowKey(sectionId, rowIndex) {
+      return sectionId + ':' + rowIndex;
+    }
+
+    function loadState() {
+      try {
+        return JSON.parse(localStorage.getItem(calcStateKey) || '{}');
+      } catch {
+        return {};
+      }
+    }
+
+    function saveState(state) {
+      localStorage.setItem(calcStateKey, JSON.stringify(state));
+    }
+
+    const calcState = loadState();
+    const ownerViewSelect = document.getElementById('owner-view');
+
+    function loadOwnerView() {
+      const value = localStorage.getItem(ownerStateKey);
+      return ['combined', 'sunny', 'apoorva'].includes(value) ? value : 'combined';
+    }
+
+    function saveOwnerView(value) {
+      localStorage.setItem(ownerStateKey, value);
+    }
+
+    let ownerView = loadOwnerView();
+    if (ownerViewSelect) ownerViewSelect.value = ownerView;
+
+    function ownerLabel(value) {
+      return { combined: 'Combined', sunny: 'Sunny', apoorva: 'Apoorva' }[value] || 'Combined';
+    }
+
+    function viewAmount(meta) {
+      if (meta.owner === 'shared') {
+        if (ownerView === 'sunny') return meta.yourShare ?? meta.amount ?? 0;
+        if (ownerView === 'apoorva') return meta.apoorvaShare ?? meta.amount ?? 0;
+        return meta.amount ?? 0;
+      }
+      if (meta.owner === 'sunny') {
+        return ownerView === 'apoorva' ? 0 : meta.amount ?? 0;
+      }
+      return meta.amount ?? 0;
+    }
+
+    function rowVisibleInView(meta) {
+      if (meta.owner === 'sunny' && ownerView === 'apoorva') return false;
+      return true;
+    }
+
+    function includeValue(sectionId, rowIndex, meta) {
+      const key = rowKey(sectionId, rowIndex);
+      if (Object.prototype.hasOwnProperty.call(calcState, key)) return calcState[key];
+      return meta.defaultIncluded;
+    }
+
+    function applyBadgesAndControls() {
+      sectionData.forEach((section) => {
+        if (section.id === 'summary') return;
+        const table = document.getElementById(section.tableId);
+        if (!table) return;
+
+        const headerCells = Array.from(table.querySelectorAll('thead th'));
+        headerCells.forEach((th) => {
+          const cls = columnClass(th.textContent.trim());
+          if (cls) th.classList.add(cls);
+        });
+        const statusIndex = headerCells.findIndex((th) => th.textContent.trim() === 'Status');
+        const noteIndex = headerCells.findIndex((th) => /note|source/i.test(th.textContent.trim()));
+        const amountIndexes = headerCells
+          .map((th, idx) => ({ text: th.textContent.trim(), idx }))
+          .filter(({ text }) => ['Amount AUD', 'Total AUD', 'Your 50%', 'Apoorva 50%', 'Your Share', 'Apoorva Share'].includes(text))
+          .map(({ idx }) => idx);
+
+        if (section.id !== 'references' && section.id !== 'missing') {
+          const includeHeader = document.createElement('th');
+          includeHeader.textContent = 'Include in calc';
+          includeHeader.classList.add('col-include');
+          const headRow = table.querySelector('thead tr');
+          const targetHeader = noteIndex >= 0 ? headRow.children[noteIndex] : null;
+          if (targetHeader) headRow.insertBefore(includeHeader, targetHeader);
+          else headRow.appendChild(includeHeader);
+        }
+
+        Array.from(table.querySelectorAll('tbody tr')).forEach((tr) => {
+          const rowIndex = Number(tr.dataset.rowIndex);
+          const row = section.values[rowIndex + 1];
+          const meta = getMeta(section.id, row);
+
+          Array.from(tr.children).forEach((td, idx) => {
+            const header = headerCells[idx];
+            if (!header) return;
+            const cls = columnClass(header.textContent.trim());
+            if (cls) td.classList.add(cls);
+          });
+
+          amountIndexes.forEach((idx) => {
+            const td = tr.children[idx];
+            if (td) td.classList.add('amount-cell');
+          });
+
+          if (statusIndex >= 0) {
+            const statusCell = tr.children[statusIndex];
+            if (statusCell) {
+              const original = statusCell.textContent.trim();
+              statusCell.innerHTML = '<span class="badge ' + badgeClass(meta.statusKind) + '">' + escapeHtmlClient(original) + '</span>';
+            }
+          } else if (section.id === 'missing') {
+            const priorityCell = tr.children[0];
+            if (priorityCell) {
+              priorityCell.innerHTML = '<span class="badge badge-missing">' + escapeHtmlClient(priorityCell.textContent.trim()) + '</span>';
+            }
+          }
+
+          if (section.id === 'references' || section.id === 'missing') return;
+
+          const includeCell = document.createElement('td');
+          includeCell.classList.add('col-include');
+          const included = includeValue(section.id, rowIndex, meta);
+          tr.dataset.calcIncluded = included ? 'true' : 'false';
+
+          if (meta.amount === null) {
+            includeCell.innerHTML = '<span class="badge badge-missing">No amount</span>';
+          } else {
+            const label = document.createElement('label');
+            label.className = 'include-toggle';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = included;
+            checkbox.addEventListener('change', () => {
+              calcState[rowKey(section.id, rowIndex)] = checkbox.checked;
+              saveState(calcState);
+              refreshRowState(tr, meta, checkbox.checked);
+              renderSummaryDashboard();
+            });
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode('Include'));
+            includeCell.appendChild(label);
+          }
+
+          const targetCell = noteIndex >= 0 ? tr.children[noteIndex] : null;
+          if (targetCell) tr.insertBefore(includeCell, targetCell);
+          else tr.appendChild(includeCell);
+          refreshRowState(tr, meta, included);
+        });
+      });
+    }
+
+    function refreshRowState(tr, meta, included) {
+      tr.dataset.calcIncluded = included ? 'true' : 'false';
+      if (meta.optional && !included) tr.classList.add('row-excluded');
+      else tr.classList.remove('row-excluded');
+    }
+
+    function collectIncludedRows() {
+      const rows = [];
+      sectionData.forEach((section) => {
+        if (section.id === 'summary' || section.id === 'references' || section.id === 'missing') return;
+        section.values.slice(1).forEach((row, rowIndex) => {
+          const meta = getMeta(section.id, row);
+          const included = includeValue(section.id, rowIndex, meta);
+          rows.push({ sectionId: section.id, rowIndex, row, meta, included });
+        });
+      });
+      return rows;
+    }
+
+    function shareLabel() {
+      if (ownerView === 'sunny') return 'Sunny share';
+      if (ownerView === 'apoorva') return 'Apoorva share';
+      return 'Combined total';
+    }
+
+    function rentalBucket(item) {
+      const text = String(item).toLowerCase();
+      if (text.includes('management')) return 'Property management fees';
+      if (text.includes('strata')) return 'Strata fees';
+      if (text.includes('council')) return 'Council rates';
+      if (text.includes('water')) return 'Water charges';
+      if (text.includes('loan')) return 'Loan interest';
+      if (text.includes('insurance')) return 'Landlord insurance';
+      if (text.includes('clean')) return 'Cleaning';
+      if (text.includes('bunnings') || text.includes('repair')) return 'Repairs and maintenance';
+      if (text.includes('division 43') || text.includes('depreciation') || text.includes('duo tax')) return 'Depreciation / capital works';
+      return 'Other rental expense';
+    }
+
+    function officeBucket(row) {
+      const category = String(row[0] || '');
+      if (category === 'Software subscription' || category === 'Software adjustment') return 'Subscriptions / software';
+      return 'Equipment / supplies';
+    }
+
+    function personalBucket(row) {
+      const category = String(row[0] || '');
+      if (category.includes('Life insurance')) return 'Life insurance / TPD';
+      if (category.includes('Income protection')) return 'Income protection / redundancy';
+      if (category.includes('Private health')) return 'Private health';
+      return 'Other personal candidate';
+    }
+
+    function renderDetailTable(columns, rows, emptyText) {
+      if (!rows.length) return '<div class="summary-empty">' + escapeHtmlClient(emptyText) + '</div>';
+      const thead = '<thead><tr>' + columns.map((col) => '<th>' + escapeHtmlClient(col) + '</th>').join('') + '</tr></thead>';
+      const tbody = '<tbody>' + rows.map((row) => '<tr>' + row.map((cell) => '<td' + (String(cell).trim().startsWith('$') || String(cell).trim().startsWith('-$') ? ' class="amount-cell"' : '') + '>' + cell + '</td>').join('') + '</tr>').join('') + '</tbody>';
+      return '<div class="table-wrap"><table>' + thead + tbody + '</table></div>';
+    }
+
+    function renderSummaryDashboard() {
+      const rows = collectIncludedRows();
+      const employmentIncome = rows.filter((r) => r.included && r.meta.group === 'employment-income' && rowVisibleInView(r.meta)).reduce((sum, r) => sum + viewAmount(r.meta), 0);
+      const interestIncome = rows.filter((r) => r.included && r.meta.group === 'interest-income' && rowVisibleInView(r.meta)).reduce((sum, r) => sum + viewAmount(r.meta), 0);
+      const rentalIncome = rows.filter((r) => r.included && r.meta.group === 'rental-income' && rowVisibleInView(r.meta)).reduce((sum, r) => sum + viewAmount(r.meta), 0);
+      const rentalExpenses = rows.filter((r) => r.included && r.meta.group === 'rental-expense' && rowVisibleInView(r.meta));
+      const officeExpenses = rows.filter((r) => r.included && (r.meta.group === 'office-equipment' || r.meta.group === 'office-subscription') && rowVisibleInView(r.meta));
+      const personalOtherExpenses = rows.filter((r) => r.included && r.meta.group === 'personal-other' && rowVisibleInView(r.meta));
+      const cgtSaleProceeds = rows.filter((r) => r.included && r.meta.group === 'cgt-proceeds' && rowVisibleInView(r.meta)).reduce((sum, r) => sum + viewAmount(r.meta), 0);
+      const cgtSaleRow = rows.find((r) => r.included && r.meta.group === 'cgt-proceeds');
+      const cgtSellingCosts = rows.filter((r) => r.included && r.meta.group === 'cgt-selling-cost' && rowVisibleInView(r.meta));
+      const cgtImprovements = rows.filter((r) => r.included && r.meta.group === 'cgt-improvement' && rowVisibleInView(r.meta));
+
+      const rentalTotal = rentalExpenses.reduce((sum, r) => sum + viewAmount(r.meta), 0);
+      const officeTotal = officeExpenses.reduce((sum, r) => sum + viewAmount(r.meta), 0);
+      const personalOtherTotal = personalOtherExpenses.reduce((sum, r) => sum + viewAmount(r.meta), 0);
+      const cgtCostTotal = cgtSellingCosts.reduce((sum, r) => sum + viewAmount(r.meta), 0);
+      const cgtImprovementTotal = cgtImprovements.reduce((sum, r) => sum + viewAmount(r.meta), 0);
+      const officeEquipmentTotal = officeExpenses.filter((r) => r.meta.group === 'office-equipment').reduce((sum, r) => sum + viewAmount(r.meta), 0);
+      const officeSubscriptionTotal = officeExpenses.filter((r) => r.meta.group === 'office-subscription').reduce((sum, r) => sum + viewAmount(r.meta), 0);
+      const rentalYourShare = rentalExpenses.reduce((sum, r) => sum + (r.meta.yourShare || 0), 0);
+      const rentalApoorvaShare = rentalExpenses.reduce((sum, r) => sum + (r.meta.apoorvaShare || 0), 0);
+      const cgtSellingYourShare = cgtSellingCosts.reduce((sum, r) => sum + (r.meta.yourShare || 0), 0);
+      const cgtSellingApoorvaShare = cgtSellingCosts.reduce((sum, r) => sum + (r.meta.apoorvaShare || 0), 0);
+      const cgtImprovementYourShare = cgtImprovements.reduce((sum, r) => sum + (r.meta.yourShare || 0), 0);
+      const cgtImprovementApoorvaShare = cgtImprovements.reduce((sum, r) => sum + (r.meta.apoorvaShare || 0), 0);
+      const propertyStatementTotal = rentalTotal + cgtCostTotal + cgtImprovementTotal;
+      const statementLabel = ownerLabel(ownerView);
+      const combinedMode = ownerView === 'combined';
+
+      const rentalRows = rentalExpenses.map((r) => combinedMode
+        ? [
+            escapeHtmlClient(rentalBucket(r.row[1])),
+            escapeHtmlClient(r.row[1]),
+            escapeHtmlClient(String(r.row[7] || '')),
+            fmtCurrency(r.meta.amount || 0),
+            fmtCurrency(r.meta.yourShare || 0),
+            fmtCurrency(r.meta.apoorvaShare || 0),
+          ]
+        : [
+            escapeHtmlClient(rentalBucket(r.row[1])),
+            escapeHtmlClient(r.row[1]),
+            escapeHtmlClient(String(r.row[7] || '')),
+            fmtCurrency(viewAmount(r.meta)),
+            escapeHtmlClient(statementLabel + ' ownership share'),
+          ],
+      );
+
+      const officeRows = officeExpenses.map((r) => [
+        escapeHtmlClient(officeBucket(r.row)),
+        escapeHtmlClient(r.row[1]),
+        escapeHtmlClient(String(r.row[5] || '')),
+        fmtCurrency(viewAmount(r.meta)),
+      ]);
+
+      const personalOtherRows = personalOtherExpenses.map((r) => [
+        escapeHtmlClient(personalBucket(r.row)),
+        escapeHtmlClient(r.row[1]),
+        escapeHtmlClient(String(r.row[5] || '')),
+        fmtCurrency(viewAmount(r.meta)),
+      ]);
+
+      const cgtRows = [
+        ...(cgtSaleProceeds ? [combinedMode
+          ? [escapeHtmlClient('Sale proceeds'), escapeHtmlClient('Sale proceeds'), escapeHtmlClient('Confirmed'), fmtCurrency(cgtSaleRow?.meta.amount || 0), fmtCurrency(cgtSaleRow?.meta.yourShare || 0), fmtCurrency(cgtSaleRow?.meta.apoorvaShare || 0), escapeHtmlClient('Gross sale price before cost-base adjustments')]
+          : [escapeHtmlClient('Sale proceeds'), escapeHtmlClient('Sale proceeds'), escapeHtmlClient('Confirmed'), fmtCurrency(cgtSaleProceeds), escapeHtmlClient(statementLabel + ' ownership share'), escapeHtmlClient('Gross sale price before cost-base adjustments')]] : []),
+        ...cgtSellingCosts.map((r) => combinedMode
+          ? [escapeHtmlClient('Selling cost'), escapeHtmlClient(r.row[1]), escapeHtmlClient(String(r.row[7] || '')), fmtCurrency(r.meta.amount || 0), fmtCurrency(r.meta.yourShare || 0), fmtCurrency(r.meta.apoorvaShare || 0), escapeHtmlClient(String(r.row[8] || ''))]
+          : [escapeHtmlClient('Selling cost'), escapeHtmlClient(r.row[1]), escapeHtmlClient(String(r.row[7] || '')), fmtCurrency(viewAmount(r.meta)), escapeHtmlClient(statementLabel + ' ownership share'), escapeHtmlClient(String(r.row[8] || ''))]),
+        ...cgtImprovements.map((r) => combinedMode
+          ? [escapeHtmlClient('Capital improvement'), escapeHtmlClient(r.row[1]), escapeHtmlClient(String(r.row[7] || '')), fmtCurrency(r.meta.amount || 0), fmtCurrency(r.meta.yourShare || 0), fmtCurrency(r.meta.apoorvaShare || 0), escapeHtmlClient(String(r.row[8] || ''))]
+          : [escapeHtmlClient('Capital improvement'), escapeHtmlClient(r.row[1]), escapeHtmlClient(String(r.row[7] || '')), fmtCurrency(viewAmount(r.meta)), escapeHtmlClient(statementLabel + ' ownership share'), escapeHtmlClient(String(r.row[8] || ''))]),
+      ];
+
+      document.getElementById('summary-dashboard').innerHTML = [
+        '<p class="view-note">Current statement view: <strong>' + statementLabel + '</strong>' + (ownerView === 'apoorva' ? ' · Personal salary, work expenses and software costs currently appear to belong to Sunny only.' : '') + '</p>',
+        '<div class="summary-grid">',
+          '<div class="summary-card">',
+            '<h3>Employment income</h3>',
+            '<p class="big-number">' + fmtCurrency(employmentIncome) + '</p>',
+            '<p class="sub-number">' + (ownerView === 'apoorva' ? 'No Apoorva PAYG statement captured yet' : 'PAYG salary captured from your screenshot') + '</p>',
+          '</div>',
+          '<div class="summary-card">',
+            '<h3>Interest income</h3>',
+            '<p class="big-number">' + fmtCurrency(interestIncome) + '</p>',
+            '<p class="sub-number">' + (ownerView === 'apoorva' ? 'No Apoorva interest summary captured yet' : 'Bank and ATO interest income confirmed') + '</p>',
+          '</div>',
+          '<div class="summary-card">',
+            '<h3>Rental income</h3>',
+            '<p class="big-number">' + fmtCurrency(rentalIncome) + '</p>',
+            '<p class="sub-number">Primary source: Raine &amp; Horne annual statement · ' + shareLabel() + '</p>',
+          '</div>',
+          '<div class="summary-card">',
+            '<h3>Rental deductions selected</h3>',
+            '<p class="big-number">' + fmtCurrency(rentalTotal) + '</p>',
+            '<p class="sub-number">Includes only rows currently set to include · ' + shareLabel() + '</p>',
+          '</div>',
+          '<div class="summary-card">',
+            '<h3>Office expenses selected</h3>',
+            '<p class="big-number">' + fmtCurrency(officeTotal) + '</p>',
+            '<p class="sub-number">Equipment / supplies ' + fmtCurrency(officeEquipmentTotal) + ' · Subscriptions ' + fmtCurrency(officeSubscriptionTotal) + '</p>',
+          '</div>',
+          '<div class="summary-card">',
+            '<h3>Other personal / insurance candidates selected</h3>',
+            '<p class="big-number">' + fmtCurrency(personalOtherTotal) + '</p>',
+            '<p class="sub-number">Rows outside office software/equipment that you manually include</p>',
+          '</div>',
+          '<div class="summary-card">',
+            '<h3>CGT selling costs selected</h3>',
+            '<p class="big-number">' + fmtCurrency(cgtCostTotal) + '</p>',
+            '<p class="sub-number">Sale proceeds ' + fmtCurrency(cgtSaleProceeds) + ' · ' + shareLabel() + '</p>',
+          '</div>',
+          '<div class="summary-card">',
+            '<h3>CGT capital improvements selected</h3>',
+            '<p class="big-number">' + fmtCurrency(cgtImprovementTotal) + '</p>',
+            '<p class="sub-number">Quotes / refurbishment items currently included</p>',
+          '</div>',
+          '<div class="summary-card">',
+            '<h3>' + statementLabel + ' property amount selected</h3>',
+            '<p class="big-number">' + fmtCurrency(propertyStatementTotal) + '</p>',
+            '<p class="sub-number">' + (combinedMode
+              ? 'Sunny share ' + fmtCurrency(rentalYourShare + cgtSellingYourShare + cgtImprovementYourShare) + ' · Apoorva share ' + fmtCurrency(rentalApoorvaShare + cgtSellingApoorvaShare + cgtImprovementApoorvaShare)
+              : 'Rental deductions ' + fmtCurrency(rentalTotal) + ' · CGT selling ' + fmtCurrency(cgtCostTotal) + ' · Improvements ' + fmtCurrency(cgtImprovementTotal)) + '</p>',
+          '</div>',
+        '</div>',
+        '<div class="summary-section">',
+          '<h3>Rental property breakdown</h3>',
+          '<p class="calc-note">ATO-style grouping for rental income and deductions. Every expense row can now be included or excluded directly in the Rental Property tab.</p>',
+          renderDetailTable(combinedMode ? ['Expense type', 'Item', 'Status', 'Total AUD', 'Sunny share', 'Apoorva share'] : ['Expense type', 'Item', 'Status', 'Statement amount', 'Basis'], rentalRows, 'No rental expense rows are currently included.'),
+        '</div>',
+        '<div class="summary-section">',
+          '<h3>Office expenses breakdown</h3>',
+          '<p class="calc-note">Work-related expenses grouped between equipment / supplies and subscriptions / software.</p>',
+          renderDetailTable(['ATO-style bucket', 'Item', 'Status', 'Amount AUD'], officeRows, 'No office-expense candidate rows are currently included.'),
+        '</div>',
+        '<div class="summary-section">',
+          '<h3>Other personal / insurance breakdown</h3>',
+          '<p class="calc-note">Use this section when you manually include non-office personal candidate rows such as insurance-related amounts.</p>',
+          renderDetailTable(['Bucket', 'Item', 'Status', 'Amount AUD'], personalOtherRows, 'No other personal candidate rows are currently included for this statement view.'),
+        '</div>',
+        '<div class="summary-section">',
+          '<h3>CGT breakdown</h3>',
+          '<p class="calc-note">Sale proceeds, selling costs and capital-improvement candidates selected from the CGT Sale tab. Red status rows can still be included if you want to model them without documents.</p>',
+          renderDetailTable(combinedMode ? ['Type', 'Item', 'Status', 'Total AUD', 'Sunny share', 'Apoorva share', 'Note'] : ['Type', 'Item', 'Status', 'Statement amount', 'Basis', 'Note'], cgtRows, 'No CGT rows are currently included.'),
+        '</div>'
+      ].join('');
+    }
+
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const panels = document.querySelectorAll('.tab-panel');
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        tabButtons.forEach((b) => b.classList.remove('active'));
+        panels.forEach((p) => p.classList.remove('active'));
+        button.classList.add('active');
+        document.getElementById(button.dataset.tab).classList.add('active');
+      });
+    });
+    document.querySelectorAll('.table-filter').forEach((input) => {
+      input.addEventListener('input', () => {
+        const table = document.getElementById(input.dataset.table);
+        const query = input.value.trim().toLowerCase();
+        table.querySelectorAll('tbody tr').forEach((row) => {
+          row.style.display = !query || row.textContent.toLowerCase().includes(query) ? '' : 'none';
+        });
+      });
+    });
+    if (ownerViewSelect) {
+      ownerViewSelect.addEventListener('change', () => {
+        ownerView = ownerViewSelect.value;
+        saveOwnerView(ownerView);
+        renderSummaryDashboard();
+      });
+    }
+    applyBadgesAndControls();
+    renderSummaryDashboard();
+  </script>
+</body>
+</html>

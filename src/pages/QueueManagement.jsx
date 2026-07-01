@@ -25,7 +25,9 @@ export default function QueueManagement() {
   }
   const reloadUnsold = async () => {
     if (!auction) return
-    setUnsold(await getUnsoldOrReauction(auction.id))
+    const rows = await getUnsoldOrReauction(auction.id)
+    // Defensive UI guard: never show non-unsold rows in this tab.
+    setUnsold((rows ?? []).filter((p) => p?.status === 'unsold' || p?.status === 'reauction'))
   }
   useEffect(() => { reloadQueue(); reloadUnsold() }, [auction])
 
@@ -272,31 +274,21 @@ export default function QueueManagement() {
         {tab === 'Unsold / Re-auction' && (
           <div className="space-y-2">
             {unsold.map((p) => (
-              (() => {
-                const canStart = p.status === 'reauction'
-                return (
               <div key={p.id} className="rounded-lg border border-teal-700/40 bg-ink-800/60 p-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                 <div>
                   <p>{p.name}</p>
                   <p className="text-xs text-teal-300">
                     {p.status} · {p.category}
-                    {!canStart && <span className="text-live"> · Set to Re-auction first</span>}
                   </p>
                 </div>
                 <button onClick={async () => {
-                  if (!canStart) {
-                    setErrorMsg(`"${p.name}" must be in Re-auction status before it can be brought to auction.`)
-                    return
-                  }
                   if (busy) return
                   setBusy(true)
                   try { await startPlayer(p.id); reloadUnsold(); reloadQueue() } finally { setBusy(false) }
                 }}
-                  disabled={busy || !canStart}
+                  disabled={busy}
                   className="px-3 py-1 rounded bg-gold text-ink-900 text-sm disabled:opacity-40">Bring to Auction</button>
               </div>
-                )
-              })()
             ))}
             {unsold.length === 0 && <p className="text-teal-500">No unsold/reauction players right now.</p>}
           </div>
